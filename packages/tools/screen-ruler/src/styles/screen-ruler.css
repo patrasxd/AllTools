@@ -121,6 +121,29 @@
   cursor: pointer;
 }
 
+.ruler-rotate-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  color: var(--text-dim);
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 150ms ease, border-color 150ms ease, background 150ms ease;
+  user-select: none;
+}
+
+.ruler-rotate-btn:hover {
+  color: var(--text);
+  border-color: var(--border-2);
+  background: var(--surface-2);
+}
+
 /* ─── Ruler Measurement View ────────────────────────────────── */
 .ruler-measure-view {
   display: flex;

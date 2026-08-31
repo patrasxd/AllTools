@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   PillGroup,
   StatsHeader,
@@ -14,8 +14,8 @@ export interface ToolComponentProps {
 }
 
 // Standard ID-1 card size in millimeters
-const CARD_WIDTH_MM = 85.60
-const CARD_HEIGHT_MM = 53.98
+const CARD_LONG_MM = 85.60
+const CARD_SHORT_MM = 53.98
 
 export function ScreenRuler({ locale = 'en', setHeader }: ToolComponentProps) {
   // Calibration: pixels per millimeter
@@ -36,10 +36,29 @@ export function ScreenRuler({ locale = 'en', setHeader }: ToolComponentProps) {
     }
   })
 
+  // Card orientation for calibration (landscape vs portrait)
+  const [cardOrientation, setCardOrientation] = useState<'landscape' | 'portrait'>(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 500) {
+      return 'portrait'
+    }
+    return 'landscape'
+  })
+
+  const targetWidthMm = cardOrientation === 'landscape' ? CARD_LONG_MM : CARD_SHORT_MM
+  const targetHeightMm = cardOrientation === 'landscape' ? CARD_SHORT_MM : CARD_LONG_MM
+
   // Calibration slider value (width of on-screen card in pixels)
   const [cardWidthPx, setCardWidthPx] = useState<number>(() => {
-    return Math.round(pixelsPerMm * CARD_WIDTH_MM)
+    const initTarget = (typeof window !== 'undefined' && window.innerWidth < 500) ? CARD_SHORT_MM : CARD_LONG_MM
+    return Math.round(pixelsPerMm * initTarget)
   })
+
+  // When card orientation changes, recalculate initial cardWidthPx
+  const handleOrientationChange = (orient: 'landscape' | 'portrait') => {
+    setCardOrientation(orient)
+    const newTarget = orient === 'landscape' ? CARD_LONG_MM : CARD_SHORT_MM
+    setCardWidthPx(Math.round(pixelsPerMm * newTarget))
+  }
 
   // Measurement unit
   const [unit, setUnit] = useState<'cm' | 'inch'>('cm')
@@ -52,7 +71,7 @@ export function ScreenRuler({ locale = 'en', setHeader }: ToolComponentProps) {
 
   // Save calibration
   const saveCalibration = () => {
-    const ppm = cardWidthPx / CARD_WIDTH_MM
+    const ppm = cardWidthPx / targetWidthMm
     setPixelsPerMm(ppm)
     setIsCalibrated(true)
     try {
@@ -68,10 +87,11 @@ export function ScreenRuler({ locale = 'en', setHeader }: ToolComponentProps) {
   }
 
   // Calculated measurements
+  const currentPpm = isCalibrated ? pixelsPerMm : (cardWidthPx / targetWidthMm)
   const measuredMm = pixelsPerMm > 0 ? measuredPx / pixelsPerMm : 0
   const measuredCm = measuredMm / 10
   const measuredInches = measuredMm / 25.4
-  const estimatedDpi = Math.round(pixelsPerMm * 25.4)
+  const estimatedDpi = Math.round(currentPpm * 25.4)
 
   // Header stats injection
   useEffect(() => {
@@ -81,7 +101,11 @@ export function ScreenRuler({ locale = 'en', setHeader }: ToolComponentProps) {
         <StatsHeader
           label={locale === 'pl' ? 'KALIBRACJA EKRANU' : 'SCREEN CALIBRATION'}
           items={[
-            { key: 'card', label: 'WZORZEC', value: '85.6 MM' },
+            {
+              key: 'card',
+              label: locale === 'pl' ? 'SZEROKOŚĆ' : 'WIDTH',
+              value: `${targetWidthMm.toFixed(1)} MM`,
+            },
             { key: 'dpi', label: 'EST. DPI', value: estimatedDpi },
           ]}
         />
@@ -101,7 +125,7 @@ export function ScreenRuler({ locale = 'en', setHeader }: ToolComponentProps) {
         />
       )
     }
-  }, [setHeader, isCalibrated, unit, measuredCm, measuredInches, estimatedDpi, locale])
+  }, [setHeader, isCalibrated, unit, measuredCm, measuredInches, estimatedDpi, targetWidthMm, locale])
 
   // Ruler pointer handling
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -123,12 +147,20 @@ export function ScreenRuler({ locale = 'en', setHeader }: ToolComponentProps) {
     setIsDragging(false)
   }
 
-  const cardHeightPx = Math.round(cardWidthPx * (CARD_HEIGHT_MM / CARD_WIDTH_MM))
+  const cardHeightPx = Math.round(cardWidthPx * (targetHeightMm / targetWidthMm))
+
+  const orientationOptions = [
+    { value: 'landscape' as const, label: locale === 'pl' ? 'Poziomo (85.6 mm)' : 'Horizontal (85.6 mm)' },
+    { value: 'portrait' as const, label: locale === 'pl' ? 'Pionowo (54.0 mm)' : 'Vertical (54.0 mm)' },
+  ]
 
   const unitOptions = [
     { value: 'cm' as const, label: 'Centymetry (cm)' },
     { value: 'inch' as const, label: 'Cale (in)' },
   ]
+
+  const sliderMin = cardOrientation === 'landscape' ? 180 : 110
+  const sliderMax = cardOrientation === 'landscape' ? 480 : 340
 
   return (
     <div className="ruler-root">
@@ -143,8 +175,12 @@ export function ScreenRuler({ locale = 'en', setHeader }: ToolComponentProps) {
         </div>
         <div className="ruler-status-sub">
           {!isCalibrated
-            ? (locale === 'pl' ? 'Dopasuj rozmiar ramki do karty płatniczej' : 'Adjust frame size to match your ID/Credit card')
-            : (locale === 'pl' ? `Skalibrowano: ${estimatedDpi} DPI · Dotknij, aby zmierzyć` : `Calibrated: ${estimatedDpi} DPI · Touch & drag to measure`)}
+            ? (locale === 'pl'
+              ? `Dopasuj szerokość (${targetWidthMm.toFixed(1)} mm) do fizycznej karty`
+              : `Adjust width (${targetWidthMm.toFixed(1)} mm) to match physical card`)
+            : (locale === 'pl'
+              ? `Skalibrowano: ${estimatedDpi} DPI · Dotknij, aby zmierzyć`
+              : `Calibrated: ${estimatedDpi} DPI · Touch & drag to measure`)}
         </div>
       </div>
 
@@ -158,13 +194,16 @@ export function ScreenRuler({ locale = 'en', setHeader }: ToolComponentProps) {
               style={{
                 width: `${cardWidthPx}px`,
                 height: `${cardHeightPx}px`,
+                maxHeight: 'min(240px, calc(100vh - 360px))',
               }}
             >
               <div className="ruler-card-chip" />
               <div className="ruler-card-text">
-                {locale === 'pl' ? 'Dowód osobisty / Karta płatnicza' : 'ID Card / Credit Card'}
+                {locale === 'pl' ? 'Karta płatnicza / Dowód' : 'Payment Card / ID'}
               </div>
-              <div className="ruler-card-dim">85.60 mm × 53.98 mm</div>
+              <div className="ruler-card-dim">
+                {targetWidthMm.toFixed(1)} mm × {targetHeightMm.toFixed(1)} mm
+              </div>
             </div>
 
             {/* Slider to adjust on-screen size */}
@@ -172,14 +211,15 @@ export function ScreenRuler({ locale = 'en', setHeader }: ToolComponentProps) {
               <button
                 type="button"
                 className="game-btn game-btn--sm"
-                onClick={() => setCardWidthPx((prev) => Math.max(150, prev - 2))}
+                onClick={() => setCardWidthPx((prev) => Math.max(sliderMin, prev - 2))}
+                aria-label="Decrease width"
               >
                 -
               </button>
               <input
                 type="range"
-                min="200"
-                max="480"
+                min={sliderMin}
+                max={sliderMax}
                 step="1"
                 value={cardWidthPx}
                 onChange={(e) => setCardWidthPx(parseInt(e.target.value, 10))}
@@ -188,11 +228,28 @@ export function ScreenRuler({ locale = 'en', setHeader }: ToolComponentProps) {
               <button
                 type="button"
                 className="game-btn game-btn--sm"
-                onClick={() => setCardWidthPx((prev) => Math.min(500, prev + 2))}
+                onClick={() => setCardWidthPx((prev) => Math.min(sliderMax, prev + 2))}
+                aria-label="Increase width"
               >
                 +
               </button>
             </div>
+
+            {/* Quick Rotate Button for Mobile */}
+            <button
+              type="button"
+              className="ruler-rotate-btn"
+              onClick={() => handleOrientationChange(cardOrientation === 'landscape' ? 'portrait' : 'landscape')}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+              </svg>
+              <span>
+                {locale === 'pl'
+                  ? (cardOrientation === 'landscape' ? 'Obróć pionowo (na telefon)' : 'Obróć poziomo (na komputer)')
+                  : (cardOrientation === 'landscape' ? 'Rotate vertical (for phone)' : 'Rotate horizontal (for desktop)')}
+              </span>
+            </button>
           </div>
         ) : (
           <div className="ruler-measure-view">
@@ -296,9 +353,18 @@ export function ScreenRuler({ locale = 'en', setHeader }: ToolComponentProps) {
       <div className="ruler-controls-container">
         <ControlsBar>
           {!isCalibrated ? (
-            <GameButton variant="primary" size="md" onClick={saveCalibration}>
-              {locale === 'pl' ? 'Zatwierdź kalibrację' : 'Save Calibration'}
-            </GameButton>
+            <>
+              <GameButton variant="primary" size="md" onClick={saveCalibration}>
+                {locale === 'pl' ? 'Zatwierdź kalibrację' : 'Save Calibration'}
+              </GameButton>
+
+              {/* Orientation Pills */}
+              <PillGroup
+                options={orientationOptions}
+                value={cardOrientation}
+                onChange={handleOrientationChange}
+              />
+            </>
           ) : (
             <>
               <GameButton variant="secondary" size="md" onClick={startRecalibration}>
