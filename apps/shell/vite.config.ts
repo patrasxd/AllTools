@@ -46,6 +46,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@alltools/ui': path.resolve(__dirname, '../../packages/ui/src'),
+      '@alltools/calc-converter': path.resolve(__dirname, '../../packages/tools/calc-converter/src'),
       '@alltools/guitar-tuner': path.resolve(__dirname, '../../packages/tools/guitar-tuner/src'),
       '@alltools/level-protractor': path.resolve(__dirname, '../../packages/tools/level-protractor/src'),
       '@alltools/qr-suite': path.resolve(__dirname, '../../packages/tools/qr-suite/src'),

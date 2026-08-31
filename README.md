@@ -33,6 +33,7 @@ AllTools/
 └── packages/
     ├── ui/                        # Shared UI primitives (@alltools/ui)
     └── tools/
+        ├── calc-converter/        # Standard/scientific calculator & multi-unit converter
         ├── guitar-tuner/          # Chromatic & guitar tuning utility
         ├── level-protractor/      # Bubble level and angle measurement tool
         ├── qr-suite/              # QR generation and scanning utility

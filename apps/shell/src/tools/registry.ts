@@ -1,6 +1,6 @@
 import { ToolMetadata } from '../types/tool'
 
-// Eager metadata imports from tool packages (matching AllGames registry pattern)
+import { metadata as calcConverterMeta } from '@alltools/calc-converter'
 import { metadata as guitarTunerMeta } from '@alltools/guitar-tuner'
 import { metadata as levelProtractorMeta } from '@alltools/level-protractor'
 import { metadata as qrSuiteMeta } from '@alltools/qr-suite'
@@ -9,6 +9,7 @@ import { metadata as quickNotesMeta } from '@alltools/quick-notes'
 import { metadata as screenRulerMeta } from '@alltools/screen-ruler'
 
 export const TOOLS_METADATA: ToolMetadata[] = [
+  calcConverterMeta,
   guitarTunerMeta,
   levelProtractorMeta,
   screenRulerMeta,
@@ -19,6 +20,7 @@ export const TOOLS_METADATA: ToolMetadata[] = [
 
 // Dynamic lazy component loaders
 const loaders: Record<string, () => Promise<{ ToolComponent: React.ComponentType<any> }>> = {
+  'calc-converter': () => import('@alltools/calc-converter'),
   'guitar-tuner': () => import('@alltools/guitar-tuner'),
   'level-protractor': () => import('@alltools/level-protractor'),
   'screen-ruler': () => import('@alltools/screen-ruler'),

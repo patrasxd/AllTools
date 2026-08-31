@@ -5,6 +5,7 @@ export interface GameButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>
   size?: 'sm' | 'md' | 'lg'
   icon?: ReactNode
   children?: ReactNode
+  fullWidth?: boolean
 }
 
 export interface ToolButtonProps extends GameButtonProps {}
@@ -15,6 +16,7 @@ const ToolButtonBase = forwardRef<HTMLButtonElement, GameButtonProps>(function T
     size = 'md',
     icon,
     children,
+    fullWidth = false,
     className = '',
     type = 'button',
     ...props
@@ -23,12 +25,13 @@ const ToolButtonBase = forwardRef<HTMLButtonElement, GameButtonProps>(function T
 ) {
   const variantClass = variant === 'primary' ? 'game-btn--primary' : variant === 'ghost' ? 'game-btn--ghost' : variant === 'danger' ? 'game-btn--danger' : ''
   const sizeClass = size === 'sm' ? 'game-btn--sm' : size === 'lg' ? 'game-btn--lg' : ''
+  const fullWidthClass = fullWidth ? 'w-full game-btn--full' : ''
 
   return (
     <button
       ref={ref}
       type={type}
-      className={`tool-btn game-btn ${variantClass} ${sizeClass} ${className}`.trim()}
+      className={`tool-btn game-btn ${variantClass} ${sizeClass} ${fullWidthClass} ${className}`.trim()}
       {...props}
     >
       {icon && <span className="game-btn-icon tool-btn-icon" aria-hidden="true">{icon}</span>}

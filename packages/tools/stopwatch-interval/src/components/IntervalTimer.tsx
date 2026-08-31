@@ -348,7 +348,7 @@ export const IntervalTimer: React.FC<IntervalTimerProps> = ({ locale }) => {
         </ToolButton>
 
         <ToolButton
-          variant={soundEnabled ? 'secondary' : 'outline'}
+          variant={soundEnabled ? 'secondary' : 'ghost'}
           size="lg"
           onClick={() => setSoundEnabled(!soundEnabled)}
           icon={soundEnabled ? <IconVolume size={18} /> : <IconVolumeMute size={18} />}

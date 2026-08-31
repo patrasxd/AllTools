@@ -14,7 +14,17 @@
     "strict": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "paths": {
+      "@alltools/ui": ["../../packages/ui/src"],
+      "@alltools/calc-converter": ["../../packages/tools/calc-converter/src"],
+      "@alltools/guitar-tuner": ["../../packages/tools/guitar-tuner/src"],
+      "@alltools/level-protractor": ["../../packages/tools/level-protractor/src"],
+      "@alltools/qr-suite": ["../../packages/tools/qr-suite/src"],
+      "@alltools/stopwatch-interval": ["../../packages/tools/stopwatch-interval/src"],
+      "@alltools/quick-notes": ["../../packages/tools/quick-notes/src"],
+      "@alltools/screen-ruler": ["../../packages/tools/screen-ruler/src"]
+    }
   },
-  "include": ["src", "../../packages/*/src"]
+  "include": ["src", "../../packages/*/src", "../../packages/tools/*/src"]
 }

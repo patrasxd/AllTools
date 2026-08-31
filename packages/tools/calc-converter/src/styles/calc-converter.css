@@ -1,0 +1,520 @@
+/* ─── Calc & Converter Suite Root ────────────────────────────── */
+.calc-root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.25rem 0 0.75rem;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* ─── Status Block (Top) ────────────────────────────────────── */
+.calc-status {
+  text-align: center;
+  min-height: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0.25rem 0;
+}
+
+.calc-status-text {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 1.125rem;
+  color: var(--text);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+/* ─── Center Viewport Area (Zero Outer Scroll) ──────────────── */
+.calc-center-area {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  overflow: hidden;
+  padding: 0.15rem 0 0.4rem;
+  box-sizing: border-box;
+}
+
+.calc-center-area--calc {
+  justify-content: center;
+}
+
+/* ─── Calculator View ───────────────────────────────────────── */
+.calc-view {
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+/* Screen / Display Box */
+.calc-screen {
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius);
+  padding: 0.5rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  min-height: 56px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.calc-screen-expr {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  min-height: 1rem;
+  white-space: nowrap;
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.calc-screen-val {
+  font-family: var(--font-mono);
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+/* History Strip */
+.calc-history-strip {
+  display: flex;
+  gap: 0.35rem;
+  overflow-x: auto;
+  padding: 0.1rem 0;
+  scrollbar-width: none;
+}
+.calc-history-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.calc-history-pill {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+.calc-history-pill:hover {
+  border-color: var(--border-2);
+  color: var(--text);
+}
+
+/* Keypad Grids */
+.calc-keypad-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+}
+
+.calc-sci-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.25rem;
+  padding: 0.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  animation: calcSlideDown 150ms ease-out;
+}
+
+@keyframes calcSlideDown {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.calc-main-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.35rem;
+}
+
+/* Key Button */
+.calc-key {
+  font-family: var(--font-mono);
+  font-size: 1.125rem;
+  font-weight: 500;
+  height: clamp(36px, 5.5vh, 44px);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  transition: all 100ms ease;
+  box-sizing: border-box;
+}
+
+.calc-key:hover {
+  background: var(--surface-2);
+  border-color: var(--border-2);
+}
+
+.calc-key:active {
+  transform: scale(0.96);
+}
+
+.calc-key--sci {
+  font-size: 0.75rem;
+  font-weight: 600;
+  height: clamp(26px, 4vh, 32px);
+  background: var(--surface-2);
+  color: var(--text-dim);
+}
+.calc-key--sci:hover {
+  color: var(--text);
+}
+
+.calc-key--op {
+  font-size: 1.25rem;
+  font-weight: 600;
+  background: var(--surface-2);
+  border-color: var(--border);
+}
+
+.calc-key--action {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.calc-key--equals {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+  font-weight: 700;
+}
+.calc-key--equals:hover {
+  background: var(--text);
+  opacity: 0.9;
+}
+
+/* ─── Compact Scientific Mode Overrides (Guarantees NO SCROLL) ─── */
+.calc-view--sci {
+  gap: 0.25rem;
+}
+
+.calc-view--sci .calc-screen {
+  min-height: 46px;
+  padding: 0.3rem 0.75rem;
+}
+
+.calc-view--sci .calc-screen-val {
+  font-size: 1.45rem;
+}
+
+.calc-view--sci .calc-keypad-container {
+  gap: 0.2rem;
+}
+
+.calc-view--sci .calc-sci-grid {
+  gap: 0.2rem;
+  padding: 0.2rem;
+}
+
+.calc-view--sci .calc-main-grid {
+  gap: 0.2rem;
+}
+
+.calc-view--sci .calc-key {
+  height: clamp(28px, 4.2vh, 35px);
+  font-size: 0.9375rem;
+}
+
+.calc-view--sci .calc-key--sci {
+  height: clamp(22px, 3.4vh, 27px);
+  font-size: 0.6875rem;
+}
+
+/* ─── Unit Converter View (Fixed Header, Scrollable Table, Fixed Footer) ─── */
+.conv-view {
+  width: 100%;
+  max-width: 380px;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.4rem;
+  overflow: hidden;
+}
+
+/* Search Bar */
+.conv-search-box {
+  position: relative;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.conv-search-input {
+  width: 100%;
+  padding: 0.4rem 0.85rem 0.4rem 2rem;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  box-sizing: border-box;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+.conv-search-input:focus {
+  outline: none;
+  border-color: var(--border-2);
+  background: var(--surface-2);
+}
+.conv-search-icon {
+  position: absolute;
+  left: 0.65rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+/* Category Filter Bar */
+.conv-cat-bar {
+  display: flex;
+  gap: 0.3rem;
+  overflow-x: auto;
+  padding-bottom: 0.1rem;
+  width: 100%;
+  flex-shrink: 0;
+  scrollbar-width: none;
+}
+.conv-cat-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.conv-cat-pill {
+  font-family: var(--font-sans);
+  font-size: 0.625rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 120ms ease;
+  user-select: none;
+}
+.conv-cat-pill:hover {
+  border-color: var(--border-2);
+  color: var(--text);
+}
+.conv-cat-pill--active {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+}
+
+/* Input Card (Active Value) */
+.conv-input-card {
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius);
+  padding: 0.45rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  flex-shrink: 0;
+}
+
+.conv-input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.conv-num-input {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  font-weight: 700;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  padding: 0;
+  min-width: 0;
+}
+.conv-num-input:focus {
+  outline: none;
+}
+
+.conv-unit-select {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.3rem 0.5rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  cursor: pointer;
+  max-width: 170px;
+}
+.conv-unit-select:focus {
+  outline: none;
+  border-color: var(--border-2);
+}
+
+/* ─── Scrollable Results Table (Fixed Height like Stopwatch Laps) ─── */
+.conv-results-table {
+  width: 100%;
+  max-width: 380px;
+  flex: 1;
+  min-height: 110px;
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+}
+
+.conv-results-table::-webkit-scrollbar {
+  width: 4px;
+}
+.conv-results-table::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+.conv-result-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.35rem 0.65rem;
+  border-bottom: 1px solid var(--border);
+  transition: background 150ms ease, color 150ms ease;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.conv-result-row:last-child {
+  border-bottom: none;
+}
+
+.conv-result-row:hover {
+  background: var(--surface-2);
+}
+
+.conv-result-row--active {
+  background: var(--surface-2);
+  font-weight: 600;
+}
+
+.conv-result-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  min-width: 0;
+}
+
+.conv-result-name {
+  font-family: var(--font-sans);
+  font-size: 0.6rem;
+  color: var(--text-muted);
+}
+
+.conv-result-val {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text);
+  word-break: break-all;
+}
+
+.conv-result-right {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.conv-result-symbol {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  background: var(--surface-2);
+  padding: 0.1rem 0.3rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.conv-copy-btn {
+  background: transparent;
+  border: none;
+  padding: 0.2rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: color 120ms ease;
+}
+.conv-copy-btn:hover {
+  color: var(--text);
+}
+
+/* ─── Bottom Controls Bar (Fixed at bottom edge) ─────────────── */
+.calc-controls-container {
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  margin-top: auto;
+  padding-bottom: 0.5rem;
+}
+
+.calc-controls-container .game-controls-bar,
+.calc-controls-container .tool-controls-bar {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.4rem;
+}
