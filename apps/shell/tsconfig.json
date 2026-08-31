@@ -17,6 +17,7 @@
     "noFallthroughCasesInSwitch": true,
     "paths": {
       "@alltools/ui": ["../../packages/ui/src"],
+      "@alltools/image-studio": ["../../packages/tools/image-studio/src"],
       "@alltools/calc-converter": ["../../packages/tools/calc-converter/src"],
       "@alltools/guitar-tuner": ["../../packages/tools/guitar-tuner/src"],
       "@alltools/level-protractor": ["../../packages/tools/level-protractor/src"],

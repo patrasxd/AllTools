@@ -11,6 +11,7 @@
   "dependencies": {
     "@alltools/calc-converter": "*",
     "@alltools/guitar-tuner": "*",
+    "@alltools/image-studio": "*",
     "@alltools/level-protractor": "*",
     "@alltools/qr-suite": "*",
     "@alltools/quick-notes": "*",

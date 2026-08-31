@@ -1,0 +1,421 @@
+/* ─── Image Studio Suite Root ───────────────────────────────── */
+.img-root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.25rem 0 0.5rem;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* ─── Status Header Title ───────────────────────────────────── */
+.img-status {
+  text-align: center;
+  min-height: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0.25rem 0;
+}
+
+.img-status-text {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 1.125rem;
+  color: var(--text);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+/* ─── Center Viewport Area (Zero Outer Scroll, Max-Width 400px) ── */
+.img-center-area {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 0.15rem 0;
+  box-sizing: border-box;
+}
+
+/* ─── Dropzone (When No Image is Loaded) ────────────────────── */
+.img-dropzone {
+  width: 100%;
+  max-width: 380px;
+  height: 240px;
+  border: 2px dashed var(--border-2);
+  border-radius: var(--radius);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 1.5rem 1rem;
+  box-sizing: border-box;
+  text-align: center;
+  cursor: pointer;
+  transition: all 180ms ease;
+  user-select: none;
+}
+
+.img-dropzone:hover {
+  border-color: var(--text);
+  background: var(--surface-2);
+}
+
+.img-drop-icon {
+  color: var(--text-muted);
+  transition: transform 180ms ease, color 180ms ease;
+}
+.img-dropzone:hover .img-drop-icon {
+  color: var(--text);
+  transform: scale(1.08);
+}
+
+.img-drop-title {
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.img-drop-sub {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  max-width: 280px;
+}
+
+.img-drop-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+}
+
+/* ─── Active Editor Card (Centered 1-Column Layout) ──────────── */
+.img-editor-card {
+  width: 100%;
+  max-width: 400px;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.45rem;
+  overflow: hidden;
+}
+
+/* Preview Box */
+.img-preview-box {
+  flex: 1;
+  min-height: 0;
+  max-height: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  overflow: hidden;
+}
+
+.img-preview-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 0.15rem;
+  flex-shrink: 0;
+}
+
+.img-badge-info {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.img-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.img-drag-hint {
+  font-family: var(--font-sans);
+  font-size: 0.625rem;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  padding: 0.1rem 0.35rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.img-view-toggle {
+  font-family: var(--font-sans);
+  font-size: 0.625rem;
+  font-weight: 600;
+  padding: 0.15rem 0.45rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 120ms ease;
+  user-select: none;
+}
+.img-view-toggle:hover,
+.img-view-toggle--active {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+}
+
+.img-canvas-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  cursor: grab;
+  touch-action: none;
+}
+
+.img-canvas-wrap--dragging {
+  cursor: grabbing;
+}
+
+.img-framed-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.img-preview-element {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Rule of thirds grid overlay */
+.img-crop-grid-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 4px;
+}
+
+.img-grid-line {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 1px rgba(0, 0, 0, 0.6);
+}
+
+.img-grid-line--h1 { top: 33.33%; left: 0; right: 0; height: 1px; }
+.img-grid-line--h2 { top: 66.66%; left: 0; right: 0; height: 1px; }
+.img-grid-line--v1 { left: 33.33%; top: 0; bottom: 0; width: 1px; }
+.img-grid-line--v2 { left: 66.66%; top: 0; bottom: 0; width: 1px; }
+
+/* Passport biometric guide overlay */
+.img-passport-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.img-passport-svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.8));
+}
+
+.img-loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(2px);
+}
+
+.img-loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: var(--text);
+  border-radius: 50%;
+  animation: imgSpin 0.7s linear infinite;
+}
+
+@keyframes imgSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* Context Panel (Compact, Fixed-Height Box) */
+.img-context-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.5rem 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.img-tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+/* Compact Preset Pill Bar */
+.img-preset-bar {
+  display: flex;
+  gap: 0.25rem;
+  overflow-x: auto;
+  padding-bottom: 0.1rem;
+  width: 100%;
+  scrollbar-width: none;
+}
+.img-preset-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.img-pill-btn {
+  flex: 1;
+  font-family: var(--font-sans);
+  font-size: 0.625rem;
+  font-weight: 600;
+  padding: 0.25rem 0.45rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 120ms ease;
+  user-select: none;
+}
+.img-pill-btn:hover {
+  border-color: var(--border-2);
+  color: var(--text);
+}
+.img-pill-btn--active {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+}
+
+.img-row-sliders {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.img-field-slider {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.img-slider-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-sans);
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.img-text-link {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-family: var(--font-sans);
+  font-size: 0.625rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  text-decoration: underline;
+}
+.img-text-link:hover {
+  color: var(--text);
+}
+
+.img-watermark-row {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.img-text-input {
+  flex: 1;
+  padding: 0.3rem 0.55rem;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  box-sizing: border-box;
+}
+.img-text-input:focus {
+  outline: none;
+  border-color: var(--border-2);
+}
+
+.img-range {
+  width: 100%;
+  accent-color: var(--text);
+  cursor: pointer;
+}
+
+/* ─── Bottom Controls Bar (Fixed at bottom edge) ─────────────── */
+.img-controls-container {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  margin-top: auto;
+  padding-bottom: 0.5rem;
+}
+
+.img-controls-container .game-controls-bar,
+.img-controls-container .tool-controls-bar {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.4rem;
+}

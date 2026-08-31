@@ -20,7 +20,7 @@ export interface ToolMetadata {
   name: LocalizedString
   description: LocalizedString
   icon: React.ReactNode
-  category: 'audio' | 'measurement' | 'productivity' | 'time' | 'utility' | 'math'
+  category: 'audio' | 'measurement' | 'productivity' | 'time' | 'utility' | 'math' | 'media'
   tags: LocalizedTags
 }
 

@@ -8,8 +8,8 @@ export const metadata = {
     pl: 'Kalkulator & Konwerter',
   },
   description: {
-    en: 'Smart dual-mode calculator & unit converter for kitchen, fitness, travel, USA units, and computer data.',
-    pl: 'Kalkulator standardowy i naukowy oraz przelicznik miar, wag, kuchni, podróży, prędkości i systemów liczbowych.',
+    en: 'Smart calculator and converter for cooking, fitness, travel, and digital data.',
+    pl: 'Kalkulator i przelicznik miar, wag, kuchni, podróży oraz danych cyfrowych.',
   },
   icon: <IconCalculator size={24} strokeWidth={1.5} />,
   category: 'math' as const,

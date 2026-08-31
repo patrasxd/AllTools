@@ -30,6 +30,7 @@ export function ToolCard({ metadata, index }: ToolCardProps) {
   const name = getLocalizedText(metadata.name, locale)
   const description = getLocalizedText(metadata.description, locale)
   const tags = getLocalizedTags(metadata.tags, locale)
+  const visibleTags = tags.slice(0, 4)
 
   const handleClick = () => navigate(`/tools/${metadata.slug}`)
 
@@ -81,7 +82,7 @@ export function ToolCard({ metadata, index }: ToolCardProps) {
 
       <div className="tool-card-footer">
         <div className="tool-card-tags" aria-label={t.toolTagsAria}>
-          {tags.map(tag => (
+          {visibleTags.map(tag => (
             <Badge key={tag} size="sm">{tag}</Badge>
           ))}
         </div>

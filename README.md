@@ -35,6 +35,7 @@ AllTools/
     └── tools/
         ├── calc-converter/        # Standard/scientific calculator & multi-unit converter
         ├── guitar-tuner/          # Chromatic & guitar tuning utility
+        ├── image-studio/          # Watermark, crop, converter (HEIC/JPG/PNG/WebP), size compression
         ├── level-protractor/      # Bubble level and angle measurement tool
         ├── qr-suite/              # QR generation and scanning utility
         ├── quick-notes/           # Keep-style notes and checklist tool

@@ -797,6 +797,11 @@ button, input, select {
   line-height: 1.5;
   font-weight: 400;
   margin-bottom: var(--space-4);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  min-height: 4.5em;
 }
 
 .game-card-footer,
