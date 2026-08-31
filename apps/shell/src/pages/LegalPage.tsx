@@ -68,8 +68,8 @@ export function LegalPage() {
                 </h2>
                 <p style={{ margin: 0, color: 'var(--text-muted)' }}>
                   {isPl
-                    ? 'Narzędzia dostępne w AllTools (w tym kalkulatory, przeliczniki jednostek, linijka ekranowa, kątomierz, poziomica, tuner gitarowy, edytor zdjęć oraz menedżer PDF) są przeznaczone wyłącznie do codziennego użytku pomocniczego i celów poglądowych. Nie stanowią one certyfikowanych przyrządów pomiarowych ani profesjonalnych ekspertyz inżynieryjnych czy finansowych.'
-                    : 'Tools provided within AllTools (including calculators, unit converters, screen ruler, level, protractor, tuner, image editor, and PDF manager) are intended solely for casual auxiliary and informational use. They do not replace certified measuring equipment or professional engineering or financial advice.'}
+                    ? 'Narzędzia dostępne w AllTools (w tym kalkulatory, generator haseł, kalkulator podsieci IP, linijka, kątomierz, poziomica, tuner, edytor zdjęć oraz menedżer PDF) są przeznaczone wyłącznie do codziennego użytku pomocniczego. Szacunki siły haseł, entropii, czasów złamania oraz obliczenia sieciowe mają charakter wyłącznie heurystyczny i informacyjny. Nie stanowią certyfikowanych audytów bezpieczeństwa, przyrządów pomiarowych ani porad specjalistycznych.'
+                    : 'Tools provided within AllTools (including calculators, password generator, IP subnet calculator, ruler, level, protractor, tuner, image editor, and PDF suite) are intended solely for casual auxiliary and informational use. Password strength scores, entropy estimates, time-to-crack projections, and network calculations are heuristic approximations and do not constitute certified security audits or professional advice.'}
                 </p>
               </section>
 
@@ -86,12 +86,12 @@ export function LegalPage() {
 
               <section>
                 <h2 style={{ fontSize: '0.9375rem', fontWeight: 600, margin: '0 0 0.35rem', color: 'var(--text)' }}>
-                  {isPl ? '3. Prywatność i brak śledzenia' : '3. Privacy & Zero Tracking'}
+                  {isPl ? '3. Prywatność, bezpieczeństwo i brak śledzenia' : '3. Privacy, Security & Zero Tracking'}
                 </h2>
                 <p style={{ margin: 0, color: 'var(--text-muted)' }}>
                   {isPl
-                    ? 'AllTools działa w 100% lokalnie na Twoim urządzeniu. Twoje pliki PDF, zdjęcia, notatki czy dane z mikrofonu nigdy nie są przesyłane na żaden serwer. Aplikacja nie stosuje żadnych plików cookies śledzących, reklamowych ani skryptów analitycznych.'
-                    : 'AllTools runs 100% locally on your device. Your PDF documents, images, notes, and microphone audio are never uploaded to any server. The application uses zero tracking cookies, ads, or third-party analytics.'}
+                    ? 'AllTools działa w 100% lokalnie na Twoim urządzeniu. Wszelkie hasła, klucze, pliki PDF, zdjęcia, notatki czy dane z mikrofonu są przetwarzane wyłącznie w pamięci podręcznej Twojej przeglądarki i nigdy nie są przesyłane na żaden serwer. Aplikacja nie stosuje żadnych plików cookies śledzących, reklamowych ani skryptów telemetrycznych.'
+                    : 'AllTools runs 100% locally on your device. All generated passwords, cryptographic keys, PDF files, images, notes, and microphone audio are processed exclusively in volatile browser memory and are never uploaded to any server. The application uses zero tracking cookies, ads, or telemetry scripts.'}
                 </p>
               </section>
 

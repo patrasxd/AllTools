@@ -1,0 +1,288 @@
+/* ─── DevVault Root & Single-Page Layout (No Scroll) ────── */
+.vault-root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.25rem 0 0.5rem;
+  box-sizing: border-box;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* ─── Status Header ──────────────────────────────────────── */
+.vault-status {
+  text-align: center;
+  min-height: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0.25rem 0;
+}
+
+.vault-status-text {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 1.125rem;
+  color: var(--text);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+/* ─── Center Viewport (Exact 680px Unified Max-Width) ─────── */
+.vault-center-area {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: 680px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  overflow: hidden;
+  padding: 0.25rem 0;
+  box-sizing: border-box;
+}
+
+/* ─── Main Editor Card ────────────────────────────────────── */
+.vault-card {
+  width: 100%;
+  height: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem;
+  box-sizing: border-box;
+  overflow-y: auto;
+  gap: 1rem;
+}
+
+/* ─── 1. Password Generator Display Box ──────────────────── */
+.vault-screen {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 58px;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: border-color 150ms ease;
+}
+.vault-screen:hover {
+  border-color: var(--text-dim);
+}
+
+.vault-screen-val {
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.04em;
+  word-break: break-all;
+  user-select: all;
+  line-height: 1.3;
+}
+
+/* Strength & Entropy Indicator */
+.vault-strength-box {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  box-sizing: border-box;
+}
+
+.vault-strength-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.vault-strength-badge {
+  font-weight: 600;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-sm);
+}
+
+.vault-strength-track {
+  width: 100%;
+  height: 4px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.vault-strength-bar {
+  height: 100%;
+  background: var(--text);
+  transition: width 200ms ease;
+}
+
+/* Length Slider Row */
+.vault-control-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--text);
+  box-sizing: border-box;
+}
+
+.vault-slider {
+  flex: 1;
+  accent-color: var(--text);
+  cursor: pointer;
+  height: 6px;
+}
+
+/* Button Grid (Using unified GameButton sizing & colors) */
+.vault-chips-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 0.5rem;
+  box-sizing: border-box;
+}
+
+/* ─── 2. Subnet Calculator Grid ──────────────────────────── */
+.vault-input-wrap {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  box-sizing: border-box;
+}
+
+.vault-field-label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--text-dim);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.vault-text-field {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 120ms ease;
+}
+.vault-text-field:focus {
+  border-color: var(--text);
+}
+
+.vault-subnet-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+  box-sizing: border-box;
+}
+
+.vault-grid-cell {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.vault-cell-title {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+.vault-cell-value {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text);
+  word-break: break-all;
+}
+
+/* ─── 3. Encoder / Decoder & Hashes ──────────────────────── */
+.vault-dual-pane {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  flex: 1;
+  box-sizing: border-box;
+}
+
+.vault-textarea-styled {
+  width: 100%;
+  flex: 1;
+  min-height: 80px;
+  padding: 0.6rem 0.75rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--text);
+  outline: none;
+  resize: none;
+  box-sizing: border-box;
+}
+.vault-textarea-styled:focus {
+  border-color: var(--text);
+}
+
+/* ─── Bottom Controls Bar (Exact 680px Max-Width) ────────── */
+.vault-controls-container {
+  width: 100%;
+  max-width: 680px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  margin-top: auto;
+  box-sizing: border-box;
+}
+
+.vault-controls-container .game-controls-bar,
+.vault-controls-container .tool-controls-bar {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}

@@ -34,6 +34,7 @@ AllTools/
     ├── ui/                        # Shared UI primitives (@alltools/ui)
     └── tools/
         ├── calc-converter/        # Standard/scientific calculator & multi-unit converter
+        ├── dev-vault/             # CSPRNG password generator, IPv4/CIDR subnet calculator, Base64/JWT/hashes
         ├── guitar-tuner/          # Chromatic & guitar tuning utility
         ├── image-studio/          # Watermark, crop, converter (HEIC/JPG/PNG/WebP), size compression
         ├── level-protractor/      # Bubble level and angle measurement tool

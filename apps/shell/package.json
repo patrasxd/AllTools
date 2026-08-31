@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@alltools/calc-converter": "*",
+    "@alltools/dev-vault": "*",
     "@alltools/guitar-tuner": "*",
     "@alltools/image-studio": "*",
     "@alltools/level-protractor": "*",

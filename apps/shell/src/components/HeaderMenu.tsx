@@ -50,6 +50,17 @@ function DownloadIcon() {
   )
 }
 
+function CoffeeIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M7 9h10a2 2 0 0 1 2 2v1a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4v-1a2 2 0 0 1 2-2z" />
+      <path d="M8 9V7.5A2.5 2.5 0 0 1 10.5 5h3A2.5 2.5 0 0 1 16 7.5V9" />
+      <path d="M7 13h10" />
+      <path d="M10 17h4" />
+    </svg>
+  )
+}
+
 function HamburgerIcon({ isOpen }: { isOpen: boolean }) {
   return (
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -110,6 +121,8 @@ export function HeaderMenu() {
     await install()
     setIsOpen(false)
   }
+
+  const buyMeACoffeeUrl = 'https://www.buymeacoffee.com/patrasxd'
 
   return (
     <div className="header-menu-container" ref={menuRef}>
@@ -226,6 +239,18 @@ export function HeaderMenu() {
                 </button>
               </>
             )}
+
+            <div className="header-menu-divider" />
+            <a
+              href={buyMeACoffeeUrl}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="header-menu-support-btn"
+              aria-label="Buy me a coffee"
+            >
+              <CoffeeIcon />
+              <span>Buy me a coffee</span>
+            </a>
           </motion.div>
         )}
       </AnimatePresence>

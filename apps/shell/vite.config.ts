@@ -49,6 +49,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@alltools/ui': path.resolve(__dirname, '../../packages/ui/src'),
+      '@alltools/dev-vault': path.resolve(__dirname, '../../packages/tools/dev-vault/src'),
       '@alltools/image-studio': path.resolve(__dirname, '../../packages/tools/image-studio/src'),
       '@alltools/pdf-suite': path.resolve(__dirname, '../../packages/tools/pdf-suite/src'),
       '@alltools/calc-converter': path.resolve(__dirname, '../../packages/tools/calc-converter/src'),

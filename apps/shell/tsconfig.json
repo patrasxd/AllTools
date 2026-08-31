@@ -17,6 +17,7 @@
     "noFallthroughCasesInSwitch": true,
     "paths": {
       "@alltools/ui": ["../../packages/ui/src"],
+      "@alltools/dev-vault": ["../../packages/tools/dev-vault/src"],
       "@alltools/image-studio": ["../../packages/tools/image-studio/src"],
       "@alltools/pdf-suite": ["../../packages/tools/pdf-suite/src"],
       "@alltools/calc-converter": ["../../packages/tools/calc-converter/src"],
