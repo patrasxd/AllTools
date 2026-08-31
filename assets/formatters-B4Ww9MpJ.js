@@ -1,0 +1,1 @@
+function e(t){const n=Math.floor(t/1e3),o=Math.floor(n/60),r=n%60,a=Math.floor(t%1e3/10),s=String(o).padStart(2,"0"),c=String(r).padStart(2,"0"),S=String(a).padStart(2,"0");return`${s}:${c}.${S}`}function i(t){const n=Math.floor(t/60),o=t%60;return`${String(n).padStart(2,"0")}:${String(o).padStart(2,"0")}`}function f(t,n=1){return`${t.toFixed(n)}°`}export{i as a,f as b,e as f};
