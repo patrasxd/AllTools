@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTheme } from '../hooks/useTheme'
 import { useI18n } from '../i18n'
@@ -71,6 +72,7 @@ function HamburgerIcon({ isOpen }: { isOpen: boolean }) {
 export function HeaderMenu() {
   const [isOpen, setIsOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const navigate = useNavigate()
   const { theme, setTheme } = useTheme()
   const { locale, setLocale, t } = useI18n()
   const { isEink, setIsEink } = useEink()

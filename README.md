@@ -37,6 +37,7 @@ AllTools/
         ├── guitar-tuner/          # Chromatic & guitar tuning utility
         ├── image-studio/          # Watermark, crop, converter (HEIC/JPG/PNG/WebP), size compression
         ├── level-protractor/      # Bubble level and angle measurement tool
+        ├── pdf-suite/             # PDF manager: merge, split, rotate, images to PDF
         ├── qr-suite/              # QR generation and scanning utility
         ├── quick-notes/           # Keep-style notes and checklist tool
         ├── screen-ruler/          # Screen calibration and measurement ruler

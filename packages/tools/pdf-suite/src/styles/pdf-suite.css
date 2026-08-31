@@ -1,0 +1,448 @@
+/* ─── PDF Suite Root ────────────────────────────────────────── */
+.pdf-root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.25rem 0 0.5rem;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* ─── Status Header Title ───────────────────────────────────── */
+.pdf-status {
+  text-align: center;
+  min-height: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0.25rem 0;
+}
+
+.pdf-status-text {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 1.125rem;
+  color: var(--text);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+/* ─── Center Viewport Area (Unified Width with ControlsBar) ──── */
+.pdf-center-area {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: 680px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 0.25rem 0;
+  box-sizing: border-box;
+}
+
+/* ─── Dropzone (Exact 100% Width of Workspace) ──────────────── */
+.pdf-dropzone {
+  width: 100%;
+  height: 100%;
+  max-height: 340px;
+  border: 2px dashed var(--border-2);
+  border-radius: var(--radius);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 2.5rem 1.5rem;
+  box-sizing: border-box;
+  text-align: center;
+  cursor: pointer;
+  transition: all 180ms ease;
+  user-select: none;
+}
+
+.pdf-dropzone:hover {
+  border-color: var(--text);
+  background: var(--surface-2);
+}
+
+.pdf-drop-icon {
+  color: var(--text-muted);
+  transition: transform 180ms ease, color 180ms ease;
+}
+.pdf-dropzone:hover .pdf-drop-icon {
+  color: var(--text);
+  transform: scale(1.08);
+}
+
+.pdf-drop-title {
+  font-family: var(--font-sans);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.pdf-drop-sub {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  max-width: 360px;
+}
+
+.pdf-drop-actions {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+/* ─── Active PDF Workspace (Exact 100% Width of Workspace) ──── */
+.pdf-editor-card {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.5rem;
+  overflow: hidden;
+}
+
+/* Quick Action Toolbar */
+.pdf-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 0.15rem;
+  flex-shrink: 0;
+}
+
+.pdf-toolbar-info {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.pdf-toolbar-btns {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.pdf-tool-link {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.2rem 0.6rem;
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+.pdf-tool-link:hover {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+}
+
+/* ─── Scrollable Items Container (Fixed Height Table) ──────── */
+.pdf-items-container {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  padding: 0.6rem;
+  box-sizing: border-box;
+}
+
+.pdf-items-container::-webkit-scrollbar {
+  width: 4px;
+}
+.pdf-items-container::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+/* File List (Merge / Images) */
+.pdf-file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: 100%;
+}
+
+.pdf-file-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.85rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  transition: border-color 120ms ease;
+}
+.pdf-file-row:hover {
+  border-color: var(--border-2);
+}
+
+.pdf-file-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.pdf-file-index {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  width: 22px;
+}
+
+.pdf-file-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.pdf-file-name {
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pdf-file-sub {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--text-dim);
+}
+
+.pdf-icon-btn {
+  background: transparent;
+  border: none;
+  padding: 0.3rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: color 120ms ease;
+}
+.pdf-icon-btn:hover {
+  color: var(--text);
+}
+
+/* Page Thumbnail Grid (Split / Rotate) */
+.pdf-page-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 0.6rem;
+  width: 100%;
+}
+
+.pdf-page-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 150ms ease;
+  user-select: none;
+}
+.pdf-page-card:hover {
+  border-color: var(--border-2);
+}
+.pdf-page-card--selected {
+  border-color: var(--text);
+  background: var(--surface);
+  box-shadow: 0 0 0 1.5px var(--text);
+}
+
+.pdf-page-preview-box {
+  width: 100%;
+  aspect-ratio: 0.75;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 0.35rem;
+  box-sizing: border-box;
+}
+
+.pdf-page-real-thumb {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  border-radius: 1px;
+  transition: transform 200ms ease-out;
+}
+
+.pdf-page-sheet {
+  width: 100%;
+  height: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0.35rem;
+  box-sizing: border-box;
+  transition: transform 200ms ease-out;
+}
+
+.pdf-sheet-header {
+  display: flex;
+  gap: 0.2rem;
+}
+.pdf-sheet-bar {
+  height: 4px;
+  background: var(--border-2);
+  border-radius: 1px;
+  flex: 1;
+}
+
+.pdf-sheet-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.pdf-sheet-line {
+  height: 2.5px;
+  background: var(--border);
+  border-radius: 1px;
+  width: 85%;
+}
+.pdf-sheet-line:nth-child(2) { width: 95%; }
+.pdf-sheet-line:nth-child(3) { width: 70%; }
+
+.pdf-sheet-num {
+  align-self: flex-end;
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  color: var(--text-dim);
+}
+
+.pdf-file-arrows {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.pdf-arrow-btn {
+  background: transparent;
+  border: none;
+  font-size: 0.5rem;
+  line-height: 1;
+  padding: 0.1rem 0.2rem;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.pdf-arrow-btn:hover:not(:disabled) {
+  color: var(--text);
+}
+.pdf-arrow-btn:disabled {
+  opacity: 0.2;
+  cursor: default;
+}
+
+.pdf-page-footer {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 0.1rem;
+}
+
+.pdf-page-reorder-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.pdf-page-mini-arrow {
+  background: transparent;
+  border: none;
+  font-size: 0.5rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.1rem;
+  line-height: 1;
+}
+.pdf-page-mini-arrow:hover:not(:disabled) {
+  color: var(--text);
+}
+.pdf-page-mini-arrow:disabled {
+  opacity: 0.2;
+  cursor: default;
+}
+
+.pdf-page-num-label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+.pdf-page-rotate-btn {
+  background: transparent;
+  border: none;
+  padding: 0.2rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 2px;
+  transition: color 120ms ease;
+}
+.pdf-page-rotate-btn:hover {
+  color: var(--text);
+}
+
+/* ─── Bottom Controls Bar (Exact Same 680px Max-Width & Alignment) ─ */
+.pdf-controls-container {
+  width: 100%;
+  max-width: 680px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  margin-top: auto;
+  padding-bottom: 0.5rem;
+  box-sizing: border-box;
+}
+
+.pdf-controls-container .game-controls-bar,
+.pdf-controls-container .tool-controls-bar {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}

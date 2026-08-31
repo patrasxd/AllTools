@@ -13,6 +13,7 @@
     "@alltools/guitar-tuner": "*",
     "@alltools/image-studio": "*",
     "@alltools/level-protractor": "*",
+    "@alltools/pdf-suite": "*",
     "@alltools/qr-suite": "*",
     "@alltools/quick-notes": "*",
     "@alltools/screen-ruler": "*",

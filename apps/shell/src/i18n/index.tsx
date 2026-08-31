@@ -49,6 +49,7 @@ export interface TranslationDictionary {
   filterLabel: string
   noFilteredTools: string
   clearFilter: string
+  legalNotice: string
 }
 
 export const translations: Record<Locale, TranslationDictionary> = {
@@ -84,6 +85,7 @@ export const translations: Record<Locale, TranslationDictionary> = {
     filterLabel: 'Filter by category',
     noFilteredTools: 'No tools found in this category.',
     clearFilter: 'Show all tools',
+    legalNotice: 'Legal Notice & Privacy',
   },
   pl: {
     backToHomeAria: 'AllTools — wróć do strony głównej',
@@ -121,6 +123,7 @@ export const translations: Record<Locale, TranslationDictionary> = {
     filterLabel: 'Filtruj po kategorii',
     noFilteredTools: 'Brak narzędzi w tej kategorii.',
     clearFilter: 'Pokaż wszystkie narzędzia',
+    legalNotice: 'Nota prawna & Prywatność',
   },
 }
 

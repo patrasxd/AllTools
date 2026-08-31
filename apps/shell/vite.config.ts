@@ -41,12 +41,16 @@ export default defineConfig({
           },
         ],
       },
+      workbox: {
+        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
+      },
     }),
   ],
   resolve: {
     alias: {
       '@alltools/ui': path.resolve(__dirname, '../../packages/ui/src'),
       '@alltools/image-studio': path.resolve(__dirname, '../../packages/tools/image-studio/src'),
+      '@alltools/pdf-suite': path.resolve(__dirname, '../../packages/tools/pdf-suite/src'),
       '@alltools/calc-converter': path.resolve(__dirname, '../../packages/tools/calc-converter/src'),
       '@alltools/guitar-tuner': path.resolve(__dirname, '../../packages/tools/guitar-tuner/src'),
       '@alltools/level-protractor': path.resolve(__dirname, '../../packages/tools/level-protractor/src'),

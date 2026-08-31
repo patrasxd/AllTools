@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { TOOLS_METADATA } from '../tools/registry'
 import { ToolCard } from '../components/ToolCard'
@@ -22,6 +23,7 @@ const lineVariants = {
 }
 
 export function HomePage() {
+  const navigate = useNavigate()
   const { locale, t } = useI18n()
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
 
@@ -181,6 +183,33 @@ export function HomePage() {
             </AnimatePresence>
           </motion.div>
         </section>
+
+        {/* Footer */}
+        <footer style={{
+          marginTop: '3.5rem',
+          paddingTop: '1.25rem',
+          borderTop: '1px solid var(--border)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          paddingBottom: '1rem',
+        }}>
+          <button
+            type="button"
+            onClick={() => navigate('/legal')}
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              fontFamily: 'var(--font-sans)',
+              fontSize: '0.75rem',
+              color: 'var(--text-muted)',
+              cursor: 'pointer',
+            }}
+          >
+            {t.legalNotice}
+          </button>
+        </footer>
       </div>
     </div>
   )

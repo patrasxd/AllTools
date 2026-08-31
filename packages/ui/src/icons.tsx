@@ -306,4 +306,41 @@ export const IconLayers: React.FC<IconProps> = ({ size = 20, className = '', ...
   </svg>
 )
 
+export const IconFileText: React.FC<IconProps> = ({ size = 20, className = '', ...props }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+    <polyline points="14 2 14 8 20 8" />
+    <line x1="16" y1="13" x2="8" y2="13" />
+    <line x1="16" y1="17" x2="8" y2="17" />
+    <line x1="10" y1="9" x2="8" y2="9" />
+  </svg>
+)
+
+export const IconMerge: React.FC<IconProps> = ({ size = 20, className = '', ...props }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+    <path d="m8 6 4-4 4 4" />
+    <path d="M12 2v10.3a4 4 0 0 1-1.172 2.872L4 22" />
+    <path d="m20 22-5-5" />
+  </svg>
+)
+
+export const IconSplit: React.FC<IconProps> = ({ size = 20, className = '', ...props }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+    <path d="M16 3h5v5" />
+    <path d="m21 3-7 7" />
+    <path d="M8 3H3v5" />
+    <path d="m3 3 7 7" />
+    <path d="M12 14v8" />
+  </svg>
+)
+
+export const IconRotateCw: React.FC<IconProps> = ({ size = 20, className = '', ...props }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+    <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+    <path d="M21 3v5h-5" />
+  </svg>
+)
+
+
+
 

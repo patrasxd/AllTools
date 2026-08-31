@@ -22,6 +22,7 @@ export const translations = {
     clearSearch: 'Clear search',
     favorites: 'Favorites',
     openTool: 'Open Tool',
+    legalNotice: 'Legal Notice & Privacy',
   },
   pl: {
     appTitle: 'AllTools',
@@ -46,6 +47,7 @@ export const translations = {
     clearSearch: 'Wyczyść filtr',
     favorites: 'Ulubione',
     openTool: 'Otwórz narzędzie',
+    legalNotice: 'Nota prawna & Prywatność',
   },
 } as const
 

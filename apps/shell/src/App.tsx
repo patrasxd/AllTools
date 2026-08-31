@@ -3,6 +3,7 @@ import { MotionConfig, AnimatePresence } from 'framer-motion'
 import { Layout } from './components/Layout'
 import { HomePage } from './pages/HomePage'
 import { ToolPage } from './pages/ToolPage'
+import { LegalPage } from './pages/LegalPage'
 import { useI18n } from './i18n'
 import { useEink } from './hooks/useEink'
 
@@ -23,6 +24,7 @@ export default function App() {
     <Routes location={location} key={location.pathname}>
       <Route path="/" element={<HomePage />} />
       <Route path="/tools/:slug" element={<ToolPage />} />
+      <Route path="/legal" element={<LegalPage />} />
       <Route path="*" element={<NotFoundRoute />} />
     </Routes>
   )
