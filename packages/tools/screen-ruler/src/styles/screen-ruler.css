@@ -1,8 +1,23 @@
-/* ─── Screen Ruler & Caliper Root ────────────────────────────── */
+/* ─── Screen Ruler (Real Physical Ruler Along Bottom & Right Edges) ─── */
 .ruler-root {
   position: relative;
   width: 100%;
   height: 100%;
+  flex: 1;
+  min-height: 480px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* ─── Calibration Screen ────────────────────────────────────── */
+.ruler-calib-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -10,11 +25,9 @@
   justify-content: space-between;
   padding: 0.75rem 0 1.25rem;
   box-sizing: border-box;
-  overflow: hidden;
 }
 
-/* ─── Status Block (Top) ────────────────────────────────────── */
-.ruler-status {
+.ruler-calib-status {
   text-align: center;
   min-height: 2.75rem;
   display: flex;
@@ -25,17 +38,15 @@
   flex-shrink: 0;
 }
 
-.ruler-status-text {
+.ruler-calib-status-text {
   font-family: var(--font-sans);
   font-weight: 600;
-  font-style: normal;
   font-size: 1.125rem;
   color: var(--text);
   letter-spacing: -0.01em;
-  line-height: 1.2;
 }
 
-.ruler-status-sub {
+.ruler-calib-status-sub {
   font-family: var(--font-mono);
   font-size: 0.6875rem;
   color: var(--text-muted);
@@ -44,67 +55,120 @@
   font-weight: 500;
 }
 
-/* ─── Center Viewport Area ──────────────────────────────────── */
-.ruler-center-area {
+.ruler-calib-center {
   flex: 1;
   min-height: 0;
-  width: 100%;
-  max-width: 520px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 1rem;
-  overflow: hidden;
-  padding: 0.5rem 0;
+  width: 100%;
+  max-width: 480px;
 }
 
-/* ─── Calibration View ──────────────────────────────────────── */
-.ruler-calib-view {
+/* Credit Card Realistic Preview */
+.ruler-card-outline {
+  position: relative;
+  background: linear-gradient(135deg, #18181b 0%, #09090b 100%);
+  border: 2px solid #ffffff;
+  border-radius: 12px;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
+  padding: 0.85rem;
+  box-sizing: border-box;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+  flex-shrink: 0;
+}
+
+.ruler-card-top-row {
+  display: flex;
   align-items: center;
-  gap: 1rem;
+  justify-content: space-between;
   width: 100%;
 }
 
-.ruler-card-outline {
+.ruler-card-chip {
+  width: 36px;
+  height: 26px;
+  border-radius: 4px;
+  border: 1px solid #d4af37;
+  background: linear-gradient(135deg, #d4af37 0%, #aa8c2c 50%, #f3e5ab 100%);
   position: relative;
-  background: var(--surface);
-  border: 2px dashed var(--text);
-  border-radius: 8px;
+}
+
+.ruler-card-chip::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.ruler-card-chip::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.ruler-card-contactless {
+  color: #a1a1aa;
+}
+
+.ruler-card-issuer {
+  display: flex;
+}
+
+.ruler-card-issuer-circle {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #71717a;
+  opacity: 0.6;
+}
+
+.ruler-card-issuer-circle:last-child {
+  margin-left: -7px;
+  background: #d4d4d8;
+  opacity: 0.5;
+}
+
+.ruler-card-center-row {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  padding: 1rem;
-  box-sizing: border-box;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-  transition: width 80ms ease-out, height 80ms ease-out;
-  user-select: none;
+  gap: 0.25rem;
 }
 
-.ruler-card-chip {
-  width: 32px;
-  height: 24px;
-  border-radius: 4px;
-  border: 1px solid var(--border-2);
-  background: var(--surface-2);
-  align-self: flex-start;
-}
-
-.ruler-card-text {
+.ruler-card-title {
   font-family: var(--font-sans);
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text);
-  text-align: center;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #ffffff;
 }
 
-.ruler-card-dim {
+.ruler-card-dots {
   font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  color: var(--text-muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  color: #a1a1aa;
+}
+
+.ruler-card-bottom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: #a1a1aa;
 }
 
 .ruler-calib-slider-row {
@@ -134,8 +198,7 @@
   font-size: 0.6875rem;
   font-weight: 500;
   cursor: pointer;
-  transition: color 150ms ease, border-color 150ms ease, background 150ms ease;
-  user-select: none;
+  transition: all 150ms ease;
 }
 
 .ruler-rotate-btn:hover {
@@ -144,84 +207,42 @@
   background: var(--surface-2);
 }
 
-/* ─── Ruler Measurement View ────────────────────────────────── */
-.ruler-measure-view {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
+/* ─── Real 2D Ruler Workspace (Single Master SVG) ───────────── */
+.ruler-workspace {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  justify-content: center;
-}
-
-.ruler-scale-box {
-  position: relative;
-  width: 100%;
-  height: 180px;
-  background: var(--surface);
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius);
+  background: #09090b;
+  border: none;
+  border-radius: 0;
   overflow: hidden;
-  cursor: crosshair;
-  user-select: none;
   touch-action: none;
+  cursor: crosshair;
 }
 
-.ruler-scale-svg {
+.ruler-master-svg {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   display: block;
 }
 
-/* Moveable Caliper Marker */
-.ruler-caliper-line {
+/* Top Action Controls inside Workspace */
+.ruler-top-bar {
   position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: var(--text);
-  box-shadow: 0 0 8px var(--text);
-  pointer-events: none;
-  transition: transform 30ms linear;
-}
-
-.ruler-caliper-handle {
-  position: absolute;
-  top: 50%;
-  left: -12px;
-  transform: translateY(-50%);
-  width: 26px;
-  height: 26px;
-  background: var(--text);
-  color: var(--bg);
-  border-radius: 50%;
+  top: 0.75rem;
+  left: 0;
+  right: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-family: var(--font-mono);
-  font-size: 0.625rem;
-  font-weight: 700;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  gap: 0.75rem;
+  z-index: 30;
+  pointer-events: auto;
 }
 
-.ruler-readout-pill {
-  font-family: var(--font-mono);
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text);
-  display: flex;
-  align-items: baseline;
-  gap: 0.35rem;
-}
-
-.ruler-readout-unit {
-  font-size: 0.8125rem;
-  color: var(--text-muted);
-  font-weight: 500;
-}
-
-/* ─── Bottom Controls Bar ───────────────────────────────────── */
+/* ─── Bottom Calibration Controls Bar ──────────────────────── */
 .ruler-controls-container {
   width: 100%;
   max-width: 460px;

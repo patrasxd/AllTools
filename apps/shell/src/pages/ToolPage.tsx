@@ -114,22 +114,24 @@ export function ToolPage() {
       animate="visible"
       exit="exit"
     >
-      <div className="tool-page-inner container">
-        <button
-          id={`back-btn-${slug}`}
-          className="game-floating-back"
-          onClick={() => navigate(-1)}
-          aria-label={t.backToToolsAria}
-          title={t.backToTools}
-        >
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M15 18l-6-6 6-6" />
-            <path d="M9 12h10" />
-          </svg>
-          <span>{t.backToTools}</span>
-        </button>
+      <div className="tool-page-inner">
+        <div className="container" style={{ width: '100%' }}>
+          <button
+            id={`back-btn-${slug}`}
+            className="game-floating-back"
+            onClick={() => navigate(-1)}
+            aria-label={t.backToToolsAria}
+            title={t.backToTools}
+          >
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M15 18l-6-6 6-6" />
+              <path d="M9 12h10" />
+            </svg>
+            <span>{t.backToTools}</span>
+          </button>
+        </div>
 
-        <div className="tool-page-content">
+        <div className={`tool-page-content ${slug === 'screen-ruler' ? 'tool-page-content--fullbleed' : 'container'}`}>
           {loading ? (
             <ToolFallback />
           ) : ToolComp ? (

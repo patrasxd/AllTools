@@ -4,7 +4,7 @@
 
 ---
 
-## 🎯 Architecture & Monorepo Structure
+## Architecture & Monorepo Structure
 
 The project is organized as an autonomous **npm workspaces monorepo**:
 
@@ -36,18 +36,20 @@ AllTools/
         ├── guitar-tuner/          # Chromatic & guitar tuning utility
         ├── level-protractor/      # Bubble level and angle measurement tool
         ├── qr-suite/              # QR generation and scanning utility
-        ├── stopwatch-interval/    # Stopwatch, laps, and interval timer
-        └── quick-notes/           # Keep-style notes and checklist tool
+        ├── quick-notes/           # Keep-style notes and checklist tool
+        ├── screen-ruler/          # Screen calibration and measurement ruler
+        └── stopwatch-interval/    # Stopwatch, laps, and interval timer
 ```
 
 ---
 
-## 🔌 Tool API Contract
+## Tool API Contract
 
 Every tool module in `packages/tools/*` exports a standard metadata object and a `ToolComponent` from `src/index.ts`:
 
 ```ts
 import type { ToolMetadata, ToolComponentProps } from '../../../apps/shell/src/types/tool'
+import { IconGuitar } from '@alltools/ui'
 
 export const metadata: ToolMetadata = {
   slug: 'guitar-tuner',
@@ -59,7 +61,7 @@ export const metadata: ToolMetadata = {
     en: 'Chromatic and guitar tuner with real-time frequency analysis and reference tones.',
     pl: 'Tuner chromatyczny i gitarowy z analizą częstotliwości w czasie rzeczywistym.'
   },
-  icon: '🎸',
+  icon: <IconGuitar size={24} strokeWidth={1.5} />,
   category: 'audio',
   tags: {
     en: ['tuner', 'guitar', 'pitch', 'audio'],
@@ -72,7 +74,7 @@ export { GuitarTuner as ToolComponent } from './GuitarTuner'
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ```bash
 # Navigate to AllTools
@@ -93,7 +95,7 @@ npm run preview
 
 ---
 
-## ✅ Product direction
+## Product direction
 
 AllTools follows the same shell discipline as AllGames, but keeps its own identity as a collection of offline utilities:
 
