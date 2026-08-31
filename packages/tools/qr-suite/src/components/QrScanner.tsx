@@ -62,7 +62,7 @@ export const QrScanner: React.FC<QrScannerProps> = ({ locale }) => {
     try {
       setErrorMsg(null)
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
+        video: { facingMode: { ideal: 'environment' } },
       })
       streamRef.current = stream
       if (videoRef.current) {

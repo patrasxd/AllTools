@@ -11,6 +11,7 @@ import {
   IconCheck,
   IconCamera,
   IconUpload,
+  IconSwitchCamera,
 } from '@alltools/ui'
 import './styles/qr-suite.css'
 
@@ -37,6 +38,18 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
   const [isScanning, setIsScanning] = useState<boolean>(false)
   const [scannedResult, setScannedResult] = useState<string | null>(null)
   const [scanError, setScanError] = useState<string | null>(null)
+
+  // Multi-camera and zoom state
+  const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([])
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem('alltools:qr-camera-id')
+    } catch {
+      return null
+    }
+  })
+  const [zoomCapabilities, setZoomCapabilities] = useState<{ min: number; max: number; step: number } | null>(null)
+  const [currentZoom, setCurrentZoom] = useState<number>(1)
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
@@ -71,6 +84,39 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
     )
   }, [activeMode, payload])
 
+  // Camera name formatting helper
+  const formatCameraName = (dev: MediaDeviceInfo, index: number): string => {
+    const label = (dev.label || '').toLowerCase()
+    if (label.includes('front') || label.includes('przedni') || label.includes('user') || label.includes('facing front')) {
+      return locale === 'pl' ? 'Przedni aparat' : 'Front Camera'
+    }
+    if (label.includes('ultra') || label.includes('0.5') || label.includes('szerok')) {
+      return locale === 'pl' ? 'Szeroki (0.5x)' : 'Ultra-Wide (0.5x)'
+    }
+    if (label.includes('tele') || label.includes('2x') || label.includes('3x') || label.includes('zoom')) {
+      return locale === 'pl' ? 'Teleobiektyw' : 'Telephoto'
+    }
+    if (
+      label.includes('main') ||
+      label.includes('główny') ||
+      label.includes('1x') ||
+      label.includes('wide') ||
+      label.includes('camera2 0') ||
+      label.includes('back 0')
+    ) {
+      return locale === 'pl' ? 'Główny (1x)' : 'Main (1x)'
+    }
+    if (dev.label) {
+      return dev.label.replace(/\(.*\)/, '').trim() || dev.label
+    }
+    return locale === 'pl' ? `Aparat ${index + 1}` : `Camera ${index + 1}`
+  }
+
+  const activeDevice = videoDevices.find((d) => d.deviceId === selectedDeviceId)
+  const activeDeviceLabel = activeDevice
+    ? formatCameraName(activeDevice, videoDevices.indexOf(activeDevice))
+    : (locale === 'pl' ? 'Aparat' : 'Camera')
+
   // Sync StatsHeader to shell top title bar
   useEffect(() => {
     if (!setHeader) return
@@ -89,13 +135,13 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
         <StatsHeader
           label={locale === 'pl' ? 'SKANER QR' : 'QR SCANNER'}
           items={[
-            { key: 'status', label: 'KAMERA', value: isScanning ? 'ON' : 'OFF' },
+            { key: 'status', label: 'KAMERA', value: isScanning ? (videoDevices.length > 1 ? activeDeviceLabel : 'ON') : 'OFF' },
             { key: 'found', label: 'ODCZYT', value: scannedResult ? 'OK' : '—' },
           ]}
         />
       )
     }
-  }, [setHeader, activeMode, payloadType, payload.length, isScanning, scannedResult, locale])
+  }, [setHeader, activeMode, payloadType, payload.length, isScanning, scannedResult, locale, videoDevices.length, activeDeviceLabel])
 
   // Decode QR from Image file / blob
   const decodeImageBlob = useCallback((blob: Blob) => {
@@ -158,10 +204,79 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
     setIsScanning(false)
   }
 
-  const startCamera = async () => {
+  const startCamera = async (targetDeviceId?: string) => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      setScanError(null)
+      const deviceIdToUse = targetDeviceId !== undefined ? targetDeviceId : selectedDeviceId
+
+      let stream: MediaStream
+      try {
+        if (deviceIdToUse) {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              deviceId: { exact: deviceIdToUse },
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+            },
+          })
+        } else {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: { ideal: 'environment' },
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+            },
+          })
+        }
+      } catch {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment' },
+        })
+      }
+
       streamRef.current = stream
+      const track = stream.getVideoTracks()[0]
+
+      // Zoom capability detection
+      if (track) {
+        try {
+          const caps = (track.getCapabilities?.() as { zoom?: { min: number; max: number; step?: number } }) || {}
+          if (caps.zoom && typeof caps.zoom.min === 'number' && typeof caps.zoom.max === 'number' && caps.zoom.max > caps.zoom.min) {
+            setZoomCapabilities({
+              min: caps.zoom.min,
+              max: caps.zoom.max,
+              step: caps.zoom.step || 0.1,
+            })
+            const settings = track.getSettings?.() as { zoom?: number }
+            setCurrentZoom(settings?.zoom || caps.zoom.min || 1)
+          } else {
+            setZoomCapabilities(null)
+          }
+        } catch {
+          setZoomCapabilities(null)
+        }
+      }
+
+      // Enumerate available video inputs
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices()
+        const vInputs = devices.filter((d) => d.kind === 'videoinput')
+        setVideoDevices(vInputs)
+
+        const settings = track?.getSettings?.()
+        const activeId = settings?.deviceId || deviceIdToUse || (vInputs[0]?.deviceId ?? null)
+        if (activeId) {
+          setSelectedDeviceId(activeId)
+          try {
+            localStorage.setItem('alltools:qr-camera-id', activeId)
+          } catch {
+            // ignore
+          }
+        }
+      } catch {
+        // ignore
+      }
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream
         videoRef.current.setAttribute('playsinline', 'true')
@@ -169,8 +284,40 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
         setIsScanning(true)
         scanLoop()
       }
-    } catch {
+    } catch (err) {
+      console.error('Camera startup error:', err)
       setIsScanning(false)
+      setScanError(
+        locale === 'pl'
+          ? 'Brak dostępu do kamery. Sprawdź uprawnienia w przeglądarce.'
+          : 'Camera access denied. Please allow camera permissions.'
+      )
+    }
+  }
+
+  const switchCamera = () => {
+    if (videoDevices.length <= 1) return
+    const currentIndex = videoDevices.findIndex((d) => d.deviceId === selectedDeviceId)
+    const nextIndex = (currentIndex + 1) % videoDevices.length
+    const nextDev = videoDevices[nextIndex]
+    if (nextDev) {
+      stopCamera()
+      startCamera(nextDev.deviceId)
+    }
+  }
+
+  const applyZoom = async (zoomValue: number) => {
+    if (!streamRef.current || !zoomCapabilities) return
+    const track = streamRef.current.getVideoTracks()[0]
+    if (!track) return
+    try {
+      const clamped = Math.min(Math.max(zoomValue, zoomCapabilities.min), zoomCapabilities.max)
+      await (track as MediaStreamTrack & { applyConstraints: (c: unknown) => Promise<void> }).applyConstraints({
+        advanced: [{ zoom: clamped }],
+      })
+      setCurrentZoom(clamped)
+    } catch (err) {
+      console.error('Zoom constraint error:', err)
     }
   }
 
@@ -281,7 +428,9 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
           {activeMode === 'generate'
             ? `${payloadType.toUpperCase()} · ${payload.length} ${locale === 'pl' ? 'znaków' : 'chars'}`
             : isScanning
-            ? (locale === 'pl' ? 'Skieruj aparat na kod' : 'Point camera at code')
+            ? (videoDevices.length > 1
+                ? `${locale === 'pl' ? 'Aktywny:' : 'Active:'} ${activeDeviceLabel}`
+                : (locale === 'pl' ? 'Skieruj aparat na kod' : 'Point camera at code'))
             : (locale === 'pl' ? 'Obsługuje Ctrl+V, upuszczenie pliku i aparat' : 'Supports Ctrl+V, drag & drop, and camera')}
         </div>
       </div>
@@ -377,6 +526,46 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
                 {isScanning && <div className="qr-scan-laser" />}
               </div>
 
+              {/* Viewfinder Overlays when scanning */}
+              {isScanning && (
+                <>
+                  {videoDevices.length > 1 && (
+                    <div className="qr-viewfinder-overlay">
+                      <button
+                        type="button"
+                        className="qr-cam-badge"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          switchCamera()
+                        }}
+                        title={locale === 'pl' ? 'Przełącz aparat / obiektyw' : 'Switch camera / lens'}
+                      >
+                        <IconSwitchCamera size={12} />
+                        <span>{activeDeviceLabel}</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {zoomCapabilities && zoomCapabilities.max >= 1.5 && (
+                    <div className="qr-zoom-toolbar" onClick={(e) => e.stopPropagation()}>
+                      {[1, 2, ...(zoomCapabilities.max >= 3 ? [3] : [])].map((z) => {
+                        const isActive = Math.abs(currentZoom - z) < 0.2
+                        return (
+                          <button
+                            key={z}
+                            type="button"
+                            className={`qr-zoom-btn ${isActive ? 'qr-zoom-btn--active' : ''}`}
+                            onClick={() => applyZoom(z)}
+                          >
+                            {z}x
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </>
+              )}
+
               {!isScanning && (
                 <div className="qr-dropzone-content">
                   <IconUpload size={28} className="qr-dropzone-icon" />
@@ -444,10 +633,20 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
               >
                 {locale === 'pl' ? 'Wybierz plik' : 'Upload File'}
               </GameButton>
+              {isScanning && videoDevices.length > 1 && (
+                <GameButton
+                  variant="secondary"
+                  size="md"
+                  onClick={switchCamera}
+                  icon={<IconSwitchCamera size={14} />}
+                >
+                  {locale === 'pl' ? 'Zmień aparat' : 'Switch Cam'}
+                </GameButton>
+              )}
               <GameButton
                 variant={isScanning ? 'danger' : 'primary'}
                 size="md"
-                onClick={isScanning ? stopCamera : startCamera}
+                onClick={isScanning ? stopCamera : () => startCamera()}
                 icon={<IconCamera size={14} />}
               >
                 {isScanning ? (locale === 'pl' ? 'Zatrzymaj' : 'Stop') : (locale === 'pl' ? 'Aparat' : 'Camera')}
@@ -455,7 +654,7 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
             </>
           )}
 
-          {/* Mode Switcher Pills (matching Stopwatch STOPER | INTERWAŁY) */}
+          {/* Mode Switcher Pills */}
           <PillGroup
             options={modeOptions}
             value={activeMode}
