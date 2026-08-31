@@ -1,0 +1,147 @@
+/* ─── Level & Protractor Root (Twin Architecture) ───────────── */
+.level-root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0 1.25rem;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* ─── Status Block (Top) ────────────────────────────────────── */
+.level-status {
+  text-align: center;
+  min-height: 2.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.level-status-text {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-style: normal;
+  font-size: 1.125rem;
+  color: var(--text);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.level-status-sub {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* ─── Center Viewport Area (Spacious & Centered) ─────────────── */
+.level-center-area {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  overflow: hidden;
+  padding: 0.5rem 0;
+}
+
+/* ─── Bubble Level View ─────────────────────────────────────── */
+.level-dial-card {
+  position: relative;
+  width: min(230px, calc(100vh - 340px));
+  height: min(230px, calc(100vh - 340px));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.level-dial-svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.2));
+}
+
+.level-sliders-row {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+  max-width: 320px;
+  align-items: center;
+  justify-content: center;
+}
+
+.level-slider-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.level-slider-label {
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.level-slider-input {
+  width: 100%;
+  accent-color: var(--text);
+  cursor: pointer;
+}
+
+/* ─── Protractor View ───────────────────────────────────────── */
+.protractor-dial-card {
+  position: relative;
+  width: min(250px, calc(100vh - 330px));
+  height: min(250px, calc(100vh - 330px));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+  user-select: none;
+}
+
+.protractor-dial-svg {
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.2));
+}
+
+.protractor-fine-tune-row {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─── Bottom Controls Bar (Fixed Width Twin to Stopwatch) ──── */
+.level-controls-container {
+  width: 100%;
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  margin-top: auto;
+}

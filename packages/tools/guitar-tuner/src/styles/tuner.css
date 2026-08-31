@@ -1,0 +1,180 @@
+/* ─── Guitar Tuner Root ─────────────────────────────────────── */
+/* Fills the game-page-content area (flex: 1, full remaining height) */
+.tuner-root {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+}
+
+/* ─── Status / Note Display ─────────────────────────────────── */
+.tuner-note-display {
+  text-align: center;
+  min-height: 2.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.tuner-note-text {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-style: normal;
+  font-size: 3.5rem;
+  color: var(--text);
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.tuner-note-octave {
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  color: var(--text-muted);
+  font-style: normal;
+  vertical-align: super;
+  margin-left: 0.15rem;
+}
+
+.tuner-note-sub {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* ─── Needle Gauge ──────────────────────────────────────────── */
+.tuner-gauge-wrapper {
+  position: relative;
+  width: min(340px, min(100%, calc(100vh - 380px)));
+  aspect-ratio: 5 / 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.tuner-gauge-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.tuner-gauge-needle {
+  transition: transform 100ms cubic-bezier(0.1, 0.9, 0.2, 1);
+}
+
+.tuner-gauge-needle--idle {
+  transition: transform 400ms ease-out;
+}
+
+.tuner-gauge-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 1rem;
+  margin-top: -0.35rem;
+}
+
+.tuner-gauge-label {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--text-dim);
+  letter-spacing: 0.06em;
+}
+
+.tuner-status-badge {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  transition: all 200ms ease;
+}
+
+.tuner-status-badge--in-tune {
+  border-color: var(--text);
+  background: var(--text);
+  color: var(--bg);
+  font-weight: 700;
+}
+
+/* ─── String Reference Buttons ──────────────────────────────── */
+.tuner-strings {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.tuner-string-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.4rem 0.55rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 200ms ease, background 200ms ease;
+  user-select: none;
+}
+
+.tuner-string-btn:hover {
+  border-color: var(--border-2);
+  background: var(--surface-2);
+}
+
+.tuner-string-btn--playing {
+  background: var(--surface-2);
+  border-color: var(--text-dim);
+}
+
+.tuner-string-note {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-style: normal;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.tuner-string-octave {
+  font-size: 0.5625rem;
+  font-style: normal;
+  vertical-align: super;
+}
+
+.tuner-string-freq {
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+
+/* ─── E-ink overrides ───────────────────────────────────────── */
+[data-eink='true'] .tuner-status-badge--in-tune {
+  background: var(--text) !important;
+  color: var(--bg) !important;
+  border-color: var(--text) !important;
+}
+
+[data-eink='true'] .tuner-string-btn--playing {
+  background: var(--text) !important;
+  color: var(--bg) !important;
+}

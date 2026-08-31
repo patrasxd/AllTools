@@ -1,0 +1,35 @@
+{
+  "name": "alltools",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Minimalist PWA Tools Suite — Sketch & Ink Aesthetic",
+  "workspaces": [
+    "apps/*",
+    "packages/tools/*",
+    "packages/ui"
+  ],
+  "scripts": {
+    "start": "npm run dev --workspace=@alltools/shell",
+    "dev": "npm run dev --workspace=@alltools/shell",
+    "build": "npm run build --workspace=@alltools/shell",
+    "preview": "npm run preview --workspace=@alltools/shell",
+    "deploy": "npm run build --workspace=@alltools/shell && gh-pages -d apps/shell/dist",
+    "install-all": "npm install"
+  },
+  "keywords": [
+    "tools",
+    "pwa",
+    "utilities",
+    "tuner",
+    "protractor",
+    "qr-code",
+    "stopwatch",
+    "notes",
+    "sketch"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "gh-pages": "^6.3.0"
+  }
+}

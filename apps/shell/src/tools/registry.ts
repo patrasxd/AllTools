@@ -1,0 +1,35 @@
+import { ToolMetadata } from '../types/tool'
+
+// Eager metadata imports from tool packages (matching AllGames registry pattern)
+import { metadata as guitarTunerMeta } from '@alltools/guitar-tuner'
+import { metadata as levelProtractorMeta } from '@alltools/level-protractor'
+import { metadata as qrSuiteMeta } from '@alltools/qr-suite'
+import { metadata as stopwatchIntervalMeta } from '@alltools/stopwatch-interval'
+import { metadata as quickNotesMeta } from '@alltools/quick-notes'
+import { metadata as screenRulerMeta } from '@alltools/screen-ruler'
+
+export const TOOLS_METADATA: ToolMetadata[] = [
+  guitarTunerMeta,
+  levelProtractorMeta,
+  screenRulerMeta,
+  qrSuiteMeta,
+  stopwatchIntervalMeta,
+  quickNotesMeta,
+]
+
+// Dynamic lazy component loaders
+const loaders: Record<string, () => Promise<{ ToolComponent: React.ComponentType<any> }>> = {
+  'guitar-tuner': () => import('@alltools/guitar-tuner'),
+  'level-protractor': () => import('@alltools/level-protractor'),
+  'screen-ruler': () => import('@alltools/screen-ruler'),
+  'qr-suite': () => import('@alltools/qr-suite'),
+  'stopwatch-interval': () => import('@alltools/stopwatch-interval'),
+  'quick-notes': () => import('@alltools/quick-notes'),
+}
+
+export async function loadToolComponent(slug: string): Promise<React.ComponentType<any> | null> {
+  const loader = loaders[slug]
+  if (!loader) return null
+  const mod = await loader()
+  return mod.ToolComponent
+}

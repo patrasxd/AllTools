@@ -1,0 +1,292 @@
+/* ─── QR Suite Root (Identical Architecture to Stopwatch) ──── */
+.qr-root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0 1.25rem;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* ─── Status Block (Top) ────────────────────────────────────── */
+.qr-status {
+  text-align: center;
+  min-height: 2.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.qr-status-text {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-style: normal;
+  font-size: 1.125rem;
+  color: var(--text);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.qr-status-sub {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* ─── Center Viewport Area (Spacious & Centered) ─────────────── */
+.qr-center-area {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  overflow: hidden;
+  padding: 0.5rem 0;
+}
+
+/* ─── Generator View ────────────────────────────────────────── */
+.qr-generator-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.qr-input-group {
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.qr-input-row {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.qr-input {
+  width: 100%;
+  padding: 0.55rem 0.85rem;
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  transition: border-color 150ms ease, background 150ms ease;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.qr-input:focus {
+  outline: none;
+  border-color: var(--border-2);
+  background: var(--surface-2);
+}
+
+.qr-input::placeholder {
+  color: var(--text-muted);
+}
+
+.qr-canvas-card {
+  padding: 0.75rem;
+  background: #ffffff;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  transition: transform 200ms ease;
+}
+
+[data-theme='light'] .qr-canvas-card {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.qr-canvas-element {
+  display: block;
+  width: 160px;
+  height: 160px;
+  image-rendering: pixelated;
+}
+
+/* ─── Scanner View ──────────────────────────────────────────── */
+.qr-scanner-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.875rem;
+  width: 100%;
+}
+
+.qr-viewfinder {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.qr-viewfinder:hover:not(.qr-viewfinder--active) {
+  border-color: var(--border-2);
+  background: var(--surface-2);
+}
+
+.qr-viewfinder-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Reticle corner marks */
+.qr-reticle {
+  position: absolute;
+  inset: 16px;
+  pointer-events: none;
+}
+
+.qr-reticle-corner {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-color: var(--text);
+  border-style: solid;
+}
+
+.qr-reticle-tl { top: 0; left: 0; border-width: 2px 0 0 2px; }
+.qr-reticle-tr { top: 0; right: 0; border-width: 2px 2px 0 0; }
+.qr-reticle-bl { bottom: 0; left: 0; border-width: 0 0 2px 2px; }
+.qr-reticle-br { bottom: 0; right: 0; border-width: 0 2px 2px 0; }
+
+/* Laser scan animation */
+.qr-scan-laser {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  height: 2px;
+  background: var(--text);
+  box-shadow: 0 0 8px var(--text);
+  opacity: 0.8;
+  animation: qrLaserScan 2s infinite ease-in-out alternate;
+}
+
+@keyframes qrLaserScan {
+  0% { top: 20px; }
+  100% { top: calc(100% - 20px); }
+}
+
+.qr-dropzone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.25rem;
+  text-align: center;
+  user-select: none;
+}
+
+.qr-dropzone-icon {
+  color: var(--text-dim);
+}
+
+.qr-dropzone-title {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.qr-dropzone-cue {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.qr-scanned-card {
+  width: 100%;
+  max-width: 380px;
+  padding: 0.75rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  box-sizing: border-box;
+  animation: qrCardAppear 200ms ease-out;
+}
+
+@keyframes qrCardAppear {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.qr-scanned-label {
+  font-family: var(--font-sans);
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.qr-scanned-content {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text);
+  word-break: break-all;
+  max-height: 48px;
+  overflow-y: auto;
+}
+
+.qr-scanned-actions {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.25rem;
+}
+
+/* ─── Bottom Controls Bar (Fixed Width Twin to Stopwatch) ──── */
+.qr-controls-container {
+  width: 100%;
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  margin-top: auto;
+}
