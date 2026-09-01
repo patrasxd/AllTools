@@ -91,9 +91,9 @@
   justify-content: space-between;
   padding: 0.35rem 0.75rem;
   font-family: var(--font-sans);
-  font-size: 0.5625rem;
+  font-size: 0.6875rem;
   font-weight: 600;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-muted);
   border-bottom: 1px solid var(--border);
@@ -107,9 +107,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.35rem 0.75rem;
+  padding: 0.4rem 0.75rem;
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   border-bottom: 1px solid var(--border);
   color: var(--text-dim);
   transition: background 150ms ease, color 150ms ease;
@@ -136,7 +136,7 @@
 
 .stopwatch-lap-id {
   color: var(--text-muted);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   min-width: 45px;
 }
 

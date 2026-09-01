@@ -171,10 +171,13 @@ export function GuitarTuner({ setHeader, locale = 'en', isEink = false }: GameCo
     }
   }
 
-  const presetPills = TUNING_PRESETS.map((p) => ({
-    value: p.id,
-    label: p.name[locale],
-  }))
+  const presetPills = [
+    { value: 'guitar-std', label: locale === 'pl' ? 'Gitara' : 'Guitar' },
+    { value: 'guitar-drop-d', label: 'Drop D' },
+    { value: 'bass-4', label: locale === 'pl' ? 'Bas' : 'Bass' },
+    { value: 'ukulele', label: 'Ukulele' },
+    { value: 'chromatic', label: locale === 'pl' ? 'Chromatyczny' : 'Chromatic' },
+  ]
 
   return (
     <div className="tuner-root">

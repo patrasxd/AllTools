@@ -71,7 +71,7 @@ export function Layout({ children }: LayoutProps) {
         </div>
       </header>
 
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
         {children}
       </main>
     </ToolHeaderContext.Provider>

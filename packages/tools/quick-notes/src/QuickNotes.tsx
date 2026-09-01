@@ -89,13 +89,13 @@ export function QuickNotes({ locale = 'en', setHeader }: ToolComponentProps) {
         items={[
           {
             key: 'progress',
-            label: 'POSTĘP',
+            label: locale === 'pl' ? 'POSTĘP' : 'PROGRESS',
             value: `${completedCount}/${totalCount}`,
             className: completedCount === totalCount && totalCount > 0 ? 'text-text font-bold' : 'text-text-muted',
           },
           {
             key: 'cat',
-            label: 'KAT',
+            label: locale === 'pl' ? 'KAT.' : 'CAT.',
             value: activeList ? activeList.category.toUpperCase() : '—',
           },
         ]}

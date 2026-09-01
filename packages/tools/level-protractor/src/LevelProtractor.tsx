@@ -104,7 +104,7 @@ export function LevelProtractor({ locale = 'en', setHeader }: ToolComponentProps
           items={[
             {
               key: 'angle',
-              label: 'KĄT',
+              label: locale === 'pl' ? 'KĄT' : 'ANGLE',
               value: formatAngle(protractorStats.angle, 1),
             },
             {
@@ -137,7 +137,7 @@ export function LevelProtractor({ locale = 'en', setHeader }: ToolComponentProps
             },
             {
               key: 'type',
-              label: 'TYP',
+              label: locale === 'pl' ? 'TYP' : 'TYPE',
               value: 'MAGN.',
             },
           ]}
@@ -184,7 +184,7 @@ export function LevelProtractor({ locale = 'en', setHeader }: ToolComponentProps
             ? `ROLL: ${formatAngle(levelStats.roll, 1)} · PITCH: ${formatAngle(levelStats.pitch, 1)}`
             : activeTab === 'protractor'
             ? `RAD: ${protractorStats.rad.toFixed(3)} · 180°-θ: ${formatAngle(Math.max(0, 180 - protractorStats.angle), 1)}`
-            : `AZYMUT: ${compassStats.heading}° · KIERUNEK: ${compassStats.direction}`}
+            : `${locale === 'pl' ? 'AZYMUT' : 'HEADING'}: ${compassStats.heading}° · ${locale === 'pl' ? 'KIERUNEK' : 'DIRECTION'}: ${compassStats.direction}`}
         </div>
       </div>
 

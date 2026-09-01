@@ -338,16 +338,16 @@
 
 .qr-scanned-label {
   font-family: var(--font-sans);
-  font-size: 0.5625rem;
+  font-size: 0.6875rem;
   font-weight: 600;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-muted);
 }
 
 .qr-scanned-content {
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   color: var(--text);
   word-break: break-all;
   max-height: 48px;

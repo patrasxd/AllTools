@@ -17,16 +17,23 @@ export interface ToolComponentProps {
 const CARD_LONG_MM = 85.60
 const CARD_SHORT_MM = 53.98
 
+const getInitialPpm = () => {
+  try {
+    const saved = localStorage.getItem('alltools:ruler:ppm')
+    if (saved) return parseFloat(saved)
+  } catch {
+    // Ignore
+  }
+  // On mobile screens, viewport CSS px / mm is ~5.5 px/mm (e.g. 390px / ~70mm physical screen width)
+  if (typeof window !== 'undefined' && window.innerWidth < 640) {
+    return 5.5
+  }
+  return 3.78
+}
+
 export function ScreenRuler({ locale = 'en', setHeader }: ToolComponentProps) {
-  // Calibration: pixels per millimeter (default ~96 DPI = 3.78 ppm)
-  const [pixelsPerMm, setPixelsPerMm] = useState<number>(() => {
-    try {
-      const saved = localStorage.getItem('alltools:ruler:ppm')
-      return saved ? parseFloat(saved) : 3.78
-    } catch {
-      return 3.78
-    }
-  })
+  // Calibration: pixels per millimeter (default ~96 DPI = 3.78 ppm desktop, 5.5 ppm mobile)
+  const [pixelsPerMm, setPixelsPerMm] = useState<number>(getInitialPpm)
 
   const [isCalibrated, setIsCalibrated] = useState<boolean>(() => {
     try {
@@ -38,7 +45,7 @@ export function ScreenRuler({ locale = 'en', setHeader }: ToolComponentProps) {
 
   // Card orientation for calibration (landscape vs portrait)
   const [cardOrientation, setCardOrientation] = useState<'landscape' | 'portrait'>(() => {
-    if (typeof window !== 'undefined' && window.innerWidth < 500) {
+    if (typeof window !== 'undefined' && window.innerWidth < 640) {
       return 'portrait'
     }
     return 'landscape'
@@ -49,8 +56,8 @@ export function ScreenRuler({ locale = 'en', setHeader }: ToolComponentProps) {
 
   // Calibration slider value (width of on-screen card in pixels)
   const [cardWidthPx, setCardWidthPx] = useState<number>(() => {
-    const initTarget = (typeof window !== 'undefined' && window.innerWidth < 500) ? CARD_SHORT_MM : CARD_LONG_MM
-    return Math.round(pixelsPerMm * initTarget)
+    const initTarget = (typeof window !== 'undefined' && window.innerWidth < 640) ? CARD_SHORT_MM : CARD_LONG_MM
+    return Math.round(getInitialPpm() * initTarget)
   })
 
   const handleOrientationChange = (orient: 'landscape' | 'portrait') => {
@@ -210,8 +217,8 @@ export function ScreenRuler({ locale = 'en', setHeader }: ToolComponentProps) {
     { value: 'inch' as const, label: locale === 'pl' ? 'Cale (in)' : 'Inches (in)' },
   ]
 
-  const sliderMin = cardOrientation === 'landscape' ? 180 : 120
-  const sliderMax = cardOrientation === 'landscape' ? 440 : 260
+  const sliderMin = cardOrientation === 'landscape' ? 200 : 130
+  const sliderMax = cardOrientation === 'landscape' ? 700 : 480
 
   // Ruler visual parameters
   const rulerSize = 60

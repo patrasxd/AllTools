@@ -125,8 +125,8 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
         <StatsHeader
           label={locale === 'pl' ? 'GENERATOR QR' : 'QR GENERATOR'}
           items={[
-            { key: 'type', label: 'TYP', value: payloadType.toUpperCase() },
-            { key: 'len', label: 'ZNAKI', value: payload.length },
+            { key: 'type', label: locale === 'pl' ? 'TYP' : 'TYPE', value: payloadType.toUpperCase() },
+            { key: 'len', label: locale === 'pl' ? 'ZNAKI' : 'CHARS', value: payload.length },
           ]}
         />
       )
@@ -135,8 +135,8 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
         <StatsHeader
           label={locale === 'pl' ? 'SKANER QR' : 'QR SCANNER'}
           items={[
-            { key: 'status', label: 'KAMERA', value: isScanning ? (videoDevices.length > 1 ? activeDeviceLabel : 'ON') : 'OFF' },
-            { key: 'found', label: 'ODCZYT', value: scannedResult ? 'OK' : '—' },
+            { key: 'status', label: locale === 'pl' ? 'KAMERA' : 'CAMERA', value: isScanning ? (videoDevices.length > 1 ? activeDeviceLabel : 'ON') : 'OFF' },
+            { key: 'found', label: locale === 'pl' ? 'ODCZYT' : 'SCAN', value: scannedResult ? 'OK' : '—' },
           ]}
         />
       )

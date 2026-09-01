@@ -109,7 +109,7 @@
 
 .sound-reference-tag {
   font-family: var(--font-sans);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-dim);
   text-align: center;
@@ -155,10 +155,11 @@
 
 .sound-metric-label {
   font-family: var(--font-mono);
-  font-size: 0.5625rem;
+  font-size: 0.6875rem;
   color: var(--text-dim);
   text-transform: uppercase;
   font-weight: 600;
+  letter-spacing: 0.04em;
 }
 
 .sound-metric-val {
