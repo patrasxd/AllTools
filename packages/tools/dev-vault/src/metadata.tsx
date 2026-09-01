@@ -3,7 +3,10 @@ import { IconKey } from '@alltools/ui'
 
 export interface ToolMetadata {
   slug: string
-  name: string
+  name: {
+    en: string
+    pl: string
+  }
   category: 'audio' | 'measurement' | 'productivity' | 'time'
   description: {
     en: string
@@ -19,7 +22,10 @@ export interface ToolMetadata {
 
 export const metadata: ToolMetadata = {
   slug: 'dev-vault',
-  name: 'DevVault & Crypto',
+  name: {
+    en: 'DevVault & Crypto',
+    pl: 'DevVault & Hasła',
+  },
   category: 'productivity',
   description: {
     en: 'CSPRNG password & passphrase generator, IPv4/CIDR subnet calculator, Base64/JWT encoder, and SHA hashes.',

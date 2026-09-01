@@ -3,7 +3,10 @@ import { IconVolume } from '@alltools/ui'
 
 export interface ToolMetadata {
   slug: string
-  name: string
+  name: {
+    en: string
+    pl: string
+  }
   category: 'audio' | 'measurement' | 'productivity' | 'time'
   description: {
     en: string
@@ -19,7 +22,10 @@ export interface ToolMetadata {
 
 export const metadata: ToolMetadata = {
   slug: 'sound-meter',
-  name: 'Sound Meter & Decibels',
+  name: {
+    en: 'Sound Meter & Decibels',
+    pl: 'Decybelomierz & Hałas',
+  },
   category: 'audio',
   description: {
     en: 'Real-time noise and sound level meter (dBA/dBZ) with peak tracking, live wave chart, and microphone calibration.',
