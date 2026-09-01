@@ -10,8 +10,10 @@ import { metadata as qrSuiteMeta } from '@alltools/qr-suite'
 import { metadata as stopwatchIntervalMeta } from '@alltools/stopwatch-interval'
 import { metadata as quickNotesMeta } from '@alltools/quick-notes'
 import { metadata as screenRulerMeta } from '@alltools/screen-ruler'
+import { metadata as soundMeterMeta } from '@alltools/sound-meter'
 
 export const TOOLS_METADATA: ToolMetadata[] = [
+  soundMeterMeta,
   devVaultMeta,
   pdfSuiteMeta,
   imageStudioMeta,
@@ -26,6 +28,7 @@ export const TOOLS_METADATA: ToolMetadata[] = [
 
 // Dynamic lazy component loaders
 const loaders: Record<string, () => Promise<{ ToolComponent: React.ComponentType<any> }>> = {
+  'sound-meter': () => import('@alltools/sound-meter'),
   'dev-vault': () => import('@alltools/dev-vault'),
   'pdf-suite': () => import('@alltools/pdf-suite'),
   'image-studio': () => import('@alltools/image-studio'),

@@ -368,6 +368,8 @@ button, input, select {
 
 .header-menu-container {
   position: relative;
+  z-index: 20;
+  overflow: visible;
 }
 
 .header-menu-btn {
@@ -1214,7 +1216,7 @@ button, input, select {
   .header-actions {
     gap: var(--space-2);
     max-width: 58%;
-    overflow: hidden;
+    overflow: visible;
   }
   .header-game-stats,
   .header-tool-stats {
@@ -1274,7 +1276,7 @@ button, input, select {
   .header-logo { font-size: 0.9rem; }
   .header-game-title,
   .header-tool-title { max-width: 5.5rem; font-size: 0.75rem; padding-left: var(--space-1); }
-  .header-actions { max-width: 54%; gap: var(--space-1); overflow: hidden; }
+  .header-actions { max-width: 54%; gap: var(--space-1); overflow: visible; }
   .header-game-stats,
   .header-tool-stats { max-width: calc(100% - 40px); overflow: hidden; }
   .game-stats-header,

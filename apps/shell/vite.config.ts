@@ -59,6 +59,7 @@ export default defineConfig({
       '@alltools/stopwatch-interval': path.resolve(__dirname, '../../packages/tools/stopwatch-interval/src'),
       '@alltools/quick-notes': path.resolve(__dirname, '../../packages/tools/quick-notes/src'),
       '@alltools/screen-ruler': path.resolve(__dirname, '../../packages/tools/screen-ruler/src'),
+      '@alltools/sound-meter': path.resolve(__dirname, '../../packages/tools/sound-meter/src'),
     },
   },
   server: {

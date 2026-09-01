@@ -42,6 +42,7 @@ AllTools/
         ├── qr-suite/              # QR generation and scanning utility
         ├── quick-notes/           # Keep-style notes and checklist tool
         ├── screen-ruler/          # Screen calibration and measurement ruler
+        ├── sound-meter/           # Real-time decibel & noise level meter (dBA/dBZ)
         └── stopwatch-interval/    # Stopwatch, laps, and interval timer
 ```
 
