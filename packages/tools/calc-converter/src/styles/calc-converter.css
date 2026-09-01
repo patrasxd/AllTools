@@ -340,7 +340,8 @@
   border-color: var(--border-2);
   color: var(--text);
 }
-.conv-cat-pill--active {
+.conv-cat-pill--active,
+.conv-cat-pill--active:hover {
   background: var(--text);
   color: var(--bg);
   border-color: var(--text);

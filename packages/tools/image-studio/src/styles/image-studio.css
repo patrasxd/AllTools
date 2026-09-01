@@ -337,7 +337,8 @@
   border-color: var(--border-2);
   color: var(--text);
 }
-.img-pill-btn--active {
+.img-pill-btn--active,
+.img-pill-btn--active:hover {
   background: var(--text);
   color: var(--bg);
   border-color: var(--text);

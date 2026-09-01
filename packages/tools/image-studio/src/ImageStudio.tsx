@@ -92,7 +92,14 @@ export function ImageStudio({ locale = 'en', setHeader }: ToolComponentProps) {
   })
 
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const dragStartRef = useRef<{ x: number; y: number; startOffsetX: number; startOffsetY: number } | null>(null)
+  const dragStartRef = useRef<{
+    x: number
+    y: number
+    rectWidth: number
+    rectHeight: number
+    startOffsetX: number
+    startOffsetY: number
+  } | null>(null)
 
   // ─── Render Engine Pipeline ─────────────────────────────────
   const processImage = useCallback(async () => {
@@ -173,13 +180,16 @@ export function ImageStudio({ locale = 'en', setHeader }: ToolComponentProps) {
     )
   }, [setHeader, isPl, loadedImage, originalBytes, outputBytes, format, outputDimensions])
 
-  // ─── Drag to Pan on Preview ─────────────────────────────────
+  // ─── Smooth Direct Drag to Pan on Preview ───────────────────
   const handlePointerDown = (e: React.PointerEvent) => {
     if (showOriginal) return
     setIsDragging(true)
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
     dragStartRef.current = {
       x: e.clientX,
       y: e.clientY,
+      rectWidth: rect.width || 300,
+      rectHeight: rect.height || 300,
       startOffsetX: resize.crop.offsetX,
       startOffsetY: resize.crop.offsetY,
     }
@@ -191,9 +201,12 @@ export function ImageStudio({ locale = 'en', setHeader }: ToolComponentProps) {
     const deltaX = e.clientX - dragStartRef.current.x
     const deltaY = e.clientY - dragStartRef.current.y
 
-    const sensitivity = 0.006 / (resize.crop.zoom || 1)
-    const newOffsetX = Math.max(-1, Math.min(1, dragStartRef.current.startOffsetX - deltaX * sensitivity))
-    const newOffsetY = Math.max(-1, Math.min(1, dragStartRef.current.startOffsetY - deltaY * sensitivity))
+    const panFactor = 2.0 / Math.max(1, resize.crop.zoom || 1)
+    const normDeltaX = (deltaX / dragStartRef.current.rectWidth) * panFactor
+    const normDeltaY = (deltaY / dragStartRef.current.rectHeight) * panFactor
+
+    const newOffsetX = Math.max(-1, Math.min(1, dragStartRef.current.startOffsetX - normDeltaX))
+    const newOffsetY = Math.max(-1, Math.min(1, dragStartRef.current.startOffsetY - normDeltaY))
 
     setResize((r) => ({
       ...r,
@@ -511,36 +524,38 @@ export function ImageStudio({ locale = 'en', setHeader }: ToolComponentProps) {
                       />
                     </div>
 
-                    <div className="img-field-slider">
-                      <label className="img-slider-label">
-                        <span>Pan X / Y</span>
-                        <button
-                          type="button"
-                          className="img-text-link"
-                          onClick={() =>
-                            setResize((r) => ({
-                              ...r,
-                              crop: { ...r.crop, offsetX: 0, offsetY: 0, zoom: 1 },
-                            }))
-                          }
-                        >
-                          {isPl ? 'Środek' : 'Center'}
-                        </button>
-                      </label>
-                      <input
-                        type="range"
-                        min="-1"
-                        max="1"
-                        step="0.02"
-                        value={resize.crop.offsetY}
-                        onChange={(e) =>
+                    <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <button
+                        type="button"
+                        className="img-pill-btn"
+                        style={{ flex: 1 }}
+                        onClick={() =>
                           setResize((r) => ({
                             ...r,
-                            crop: { ...r.crop, offsetY: Number(e.target.value) },
+                            crop: { ...r.crop, offsetX: 0, offsetY: 0 },
                           }))
                         }
-                        className="img-range"
-                      />
+                      >
+                        {isPl ? '◎ Wyśrodkuj kadr' : '◎ Center crop'}
+                      </button>
+
+                      <button
+                        type="button"
+                        className="img-pill-btn"
+                        style={{ flex: 1 }}
+                        onClick={() =>
+                          setResize((r) => ({
+                            ...r,
+                            crop: { ...r.crop, offsetX: 0, offsetY: 0, zoom: 1 },
+                          }))
+                        }
+                      >
+                        {isPl ? '↺ Reset zoom (1×)' : '↺ Reset zoom (1×)'}
+                      </button>
+                    </div>
+
+                    <div style={{ fontSize: '0.625rem', color: 'var(--text-dim)', textAlign: 'center', marginTop: '0.1rem' }}>
+                      {isPl ? 'Przesuwaj bezpośrednio po zdjęciu, aby ustawić kadr' : 'Drag directly on the image to adjust framing'}
                     </div>
                   </div>
                 </div>
