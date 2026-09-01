@@ -69,6 +69,10 @@ export function ToolPage() {
   const { isEink } = useEink()
   const metadata = TOOLS_METADATA.find(item => item.slug === slug)
 
+  const handleBackToTools = useCallback(() => {
+    navigate('/')
+  }, [navigate])
+
   const [ToolComp, setToolComp] = useState<React.ComponentType<any> | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
 
@@ -119,7 +123,7 @@ export function ToolPage() {
           <button
             id={`back-btn-${slug}`}
             className="game-floating-back"
-            onClick={() => navigate(-1)}
+            onClick={handleBackToTools}
             aria-label={t.backToToolsAria}
             title={t.backToTools}
           >
