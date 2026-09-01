@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { BubbleLevel } from './components/BubbleLevel'
 import { Protractor } from './components/Protractor'
+import { Compass } from './components/Compass'
 import {
   PillGroup,
   StatsHeader,
@@ -17,7 +18,7 @@ export interface ToolComponentProps {
 }
 
 export function LevelProtractor({ locale = 'en', setHeader }: ToolComponentProps) {
-  const [activeTab, setActiveTab] = useState<'level' | 'protractor'>('level')
+  const [activeTab, setActiveTab] = useState<'level' | 'protractor' | 'compass'>('level')
 
   // Level State
   const [pitch, setPitch] = useState<number>(0)
@@ -62,6 +63,12 @@ export function LevelProtractor({ locale = 'en', setHeader }: ToolComponentProps
     rad: 0.785,
   })
 
+  // Compass State
+  const [compassStats, setCompassStats] = useState<{ heading: number; direction: string }>({
+    heading: 0,
+    direction: 'N',
+  })
+
   // Sync StatsHeader to shell top title bar
   useEffect(() => {
     if (!setHeader) return
@@ -90,7 +97,7 @@ export function LevelProtractor({ locale = 'en', setHeader }: ToolComponentProps
           ]}
         />
       )
-    } else {
+    } else if (activeTab === 'protractor') {
       setHeader(
         <StatsHeader
           label={locale === 'pl' ? 'KĄTOMIERZ' : 'PROTRACTOR'}
@@ -113,12 +120,36 @@ export function LevelProtractor({ locale = 'en', setHeader }: ToolComponentProps
           ]}
         />
       )
+    } else {
+      setHeader(
+        <StatsHeader
+          label={locale === 'pl' ? 'KOMPAS CYFROWY' : 'DIGITAL COMPASS'}
+          items={[
+            {
+              key: 'heading',
+              label: locale === 'pl' ? 'AZYMUT' : 'HEADING',
+              value: `${compassStats.heading}°`,
+            },
+            {
+              key: 'dir',
+              label: locale === 'pl' ? 'KIERUNEK' : 'DIRECTION',
+              value: compassStats.direction,
+            },
+            {
+              key: 'type',
+              label: 'TYP',
+              value: 'MAGN.',
+            },
+          ]}
+        />
+      )
     }
-  }, [setHeader, activeTab, levelStats, protractorStats, locale])
+  }, [setHeader, activeTab, levelStats, protractorStats, compassStats, locale])
 
   const tabOptions = [
     { value: 'level' as const, label: locale === 'pl' ? 'Poziomica' : 'Level' },
     { value: 'protractor' as const, label: locale === 'pl' ? 'Kątomierz' : 'Protractor' },
+    { value: 'compass' as const, label: locale === 'pl' ? 'Kompas' : 'Compass' },
   ]
 
   const calibrate = () => {
@@ -140,14 +171,20 @@ export function LevelProtractor({ locale = 'en', setHeader }: ToolComponentProps
             ? levelStats.isLevel
               ? (locale === 'pl' ? 'Idealny poziom (0.0°)' : 'Perfect level (0.0°)')
               : (locale === 'pl' ? 'Wykryto nachylenie' : 'Tilt detected')
+            : activeTab === 'protractor'
+            ? isFrozen
+              ? (locale === 'pl' ? 'Kąt zablokowany' : 'Angle locked')
+              : `${formatAngle(protractorStats.angle, 1)} (${protractorStats.angle < 90 ? (locale === 'pl' ? 'Kąt ostry' : 'Acute angle') : protractorStats.angle === 90 ? (locale === 'pl' ? 'Kąt prosty' : 'Right angle') : (locale === 'pl' ? 'Kąt rozwarty' : 'Obtuse angle')})`
             : isFrozen
-            ? (locale === 'pl' ? 'Kąt zablokowany' : 'Angle locked')
-            : `${formatAngle(protractorStats.angle, 1)} (${protractorStats.angle < 90 ? (locale === 'pl' ? 'Kąt ostry' : 'Acute angle') : protractorStats.angle === 90 ? (locale === 'pl' ? 'Kąt prosty' : 'Right angle') : (locale === 'pl' ? 'Kąt rozwarty' : 'Obtuse angle')})`}
+            ? (locale === 'pl' ? 'Kierunek zablokowany' : 'Heading locked')
+            : `${compassStats.heading}° ${compassStats.direction} (${locale === 'pl' ? 'Północ magnetyczna' : 'Magnetic North'})`}
         </div>
         <div className="level-status-sub">
           {activeTab === 'level'
             ? `ROLL: ${formatAngle(levelStats.roll, 1)} · PITCH: ${formatAngle(levelStats.pitch, 1)}`
-            : `RAD: ${protractorStats.rad.toFixed(3)} · 180°-θ: ${formatAngle(Math.max(0, 180 - protractorStats.angle), 1)}`}
+            : activeTab === 'protractor'
+            ? `RAD: ${protractorStats.rad.toFixed(3)} · 180°-θ: ${formatAngle(Math.max(0, 180 - protractorStats.angle), 1)}`
+            : `AZYMUT: ${compassStats.heading}° · KIERUNEK: ${compassStats.direction}`}
         </div>
       </div>
 
@@ -164,7 +201,7 @@ export function LevelProtractor({ locale = 'en', setHeader }: ToolComponentProps
             setPitch={setPitch}
             setRoll={setRoll}
           />
-        ) : (
+        ) : activeTab === 'protractor' ? (
           <Protractor
             locale={locale}
             onStatsChange={setProtractorStats}
@@ -175,6 +212,12 @@ export function LevelProtractor({ locale = 'en', setHeader }: ToolComponentProps
             activeArm={activeArm}
             setActiveArm={setActiveArm}
             isFrozen={isFrozen}
+          />
+        ) : (
+          <Compass
+            locale={locale}
+            isFrozen={isFrozen}
+            onHeadingChange={(heading, direction) => setCompassStats({ heading, direction })}
           />
         )}
       </div>
@@ -193,7 +236,7 @@ export function LevelProtractor({ locale = 'en', setHeader }: ToolComponentProps
                 </GameButton>
               )}
             </>
-          ) : (
+          ) : activeTab === 'protractor' ? (
             <>
               <GameButton
                 variant={isFrozen ? 'primary' : 'secondary'}
@@ -214,13 +257,24 @@ export function LevelProtractor({ locale = 'en', setHeader }: ToolComponentProps
                 {locale === 'pl' ? 'Reset (45°)' : 'Reset (45°)'}
               </GameButton>
             </>
+          ) : (
+            <GameButton
+              variant={isFrozen ? 'primary' : 'secondary'}
+              size="md"
+              onClick={() => setIsFrozen(!isFrozen)}
+            >
+              {isFrozen ? (locale === 'pl' ? 'Odblokuj' : 'Unlock') : (locale === 'pl' ? 'Zablokuj' : 'Lock')}
+            </GameButton>
           )}
 
-          {/* Mode Switcher Pills (matching Stopwatch STOPER | INTERWAŁY) */}
+          {/* Mode Switcher Pills */}
           <PillGroup
             options={tabOptions}
             value={activeTab}
-            onChange={setActiveTab}
+            onChange={(t) => {
+              setActiveTab(t)
+              setIsFrozen(false)
+            }}
           />
         </ControlsBar>
       </div>

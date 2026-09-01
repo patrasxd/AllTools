@@ -4,17 +4,17 @@ import { IconProtractor } from '@alltools/ui'
 export const metadata = {
   slug: 'level-protractor',
   name: {
-    en: 'Level & Protractor',
-    pl: 'Poziomica & Kątomierz',
+    en: 'Level, Protractor & Compass',
+    pl: 'Poziomica, Kątomierz & Kompas',
   },
   description: {
-    en: '2D surface bubble level, tubular spirit level, and rotational angle protractor with camera overlay.',
-    pl: 'Poziomica 2D i rurkowa z czujnikami orientacji oraz precyzyjny kątomierz obrotowy.',
+    en: '2D surface bubble level, rotational angle protractor, and digital magnetic compass.',
+    pl: 'Poziomica 2D z czujnikami orientacji, kątomierz obrotowy oraz cyfrowy kompas magnetyczny.',
   },
   icon: <IconProtractor size={24} strokeWidth={1.5} />,
   category: 'measurement' as const,
   tags: {
-    en: ['level', 'protractor', 'angle', 'measure', 'sensor'],
-    pl: ['poziomica', 'kątomierz', 'kąt', 'pomiary', 'czujnik'],
+    en: ['level', 'protractor', 'compass', 'angle', 'heading', 'measure', 'sensor'],
+    pl: ['poziomica', 'kątomierz', 'kompas', 'kąt', 'azymut', 'pomiary', 'czujnik'],
   },
 }
