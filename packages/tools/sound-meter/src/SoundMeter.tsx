@@ -7,7 +7,6 @@ import {
   IconPlay,
   IconPause,
   IconRotateCcw,
-  IconMic,
 } from '@alltools/ui'
 import type { SoundMeterMode, SoundWeighting } from './types'
 import {
@@ -64,10 +63,10 @@ export function SoundMeter({ locale = 'en', setHeader }: ToolComponentProps) {
       <StatsHeader
         label={isPl ? 'DECYBELOMIERZ' : 'SOUND LEVEL METER'}
         items={[
-          { key: 'cur', label: 'BIEŻĄCY', value: `${currentDb.toFixed(1)} dB` },
+          { key: 'cur', label: isPl ? 'BIEŻĄCY' : 'CURRENT', value: `${currentDb.toFixed(1)} dB` },
           { key: 'peak', label: isPl ? 'SZCZYT' : 'PEAK', value: maxDb > 0 ? `${maxDb.toFixed(1)} dB` : '--' },
           { key: 'avg', label: isPl ? 'ŚREDNIA' : 'AVG', value: avgDb > 0 ? `${avgDb.toFixed(1)} dB` : '--' },
-          { key: 'filter', label: 'FILTR', value: weighting },
+          { key: 'filter', label: isPl ? 'FILTR' : 'FILTER', value: weighting },
         ]}
       />
     )
@@ -167,7 +166,7 @@ export function SoundMeter({ locale = 'en', setHeader }: ToolComponentProps) {
 
     const width = rect.width
     const height = rect.height
-    const bottomPadding = 18 // space for time labels
+    const bottomPadding = 16 // space for time labels
 
     ctx.clearRect(0, 0, width, height)
 
@@ -207,7 +206,7 @@ export function SoundMeter({ locale = 'en', setHeader }: ToolComponentProps) {
 
       ctx.fillStyle = 'rgba(128, 128, 128, 0.6)'
       const textX = tm.pos === 1 ? x - 26 : tm.pos === 0 ? x + 4 : x - 10
-      ctx.fillText(tm.label, textX, height - 4)
+      ctx.fillText(tm.label, textX, height - 3)
     })
 
     // Noise level history curve
@@ -237,8 +236,7 @@ export function SoundMeter({ locale = 'en', setHeader }: ToolComponentProps) {
 
   const modeOptions = [
     { value: 'meter' as const, label: isPl ? 'Miernik' : 'Meter' },
-    { value: 'chart' as const, label: isPl ? 'Wykres' : 'Chart' },
-    { value: 'settings' as const, label: isPl ? 'Kalibracja' : 'Calibrate' },
+    { value: 'settings' as const, label: isPl ? 'Kalibracja' : 'Settings' },
   ]
 
   return (
@@ -273,49 +271,52 @@ export function SoundMeter({ locale = 'en', setHeader }: ToolComponentProps) {
 
           {!permissionDenied && (
             <>
-              {/* ─── Big Digital Decibel Screen ─── */}
-              <div className="sound-display-gauge">
-                <div className="sound-db-value-row">
-                  <span className="sound-db-number">
-                    {isActive ? currentDb.toFixed(1) : '--.-'}
-                  </span>
-                  <span className="sound-db-unit">{weighting}</span>
-                </div>
-                <div className="sound-reference-tag">
-                  {isActive ? reference.label : (isPl ? 'Gotowy do pomiaru' : 'Ready to measure')}
-                </div>
-                <div className="sound-level-track">
-                  <div
-                    className="sound-level-fill"
-                    style={{ width: `${Math.min(100, Math.max(0, ((currentDb - 20) / 100) * 100))}%` }}
-                  />
-                </div>
-              </div>
+              {/* ─── MAIN METER VIEW: GAUGE + METRICS + INTEGRATED CHART ─── */}
+              {activeMode === 'meter' && (
+                <>
+                  {/* Big Digital Decibel Screen */}
+                  <div className="sound-display-gauge">
+                    <div className="sound-db-value-row">
+                      <span className="sound-db-number">
+                        {isActive ? currentDb.toFixed(1) : '--.-'}
+                      </span>
+                      <span className="sound-db-unit">{weighting}</span>
+                    </div>
+                    <div className="sound-reference-tag">
+                      {isActive ? reference.label : (isPl ? 'Gotowy do pomiaru' : 'Ready to measure')}
+                    </div>
+                    <div className="sound-level-track">
+                      <div
+                        className="sound-level-fill"
+                        style={{ width: `${Math.min(100, Math.max(0, ((currentDb - 20) / 100) * 100))}%` }}
+                      />
+                    </div>
+                  </div>
 
-              {/* ─── Metric Cells (MIN / AVG / MAX) ─── */}
-              <div className="sound-metrics-grid">
-                <div className="sound-metric-cell">
-                  <span className="sound-metric-label">{isPl ? 'Minimum' : 'Min'}</span>
-                  <span className="sound-metric-val">{minDb < 999 ? `${minDb.toFixed(1)} dB` : '--'}</span>
-                </div>
-                <div className="sound-metric-cell">
-                  <span className="sound-metric-label">{isPl ? 'Średnia' : 'Average'}</span>
-                  <span className="sound-metric-val">{avgDb > 0 ? `${avgDb.toFixed(1)} dB` : '--'}</span>
-                </div>
-                <div className="sound-metric-cell">
-                  <span className="sound-metric-label">{isPl ? 'Szczyt' : 'Max / Peak'}</span>
-                  <span className="sound-metric-val">{maxDb > 0 ? `${maxDb.toFixed(1)} dB` : '--'}</span>
-                </div>
-              </div>
+                  {/* Metric Cells (MIN / AVG / MAX) */}
+                  <div className="sound-metrics-grid">
+                    <div className="sound-metric-cell">
+                      <span className="sound-metric-label">{isPl ? 'Minimum' : 'Min'}</span>
+                      <span className="sound-metric-val">{minDb < 999 ? `${minDb.toFixed(1)} dB` : '--'}</span>
+                    </div>
+                    <div className="sound-metric-cell">
+                      <span className="sound-metric-label">{isPl ? 'Średnia' : 'Average'}</span>
+                      <span className="sound-metric-val">{avgDb > 0 ? `${avgDb.toFixed(1)} dB` : '--'}</span>
+                    </div>
+                    <div className="sound-metric-cell">
+                      <span className="sound-metric-label">{isPl ? 'Szczyt' : 'Max / Peak'}</span>
+                      <span className="sound-metric-val">{maxDb > 0 ? `${maxDb.toFixed(1)} dB` : '--'}</span>
+                    </div>
+                  </div>
 
-              {/* ─── MODE: LIVE ROLLING CHART ─── */}
-              {activeMode === 'chart' && (
-                <div className="sound-canvas-container">
-                  <canvas ref={canvasRef} className="sound-canvas-elem" />
-                </div>
+                  {/* Integrated 60-Second Live Rolling Waveform Canvas */}
+                  <div className="sound-canvas-container">
+                    <canvas ref={canvasRef} className="sound-canvas-elem" />
+                  </div>
+                </>
               )}
 
-              {/* ─── MODE: CALIBRATION & FILTER SETTINGS ─── */}
+              {/* ─── SETTINGS / CALIBRATION VIEW ─── */}
               {activeMode === 'settings' && (
                 <div className="sound-calibration-box">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -324,15 +325,15 @@ export function SoundMeter({ locale = 'en', setHeader }: ToolComponentProps) {
                     </span>
                     <PillGroup
                       options={[
-                        { value: 'dBA', label: 'dBA (Ucho)' },
-                        { value: 'dBZ', label: 'dBZ (Płaski)' },
+                        { value: 'dBA', label: isPl ? 'dBA (Ucho)' : 'dBA (Human Ear)' },
+                        { value: 'dBZ', label: isPl ? 'dBZ (Płaski)' : 'dBZ (Flat)' },
                       ]}
                       value={weighting}
                       onChange={(w) => setWeighting(w as SoundWeighting)}
                     />
                   </div>
 
-                  <div className="sound-slider-row" style={{ marginTop: '0.5rem' }}>
+                  <div className="sound-slider-row" style={{ marginTop: '0.75rem' }}>
                     <label htmlFor={calSliderId}>
                       {isPl ? 'Kompensacja mikrofonu:' : 'Offset Calibration:'}{' '}
                       <strong>{calibration > 0 ? `+${calibration}` : calibration} dB</strong>

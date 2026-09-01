@@ -151,7 +151,7 @@ export function DevVault({ locale = 'en', setHeader }: ToolComponentProps) {
     if (activeMode === 'password') {
       items = [
         { key: 'len', label: isPl ? 'DŁUGOŚĆ' : 'LENGTH', value: pwdConfig.length },
-        { key: 'ent', label: isPl ? 'ENTROPIA' : 'ENTROPY', value: `${strength.entropy} bitów` },
+        { key: 'ent', label: isPl ? 'ENTROPIA' : 'ENTROPY', value: `${strength.entropy} ${isPl ? 'bitów' : 'bits'}` },
       ]
     } else if (activeMode === 'network') {
       items = [
@@ -250,15 +250,22 @@ export function DevVault({ locale = 'en', setHeader }: ToolComponentProps) {
                 </GameButton>
               </div>
 
-              {/* Entropy & Strength */}
+              {/* Entropy & Strength with Dynamic Colors */}
               <div className="vault-strength-box">
                 <div className="vault-strength-meta">
                   <span>
                     {isPl ? 'Siła:' : 'Strength:'}{' '}
-                    <span className="vault-strength-badge">
+                    <span
+                      className="vault-strength-badge"
+                      style={{
+                        color: strength.color,
+                        borderColor: `${strength.color}66`,
+                        backgroundColor: `${strength.color}15`,
+                      }}
+                    >
                       {isPl ? strength.labelPl : strength.labelEn}
                     </span>{' '}
-                    ({strength.entropy} bitów)
+                    ({strength.entropy} {isPl ? 'bitów' : 'bits'})
                   </span>
                   <span>
                     {isPl ? 'Czas złamania:' : 'Crack time:'}{' '}
@@ -268,7 +275,10 @@ export function DevVault({ locale = 'en', setHeader }: ToolComponentProps) {
                 <div className="vault-strength-track">
                   <div
                     className="vault-strength-bar"
-                    style={{ width: `${strength.score}%` }}
+                    style={{
+                      width: `${strength.score}%`,
+                      backgroundColor: strength.color,
+                    }}
                   />
                 </div>
               </div>
@@ -276,7 +286,7 @@ export function DevVault({ locale = 'en', setHeader }: ToolComponentProps) {
               {/* Length Slider */}
               <div className="vault-control-row">
                 <label htmlFor={sliderId}>
-                  {isPl ? 'Długość:' : 'Length:'} <strong>{pwdConfig.length}</strong> znaków
+                  {isPl ? 'Długość:' : 'Length:'} <strong>{pwdConfig.length}</strong> {isPl ? 'znaków' : 'chars'}
                 </label>
                 <input
                   id={sliderId}

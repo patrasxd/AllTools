@@ -1,4 +1,4 @@
-export type SoundMeterMode = 'meter' | 'chart' | 'settings'
+export type SoundMeterMode = 'meter' | 'settings'
 
 export type SoundWeighting = 'dBA' | 'dBZ' // A-weighted or flat Z-weighted
 

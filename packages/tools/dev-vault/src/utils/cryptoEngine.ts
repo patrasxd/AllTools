@@ -122,6 +122,7 @@ export function calculatePasswordStrength(password: string): PasswordStrength {
       labelPl: 'Puste',
       crackTimeEn: 'Instant',
       crackTimePl: 'Natychmiast',
+      color: '#ef4444',
     }
   }
 
@@ -140,30 +141,35 @@ export function calculatePasswordStrength(password: string): PasswordStrength {
   let labelPl = 'Słabe'
   let crackTimeEn = 'Seconds'
   let crackTimePl = 'Sekundy'
+  let color = '#ef4444' // Red
 
   if (entropy >= 80) {
     labelEn = 'Military Grade'
     labelPl = 'Bardzo silne'
     crackTimeEn = 'Centuries'
     crackTimePl = 'Stulecia'
+    color = '#10b981' // Green
   } else if (entropy >= 60) {
     labelEn = 'Strong'
     labelPl = 'Silne'
     crackTimeEn = 'Years'
     crackTimePl = 'Lata'
+    color = '#84cc16' // Light green / Lime
   } else if (entropy >= 40) {
     labelEn = 'Medium'
     labelPl = 'Średnie'
     crackTimeEn = 'Days'
     crackTimePl = 'Dni'
+    color = '#f59e0b' // Amber / Orange
   } else {
     labelEn = 'Weak'
     labelPl = 'Słabe'
     crackTimeEn = 'Minutes'
     crackTimePl = 'Minuty'
+    color = '#ef4444' // Red
   }
 
-  return { entropy, score, labelEn, labelPl, crackTimeEn, crackTimePl }
+  return { entropy, score, labelEn, labelPl, crackTimeEn, crackTimePl, color }
 }
 
 // ─── 3. IPv4 Subnet / CIDR Calculator ─────────────────────────

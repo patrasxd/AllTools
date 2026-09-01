@@ -19,6 +19,7 @@ export interface PasswordStrength {
   labelPl: string
   crackTimeEn: string
   crackTimePl: string
+  color: string
 }
 
 export interface SubnetInfo {
