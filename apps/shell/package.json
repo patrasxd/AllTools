@@ -21,7 +21,7 @@
     "@alltools/sound-meter": "*",
     "@alltools/stopwatch-interval": "*",
     "@alltools/ui": "*",
-    "@all/ui": "file:../../../AllUI",
+    "@all/ui": "github:patrasxd/AllUI#main",
     "framer-motion": "^11.3.0",
     "jsqr": "^1.4.0",
     "qrcode": "^1.5.4",
