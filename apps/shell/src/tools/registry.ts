@@ -1,16 +1,16 @@
 import { ToolMetadata } from '../types/tool'
 
-import { metadata as calcConverterMeta } from '@alltools/calc-converter'
-import { metadata as devVaultMeta } from '@alltools/dev-vault'
-import { metadata as imageStudioMeta } from '@alltools/image-studio'
-import { metadata as pdfSuiteMeta } from '@alltools/pdf-suite'
-import { metadata as guitarTunerMeta } from '@alltools/guitar-tuner'
-import { metadata as levelProtractorMeta } from '@alltools/level-protractor'
-import { metadata as qrSuiteMeta } from '@alltools/qr-suite'
-import { metadata as stopwatchIntervalMeta } from '@alltools/stopwatch-interval'
-import { metadata as quickNotesMeta } from '@alltools/quick-notes'
-import { metadata as screenRulerMeta } from '@alltools/screen-ruler'
-import { metadata as soundMeterMeta } from '@alltools/sound-meter'
+import { metadata as calcConverterMeta } from '@alltools/calc-converter/metadata'
+import { metadata as devVaultMeta } from '@alltools/dev-vault/metadata'
+import { metadata as imageStudioMeta } from '@alltools/image-studio/metadata'
+import { metadata as pdfSuiteMeta } from '@alltools/pdf-suite/metadata'
+import { metadata as guitarTunerMeta } from '@alltools/guitar-tuner/metadata'
+import { metadata as levelProtractorMeta } from '@alltools/level-protractor/metadata'
+import { metadata as qrSuiteMeta } from '@alltools/qr-suite/metadata'
+import { metadata as stopwatchIntervalMeta } from '@alltools/stopwatch-interval/metadata'
+import { metadata as quickNotesMeta } from '@alltools/quick-notes/metadata'
+import { metadata as screenRulerMeta } from '@alltools/screen-ruler/metadata'
+import { metadata as soundMeterMeta } from '@alltools/sound-meter/metadata'
 
 export const TOOLS_METADATA: ToolMetadata[] = [
   soundMeterMeta,

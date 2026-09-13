@@ -27,7 +27,8 @@
       "@alltools/stopwatch-interval": ["../../packages/tools/stopwatch-interval/src"],
       "@alltools/quick-notes": ["../../packages/tools/quick-notes/src"],
       "@alltools/screen-ruler": ["../../packages/tools/screen-ruler/src"],
-      "@alltools/sound-meter": ["../../packages/tools/sound-meter/src"]
+      "@alltools/sound-meter": ["../../packages/tools/sound-meter/src"],
+      "@alltools/*/metadata": ["../../packages/tools/*/src/metadata.tsx"]
     }
   },
   "include": ["src", "../../packages/*/src", "../../packages/tools/*/src"]
