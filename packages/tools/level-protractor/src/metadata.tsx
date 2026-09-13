@@ -14,7 +14,7 @@ export const metadata = {
   icon: <IconProtractor size={24} strokeWidth={1.5} />,
   category: 'measurement' as const,
   tags: {
-    en: ['level', 'protractor', 'compass', 'angle', 'heading', 'measure', 'sensor'],
-    pl: ['poziomica', 'kątomierz', 'kompas', 'kąt', 'azymut', 'pomiary', 'czujnik'],
+    en: ['Measurement', 'Sensor'],
+    pl: ['Pomiar', 'Czujnik'],
   },
 }

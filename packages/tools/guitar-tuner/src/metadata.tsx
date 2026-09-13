@@ -14,7 +14,7 @@ export const metadata = {
   icon: <IconGuitar size={24} strokeWidth={1.5} />,
   category: 'audio' as const,
   tags: {
-    en: ['tuner', 'guitar', 'pitch', 'audio', 'chromatic', 'instrument'],
-    pl: ['tuner', 'gitara', 'dźwięk', 'audio', 'chromatyczny', 'instrument'],
+    en: ['Audio', 'Instrument'],
+    pl: ['Audio', 'Instrument'],
   },
 }

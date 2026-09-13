@@ -32,8 +32,8 @@ export const metadata: ToolMetadata = {
     pl: 'Miernik natężenia dźwięku i decybelomierz w czasie rzeczywistym (dBA/dBZ) ze śledzeniem szczytów i wykresem.',
   },
   tags: {
-    en: ['Decibels', 'Sound', 'Noise', 'Audio', 'Microphone', 'dB', 'Meter'],
-    pl: ['Decybele', 'Dźwięk', 'Hałas', 'Audio', 'Mikrofon', 'dB', 'Miernik'],
+    en: ['Audio', 'Measurement'],
+    pl: ['Audio', 'Pomiar'],
   },
   icon: <IconVolume size={24} />,
   version: '1.0.0',

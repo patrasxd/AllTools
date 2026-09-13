@@ -14,7 +14,7 @@ export const metadata = {
   icon: <IconCalculator size={24} strokeWidth={1.5} />,
   category: 'math' as const,
   tags: {
-    en: ['calculator', 'converter', 'units', 'weight', 'kitchen', 'travel', 'knots', 'bits', 'hex', 'psi', 'mpg'],
-    pl: ['kalkulator', 'konwerter', 'przelicznik', 'jednostki', 'waga', 'kuchnia', 'podroze', 'wezly', 'bity', 'hex', 'psi', 'mpg'],
+    en: ['Calculator', 'Converter'],
+    pl: ['Kalkulator', 'Konwerter'],
   },
 }

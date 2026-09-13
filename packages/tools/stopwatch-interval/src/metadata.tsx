@@ -14,7 +14,7 @@ export const metadata = {
   icon: <IconStopwatch size={24} strokeWidth={1.5} />,
   category: 'productivity' as const,
   tags: {
-    en: ['stopwatch', 'timer', 'intervals', 'hiit', 'tabata', 'pomodoro', 'laps'],
-    pl: ['stoper', 'minutnik', 'interwały', 'hiit', 'tabata', 'pomodoro', 'okrążenia'],
+    en: ['Timer', 'Productivity'],
+    pl: ['Timer', 'Produktywność'],
   },
 }

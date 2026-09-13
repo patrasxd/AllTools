@@ -14,7 +14,7 @@ export const metadata = {
   icon: <IconNotes size={24} strokeWidth={1.5} />,
   category: 'productivity' as const,
   tags: {
-    en: ['notes', 'checklist', 'todo', 'shopping', 'keep'],
-    pl: ['notatki', 'lista', 'zakupy', 'zadania', 'todo', 'keep'],
+    en: ['Productivity'],
+    pl: ['Produktywność'],
   },
 }

@@ -32,8 +32,8 @@ export const metadata: ToolMetadata = {
     pl: 'Kryptograficzny generator haseł CSPRNG, kalkulator podsieci IPv4/CIDR, enkoder Base64/JWT oraz hasze SHA.',
   },
   tags: {
-    en: ['Password', 'Crypto', 'CIDR', 'Subnet', 'Base64', 'JWT', 'Hash', 'UUID'],
-    pl: ['Hasła', 'Krypto', 'CIDR', 'Podsieci', 'Base64', 'JWT', 'Hasze', 'UUID'],
+    en: ['Developer', 'Crypto'],
+    pl: ['Developer', 'Krypto'],
   },
   icon: <IconKey size={24} />,
   version: '1.0.0',

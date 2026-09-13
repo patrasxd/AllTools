@@ -14,7 +14,7 @@ export const metadata = {
   icon: <IconPhoto size={24} strokeWidth={1.5} />,
   category: 'media' as const,
   tags: {
-    en: ['image', 'photo', 'watermark', 'converter', 'heic', 'compress', 'crop', 'passport', 'resize'],
-    pl: ['zdjęcie', 'obraz', 'znak wodny', 'konwerter', 'heic', 'kompresja', 'kadrowanie', 'dowód', 'paszport', 'rozmiar'],
+    en: ['Photo', 'Converter'],
+    pl: ['Zdjęcia', 'Konwerter'],
   },
 }

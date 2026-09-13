@@ -14,7 +14,7 @@ export const metadata = {
   icon: <IconQrCode size={24} strokeWidth={1.5} />,
   category: 'utility' as const,
   tags: {
-    en: ['qr', 'generator', 'scanner', 'code', 'wifi', 'vcard', 'camera'],
-    pl: ['qr', 'generator', 'skaner', 'kod', 'wifi', 'kontakt', 'kamera'],
+    en: ['Camera', 'Code'],
+    pl: ['Kamera', 'Kod'],
   },
 }

@@ -14,7 +14,7 @@ export const metadata = {
   icon: <IconRuler size={24} strokeWidth={1.5} />,
   category: 'measurement' as const,
   tags: {
-    en: ['ruler', 'caliper', 'measure', 'scale', 'inch', 'millimeter', 'card'],
-    pl: ['linijka', 'suwmiarka', 'pomiar', 'skala', 'centymetr', 'milimetr', 'karta'],
+    en: ['Measurement'],
+    pl: ['Pomiar'],
   },
 }

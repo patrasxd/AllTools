@@ -14,7 +14,7 @@ export const metadata = {
   icon: <IconFileText size={24} strokeWidth={1.5} />,
   category: 'utility' as const,
   tags: {
-    en: ['pdf', 'merge', 'split', 'rotate', 'combine', 'documents', 'convert'],
-    pl: ['pdf', 'łączenie', 'dzielenie', 'obracanie', 'dokumenty', 'konwerter'],
+    en: ['Documents', 'Converter'],
+    pl: ['Dokumenty', 'Konwerter'],
   },
 }
