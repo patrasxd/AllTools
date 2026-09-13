@@ -1249,7 +1249,7 @@ button, input, select {
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  padding: var(--space-8) 0 var(--space-16);
+  padding: var(--space-16) 0 var(--space-20);
 }
 
 /* ─── Responsive ──────────────────────────────────────────── */
