@@ -5,7 +5,7 @@
 AllTools is a multi-package utility monorepo managed with npm workspaces:
 
 - `apps/shell`: The central Vite + React 18 + TypeScript + PWA shell (mounted at base path `/AllTools/`).
-- `packages/ui`: Product-local UI components (`@alltools/ui`), to be migrated toward `@all/ui`.
+- `packages/ui`: Local UI package (`@alltools/ui`), now re-exporting unified, tokenized components from `@all/ui` for 100% backward compatibility.
 - `packages/tools/*`: 11 individual, self-contained tool packages (`calc-converter`, `dev-vault`, `guitar-tuner`, `image-studio`, `level-protractor`, `pdf-suite`, `qr-suite`, `quick-notes`, `screen-ruler`, `sound-meter`, `stopwatch-interval`).
 
 ## Shell & Registry Contract

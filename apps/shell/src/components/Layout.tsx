@@ -1,5 +1,6 @@
 import { createContext, useContext, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { AppHeader } from '@all/ui'
 import { HeaderMenu } from './HeaderMenu'
 import { useI18n } from '../i18n'
 import { TOOLS_METADATA } from '../tools/registry'
@@ -39,37 +40,21 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     <ToolHeaderContext.Provider value={{ headerExtra, setHeaderExtra }}>
-      <header className="header">
-        <div className="container">
-          <div className="header-inner">
-            <div className="header-left-group">
-              <button
-                className="header-logo"
-                onClick={() => navigate('/')}
-                style={{ background: 'none', border: 'none', padding: 0 }}
-                aria-label={t.backToHomeAria}
-              >
-                AllTools
-              </button>
-
-              {isToolPage && (
-                <div className="header-game-title" aria-live="polite">
-                  {toolTitle}
-                </div>
-              )}
-            </div>
-
-            <div className="header-actions">
-              {isToolPage && headerExtra && (
-                <div className="header-game-stats">
-                  {headerExtra}
-                </div>
-              )}
-              <HeaderMenu />
-            </div>
-          </div>
-        </div>
-      </header>
+      <AppHeader
+        logo={
+          <button
+            type="button"
+            className="header-logo"
+            onClick={() => navigate('/')}
+            aria-label={t.backToHomeAria}
+          >
+            AllTools
+          </button>
+        }
+        title={isToolPage ? toolTitle : undefined}
+        actions={isToolPage && headerExtra ? headerExtra : undefined}
+        menu={<HeaderMenu />}
+      />
 
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
         {children}

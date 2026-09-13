@@ -1,20 +1,12 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { BackLink } from '@all/ui'
 import { TOOLS_METADATA, loadToolComponent } from '../tools/registry'
 import { useI18n } from '../i18n'
 import { useEink } from '../hooks/useEink'
 import { getLocalizedText } from '../types/tool'
 import { useToolHeader } from '../components/Layout'
-
-function BackIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M8 2L3 7l5 5" />
-      <path d="M3 7h9" />
-    </svg>
-  )
-}
 
 function ToolFallback() {
   const { t } = useI18n()
@@ -120,19 +112,13 @@ export function ToolPage() {
     >
       <div className="tool-page-inner">
         <div className="container" style={{ width: '100%' }}>
-          <button
+          <BackLink
             id={`back-btn-${slug}`}
-            className="game-floating-back"
+            label={t.backToTools}
             onClick={handleBackToTools}
             aria-label={t.backToToolsAria}
             title={t.backToTools}
-          >
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M15 18l-6-6 6-6" />
-              <path d="M9 12h10" />
-            </svg>
-            <span>{t.backToTools}</span>
-          </button>
+          />
         </div>
 
         <div className={`tool-page-content ${slug === 'screen-ruler' ? 'tool-page-content--fullbleed' : 'container'}`}>

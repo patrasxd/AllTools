@@ -26,8 +26,14 @@ Classify the tool against the workspace archetypes catalog:
    - `src/<Tool>.tsx` (main component)
    - `src/index.tsx` (lazy component entry point, exporting `ToolComponent`)
 2. **CRITICAL Module Graph Rule**: The metadata entry point (`metadata.ts`) and the component entry point (`index.tsx`) must be resolvable as genuinely separate module graphs, never re-exported from one common barrel file. If metadata is imported from a barrel that re-exports the component, Rollup/Vite treats the lazy `import()` as an eager static dependency, pulling the component and its heavy libraries (`heic2any`, `pdfjs-dist`, `pdf-lib`, etc.) directly into the initial shell bundle.
-3. Use shared UI primitives (`@all/ui` or `@alltools/ui`).
-4. Embed inside an appropriate responsive template (e.g. `SplitWorkspaceTemplate`, `InputOutputTemplate`, or `FullBleedCanvasTemplate`).
+3. **Use Shared UI Components (`@all/ui` or `@alltools/ui`)**:
+   - Layout Templates: `SplitWorkspaceLayout`, `CenteredUtilityLayout`, `FullBleedLayout`.
+   - Action Bars & Navigation: `ControlsBar`, `BackLink`.
+   - Controls & Forms: `Button`, `IconButton`, `ToolButton`, `Input`, `Select`, `Toggle`, `PillGroup`, `ModeSelect`.
+   - Content & Surfaces: `Card`, `Badge`, `Heading`, `Text`, `Stack`.
+   - Modals & Notifications: `Dialog`, `Alert`, `Toast`.
+   - Utilities & Formatters: `formatTime`, `formatStopwatchTime`, `pad3`.
+4. Embed inside an appropriate responsive template (`SplitWorkspaceLayout`, `CenteredUtilityLayout`, or `FullBleedLayout`).
 
 ## 3. Register in App Shell
 1. In `apps/shell/src/tools/registry.ts`:

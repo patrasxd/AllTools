@@ -18,8 +18,11 @@ Utilities must intelligently utilize the screen across viewports:
      - Calculator forced to `max-width: 380px`.
    - On a desktop monitor, multi-column split views (input left / output right) should expand naturally to utilize available horizontal space.
 2. **One-Off Layout Hacks**:
-   - Discovered bug: `ToolPage.tsx` using `slug === 'screen-ruler' ? 'tool-page-content--fullbleed' : 'container'`.
-   - Full-bleed vs centered layouts must be handled by reusable responsive templates, not hardcoded slug checks in the shell page.
+   - Never use slug checks in the shell page (e.g. `slug === 'screen-ruler' ? ...`).
+   - Use reusable responsive templates from `@all/ui`:
+     - `SplitWorkspaceLayout`: For multi-pane tools with configuration/inputs and live preview/output (e.g. `dev-vault`, `quick-notes`).
+     - `CenteredUtilityLayout`: For single-focus calculation/conversion widgets (e.g. `calc-converter`, `image-studio`).
+     - `FullBleedLayout`: For fullscreen/canvas measurement tools (e.g. `screen-ruler`, `level-protractor`, `guitar-tuner`, `sound-meter`).
 3. **Internal vs Page Scrolling**:
    - Avoid whole-page scrolling when a tool is active.
    - Long lists (e.g. calculation history, notes list, hash outputs) should scroll internally within their own pane (`overflow-y: auto`).

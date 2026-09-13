@@ -1,17 +1,19 @@
-import { memo, type ReactNode } from 'react'
+import React from 'react'
+import { ControlsBar as SharedControlsBar, type ControlsBarProps } from '@all/ui'
 
-export interface ControlsBarProps {
-  children: ReactNode
-  className?: string
-}
+export type { ControlsBarProps }
 
-export const ControlsBar = memo(function ControlsBar({
-  children,
-  className = '',
-}: ControlsBarProps) {
+export const ControlsBar = React.forwardRef<HTMLDivElement, ControlsBarProps>(function ControlsBar(
+  { className = '', ...props },
+  ref
+) {
   return (
-    <div className={`game-controls-bar ${className}`.trim()}>
-      {children}
-    </div>
+    <SharedControlsBar
+      ref={ref}
+      className={`game-controls-bar ${className}`.trim()}
+      {...props}
+    />
   )
 })
+
+export default ControlsBar

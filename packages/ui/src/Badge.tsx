@@ -1,19 +1,5 @@
-import React from 'react'
+import { Badge as SharedBadge, type BadgeProps } from '@all/ui'
 
-export interface BadgeProps {
-  children: React.ReactNode
-  size?: 'sm' | 'md'
-  className?: string
-}
-
-export const Badge: React.FC<BadgeProps> = ({
-  children,
-  size = 'sm',
-  className = '',
-}) => {
-  return (
-    <span className={`badge ${className}`}>
-      {children}
-    </span>
-  )
-}
+export type { BadgeProps }
+export const Badge = SharedBadge
+export default Badge
