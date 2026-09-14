@@ -1,13 +1,11 @@
 import { HeaderMenu as UiHeaderMenu } from '@all/ui'
 import { useTheme } from '../hooks/useTheme'
 import { useI18n } from '../i18n'
-import { useEink } from '../hooks/useEink'
 import { usePWAInstall } from '../hooks/usePWAInstall'
 
 export function HeaderMenu() {
-  const { theme, setTheme } = useTheme()
+  const { theme, setTheme, isEink, isDark } = useTheme()
   const { locale, setLocale, t } = useI18n()
-  const { isEink, setIsEink } = useEink()
   const { canInstall, install } = usePWAInstall()
 
   return (
@@ -17,7 +15,7 @@ export function HeaderMenu() {
       theme={theme}
       onThemeChange={th => setTheme(th as any)}
       isEink={isEink}
-      onEinkChange={setIsEink}
+      onEinkChange={enable => setTheme(enable ? (isDark ? 'e-ink-dark' : 'e-ink-light') : (isDark ? 'dark' : 'light'))}
       canInstall={canInstall}
       onInstall={() => { void install() }}
       labels={{

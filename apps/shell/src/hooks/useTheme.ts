@@ -1,33 +1,21 @@
-import { useState, useEffect } from 'react'
+import { createElement, type ReactNode } from 'react'
+import {
+  ThemeProvider as UiThemeProvider,
+  useTheme as useUiTheme,
+  type Theme as UiTheme,
+} from '@all/ui'
 
-export type Theme = 'dark' | 'light'
+export type Theme = UiTheme
 
-const THEME_KEY = 'alltools:theme'
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  return createElement(UiThemeProvider, {
+    defaultTheme: 'dark',
+    storageKey: 'alltools:theme',
+    children,
+  })
+}
 
 export function useTheme() {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    try {
-      const saved = localStorage.getItem(THEME_KEY)
-      if (saved === 'dark' || saved === 'light') return saved
-      return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
-    } catch {
-      return 'dark'
-    }
-  })
-
-  const setTheme = (next: Theme) => {
-    setThemeState(next)
-    try {
-      localStorage.setItem(THEME_KEY, next)
-    } catch {
-      // Ignore
-    }
-  }
-
-  useEffect(() => {
-    const root = document.documentElement
-    root.setAttribute('data-theme', theme)
-  }, [theme])
-
-  return { theme, setTheme }
+  return useUiTheme()
 }
+

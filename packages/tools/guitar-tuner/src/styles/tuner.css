@@ -180,12 +180,14 @@
 }
 
 /* ─── E-ink overrides ───────────────────────────────────────── */
+[data-theme^='e-ink'] .tuner-status-badge--in-tune,
 [data-eink='true'] .tuner-status-badge--in-tune {
   background: var(--text) !important;
   color: var(--bg) !important;
   border-color: var(--text) !important;
 }
 
+[data-theme^='e-ink'] .tuner-string-btn--playing,
 [data-eink='true'] .tuner-string-btn--playing {
   background: var(--text) !important;
   color: var(--bg) !important;

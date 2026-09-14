@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { BackLink } from '@all/ui'
 import { TOOLS_METADATA, loadToolComponent } from '../tools/registry'
 import { useI18n } from '../i18n'
-import { useEink } from '../hooks/useEink'
+import { useTheme } from '../hooks/useTheme'
 import { getLocalizedText } from '../types/tool'
 import { useToolHeader } from '../components/Layout'
 
@@ -58,7 +58,7 @@ export function ToolPage() {
   const { slug = '' } = useParams<{ slug: string }>()
   const navigate = useNavigate()
   const { locale, t } = useI18n()
-  const { isEink } = useEink()
+  const { isEink } = useTheme()
   const metadata = TOOLS_METADATA.find(item => item.slug === slug)
 
   const handleBackToTools = useCallback(() => {

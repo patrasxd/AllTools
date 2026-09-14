@@ -5,7 +5,7 @@ import { HomePage } from './pages/HomePage'
 import { ToolPage } from './pages/ToolPage'
 import { LegalPage } from './pages/LegalPage'
 import { useI18n } from './i18n'
-import { useEink } from './hooks/useEink'
+import { useTheme } from './hooks/useTheme'
 
 function NotFoundRoute() {
   const { t } = useI18n()
@@ -18,7 +18,7 @@ function NotFoundRoute() {
 
 export default function App() {
   const location = useLocation()
-  const { isEink } = useEink()
+  const { isEink } = useTheme()
 
   const routes = (
     <Routes location={location} key={location.pathname}>
