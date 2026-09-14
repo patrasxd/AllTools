@@ -1,5 +1,5 @@
 import { Routes, Route, useLocation } from 'react-router-dom'
-import { MotionConfig, AnimatePresence } from 'framer-motion'
+import { MotionConfig } from 'framer-motion'
 import { Layout } from './components/Layout'
 import { HomePage } from './pages/HomePage'
 import { ToolPage } from './pages/ToolPage'
@@ -35,13 +35,7 @@ export default function App() {
       transition={isEink ? { duration: 0 } : undefined}
     >
       <Layout>
-        {isEink ? (
-          routes
-        ) : (
-          <AnimatePresence mode="wait" initial={false}>
-            {routes}
-          </AnimatePresence>
-        )}
+        {routes}
       </Layout>
     </MotionConfig>
   )
