@@ -1,7 +1,6 @@
 import { createContext, useContext, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { AppHeader } from '@all/ui'
-import { IconWrench } from '@alltools/ui'
 import { HeaderMenu } from './HeaderMenu'
 import { useI18n } from '../i18n'
 import { TOOLS_METADATA } from '../tools/registry'
@@ -49,7 +48,6 @@ export function Layout({ children }: LayoutProps) {
             onClick={() => navigate('/')}
             aria-label={t.backToHomeAria}
           >
-            <IconWrench size={18} className="header-logo-icon" />
             <span>AllTools</span>
           </button>
         }
