@@ -322,6 +322,9 @@ button, input, select {
 }
 
 .header-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2, 0.45rem);
   font-family: var(--font-sans);
   font-weight: 700;
   font-style: normal;
@@ -334,6 +337,10 @@ button, input, select {
   cursor: pointer;
   transition: opacity var(--duration) ease;
   flex-shrink: 0;
+}
+.header-logo-icon {
+  flex-shrink: 0;
+  color: var(--text);
 }
 .header-logo:hover { opacity: 0.6; }
 
