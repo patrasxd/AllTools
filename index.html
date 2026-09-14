@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pl">
+<html lang="pl" style="background-color: #0a0a0a; color: #efefef;">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -9,10 +9,27 @@
     <link rel="apple-touch-icon" href="./favicon.svg" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <title>AllTools</title>
-    <script type="module" crossorigin src="/AllTools/assets/index-OcDTfc29.js"></script>
-    <link rel="stylesheet" crossorigin href="/AllTools/assets/index-CyyUGX6z.css">
+    <script>
+      (function() {
+        try {
+          var t = localStorage.getItem('alltools:theme') || localStorage.getItem('all_theme') || 'dark';
+          document.documentElement.setAttribute('data-theme', t);
+          document.documentElement.setAttribute('data-all-theme', t);
+          var isLight = t === 'light' || t === 'e-ink-light';
+          var bg = isLight ? '#f2f1ec' : '#0a0a0a';
+          var fg = isLight ? '#111111' : '#efefef';
+          document.documentElement.style.backgroundColor = bg;
+          document.documentElement.style.color = fg;
+          if (t.indexOf('e-ink') !== -1) {
+            document.documentElement.setAttribute('data-eink', 'true');
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <script type="module" crossorigin src="/AllTools/assets/index-DAeY_5y-.js"></script>
+    <link rel="stylesheet" crossorigin href="/AllTools/assets/index-CiHnJk-Y.css">
   <link rel="manifest" href="/AllTools/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/AllTools/registerSW.js"></script></head>
-  <body>
+  <body style="background-color: inherit; color: inherit;">
     <div id="root"></div>
   </body>
 </html>
