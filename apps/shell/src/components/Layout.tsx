@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { AppHeader } from '@all/ui'
 import { HeaderMenu } from './HeaderMenu'
@@ -33,6 +33,14 @@ export function Layout({ children }: LayoutProps) {
   const { t, locale } = useI18n()
   const [headerExtra, setHeaderExtra] = useState<React.ReactNode>(null)
 
+  useEffect(() => {
+    setHeaderExtra(null)
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+    if (document.documentElement) {
+      document.documentElement.scrollTop = 0
+    }
+  }, [location.pathname])
+
   const slug = location.pathname.match(/^\/tools\/([^/]+)/)?.[1]
   const tool = slug ? TOOLS_METADATA.find(item => item.slug === slug) : undefined
   const toolTitle = tool ? getLocalizedText(tool.name, locale) : ''
@@ -56,9 +64,10 @@ export function Layout({ children }: LayoutProps) {
         menu={<HeaderMenu />}
       />
 
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+      <main className="app-main">
         {children}
       </main>
     </ToolHeaderContext.Provider>
   )
 }
+

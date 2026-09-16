@@ -1,5 +1,30 @@
 import React from 'react'
 
+export {
+  PlayIcon,
+  PauseIcon,
+  StopIcon,
+  SettingsIcon,
+  GearIcon,
+  DpadIcon,
+  UndoIcon,
+  RotateCcwIcon,
+  RestartIcon,
+  CloseIcon,
+  XIcon,
+  HintIcon,
+  CopyIcon,
+  DownloadIcon,
+  UploadIcon,
+  TrashIcon,
+  CheckIcon,
+  VolumeIcon,
+  ExternalLinkIcon,
+  SunIcon,
+  MoonIcon,
+  CodeIcon,
+} from '@all/ui'
+
 export interface IconProps extends React.SVGProps<SVGSVGElement> {
   size?: number | string
   className?: string

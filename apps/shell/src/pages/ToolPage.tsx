@@ -1,11 +1,10 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
-import { BackLink } from '@all/ui'
+import { motion } from 'framer-motion'
+import { Button, BackLink } from '@all/ui'
 import { TOOLS_METADATA, loadToolComponent } from '../tools/registry'
 import { useI18n } from '../i18n'
 import { useTheme } from '../hooks/useTheme'
-import { getLocalizedText } from '../types/tool'
 import { useToolHeader } from '../components/Layout'
 
 function ToolFallback() {
@@ -38,12 +37,14 @@ function NotFound({ slug }: { slug: string }) {
   return (
     <div style={{ padding: '4rem 0', color: 'var(--text-muted)', textAlign: 'center' }}>
       <p>{t.notFound} <code style={{ fontFamily: 'var(--font-mono)' }}>{slug}</code></p>
-      <button
+      <Button
+        variant="secondary"
+        size="sm"
         onClick={() => navigate('/')}
-        style={{ marginTop: '1rem', background: 'none', border: 'none', color: 'var(--text)', cursor: 'pointer', padding: 0 }}
+        style={{ marginTop: '1rem' }}
       >
         {t.returnToTools}
-      </button>
+      </Button>
     </div>
   )
 }
@@ -58,7 +59,7 @@ export function ToolPage() {
   const { slug = '' } = useParams<{ slug: string }>()
   const navigate = useNavigate()
   const { locale, t } = useI18n()
-  const { isEink } = useTheme()
+  const { theme, isEink } = useTheme()
   const metadata = TOOLS_METADATA.find(item => item.slug === slug)
 
   const handleBackToTools = useCallback(() => {
@@ -68,7 +69,7 @@ export function ToolPage() {
   const [ToolComp, setToolComp] = useState<React.ComponentType<any> | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
 
-  const { headerExtra, setHeaderExtra } = useToolHeader()
+  const { setHeaderExtra } = useToolHeader()
   const setHeader = useCallback((content: React.ReactNode) => {
     setHeaderExtra(content)
   }, [setHeaderExtra])
@@ -111,7 +112,7 @@ export function ToolPage() {
       exit="exit"
     >
       <div className="tool-page-inner">
-        <div className="container" style={{ width: '100%' }}>
+        <div className="container tool-page-top-bar" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <BackLink
             id={`back-btn-${slug}`}
             label={t.backToTools}
@@ -119,6 +120,7 @@ export function ToolPage() {
             aria-label={t.backToToolsAria}
             title={t.backToTools}
           />
+          <div id="tool-page-top-actions" className="tool-page-top-actions" />
         </div>
 
         <div className={`tool-page-content ${slug === 'screen-ruler' ? 'tool-page-content--fullbleed' : 'container'}`}>
@@ -129,6 +131,7 @@ export function ToolPage() {
               locale={locale}
               setHeader={setHeader}
               isEink={isEink}
+              theme={theme}
               onSave={(data: unknown) => {
                 try {
                   localStorage.setItem(`alltools:${slug}:saved`, JSON.stringify(data))

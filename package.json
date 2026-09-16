@@ -14,6 +14,7 @@
     "build": "npm run build --workspace=@alltools/shell",
     "preview": "npm run preview --workspace=@alltools/shell",
     "deploy": "npm run build --workspace=@alltools/shell && gh-pages -d apps/shell/dist",
+    "test": "vitest run packages/tools",
     "install-all": "npm install"
   },
   "keywords": [
@@ -30,7 +31,11 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "gh-pages": "^6.3.0"
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "gh-pages": "^6.3.0",
+    "jsdom": "^30.0.1",
+    "vitest": "^5.0.0"
   },
   "dependencies": {
     "heic2any": "^0.0.4",
