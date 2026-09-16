@@ -1,14 +1,18 @@
-import React, { useState, useEffect, useRef, useId, useMemo } from 'react'
+import React, { useState, useEffect, useRef, useId, useMemo, useCallback } from 'react'
 import {
-  GameButton,
+  BoardLayout,
+  Button,
   PillGroup,
   StatsHeader,
   ControlsBar,
-  IconPlay,
-  IconPause,
-  IconRotateCcw,
-} from '@alltools/ui'
-import type { SoundMeterMode, SoundWeighting } from './types'
+  Dialog,
+  PlayIcon,
+  PauseIcon,
+  RestartIcon,
+  SettingsIcon,
+} from '@all/ui'
+import type { SoundWeighting } from './types'
+import { soundMeterTranslations } from './i18n'
 import {
   DecibelMeterEngine,
   getSoundReference,
@@ -19,16 +23,18 @@ export interface ToolComponentProps {
   locale?: 'en' | 'pl'
   setHeader?: (header: React.ReactNode) => void
   isEink?: boolean
+  theme?: string
   onSave?: (data: unknown) => void
 }
 
-export function SoundMeter({ locale = 'en', setHeader }: ToolComponentProps) {
+export function SoundMeter({ locale = 'en', setHeader, isEink = false }: ToolComponentProps) {
   const isPl = locale === 'pl'
+  const t = soundMeterTranslations[locale] || soundMeterTranslations.en
   const calSliderId = useId()
 
-  const [activeMode, setActiveMode] = useState<SoundMeterMode>('meter')
   const [isActive, setIsActive] = useState<boolean>(false)
   const [permissionDenied, setPermissionDenied] = useState<boolean>(false)
+  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false)
 
   // Metrics
   const [currentDb, setCurrentDb] = useState<number>(30.0)
@@ -55,27 +61,16 @@ export function SoundMeter({ locale = 'en', setHeader }: ToolComponentProps) {
     return getSoundReference(currentDb, locale)
   }, [currentDb, locale])
 
-  // ─── Top StatsHeader Sync ───────────────────────────────────
   useEffect(() => {
-    if (!setHeader) return
-
-    setHeader(
-      <StatsHeader
-        label={isPl ? 'DECYBELOMIERZ' : 'SOUND LEVEL METER'}
-        items={[
-          { key: 'cur', label: isPl ? 'BIEŻĄCY' : 'CURRENT', value: `${currentDb.toFixed(1)} dB` },
-          { key: 'peak', label: isPl ? 'SZCZYT' : 'PEAK', value: maxDb > 0 ? `${maxDb.toFixed(1)} dB` : '--' },
-          { key: 'avg', label: isPl ? 'ŚREDNIA' : 'AVG', value: avgDb > 0 ? `${avgDb.toFixed(1)} dB` : '--' },
-          { key: 'filter', label: isPl ? 'FILTR' : 'FILTER', value: weighting },
-        ]}
-      />
-    )
-  }, [setHeader, isPl, currentDb, maxDb, avgDb, weighting])
+    setHeader?.(null)
+    return () => setHeader?.(null)
+  }, [setHeader])
 
   const lastSampleTimeRef = useRef<number>(0)
+  const lastEinkDrawRef = useRef<number>(0)
   const MAX_SAMPLES = 300 // 300 samples * 200ms = 60 seconds (1 minute)
 
-  // ─── Audio Measurement Loop ─────────────────────────────────
+  // ─── Audio Measurement Loop (Archetype 1 Safe Teardown) ──────
   const startMeasurement = async () => {
     try {
       if (!engineRef.current) {
@@ -85,6 +80,7 @@ export function SoundMeter({ locale = 'en', setHeader }: ToolComponentProps) {
       setIsActive(true)
       setPermissionDenied(false)
       lastSampleTimeRef.current = performance.now()
+      lastEinkDrawRef.current = performance.now()
 
       const loop = () => {
         if (!engineRef.current) return
@@ -96,13 +92,20 @@ export function SoundMeter({ locale = 'en', setHeader }: ToolComponentProps) {
         setSumDb((prev) => prev + val)
         setSampleCount((prev) => prev + 1)
 
-        // Sample history at stable 200ms interval for exact 60-second window
         const now = performance.now()
         if (now - lastSampleTimeRef.current >= 200) {
           lastSampleTimeRef.current = now
           historyRef.current.push(val)
           if (historyRef.current.length > MAX_SAMPLES) {
             historyRef.current.shift()
+          }
+        }
+
+        // On E-Ink, throttle canvas rendering to conserve screen refresh
+        if (isEink) {
+          if (now - lastEinkDrawRef.current >= 1000) {
+            lastEinkDrawRef.current = now
+            drawCanvas()
           }
         }
 
@@ -117,7 +120,7 @@ export function SoundMeter({ locale = 'en', setHeader }: ToolComponentProps) {
     }
   }
 
-  const stopMeasurement = () => {
+  const stopMeasurement = useCallback(() => {
     if (animFrameRef.current) {
       cancelAnimationFrame(animFrameRef.current)
       animFrameRef.current = null
@@ -127,7 +130,7 @@ export function SoundMeter({ locale = 'en', setHeader }: ToolComponentProps) {
       engineRef.current = null
     }
     setIsActive(false)
-  }
+  }, [])
 
   const resetMetrics = () => {
     setMinDb(999)
@@ -141,7 +144,7 @@ export function SoundMeter({ locale = 'en', setHeader }: ToolComponentProps) {
     return () => {
       stopMeasurement()
     }
-  }, [])
+  }, [stopMeasurement])
 
   // Sync calibration & weighting live
   useEffect(() => {
@@ -151,8 +154,8 @@ export function SoundMeter({ locale = 'en', setHeader }: ToolComponentProps) {
     }
   }, [calibration, weighting])
 
-  // ─── Live Canvas Rendering for Chart ─────────────────────────
-  useEffect(() => {
+  // ─── Live Waveform Canvas ────────────────────────────────────
+  const drawCanvas = useCallback(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
@@ -160,22 +163,24 @@ export function SoundMeter({ locale = 'en', setHeader }: ToolComponentProps) {
 
     const dpr = window.devicePixelRatio || 1
     const rect = canvas.getBoundingClientRect()
+    if (rect.width === 0 || rect.height === 0) return
+
     canvas.width = rect.width * dpr
     canvas.height = rect.height * dpr
     ctx.scale(dpr, dpr)
 
     const width = rect.width
     const height = rect.height
-    const bottomPadding = 16 // space for time labels
+    const bottomPadding = 16
 
     ctx.clearRect(0, 0, width, height)
 
     // Decibel Horizontal Grid lines (30dB, 60dB, 90dB, 120dB)
-    ctx.strokeStyle = 'rgba(128, 128, 128, 0.15)'
-    ctx.lineWidth = 1
+    ctx.strokeStyle = isEink ? '#000000' : 'rgba(128, 128, 128, 0.18)'
+    ctx.lineWidth = isEink ? 1.5 : 1
     const levels = [30, 60, 90, 120]
     ctx.font = '9px monospace'
-    ctx.fillStyle = 'rgba(128, 128, 128, 0.5)'
+    ctx.fillStyle = isEink ? '#000000' : 'rgba(128, 128, 128, 0.5)'
 
     levels.forEach((lvl) => {
       const usableH = height - bottomPadding
@@ -187,24 +192,24 @@ export function SoundMeter({ locale = 'en', setHeader }: ToolComponentProps) {
       ctx.fillText(`${lvl} dB`, 6, y - 3)
     })
 
-    // Vertical Time Grid lines (-60s, -45s, -30s, -15s, 0s)
+    // Vertical Time Grid lines
     const timeMarkers = [
       { label: '-60s', pos: 0 },
       { label: '-45s', pos: 0.25 },
       { label: '-30s', pos: 0.5 },
       { label: '-15s', pos: 0.75 },
-      { label: isPl ? 'Teraz' : 'Now', pos: 1 },
+      { label: t.now, pos: 1 },
     ]
 
     timeMarkers.forEach((tm) => {
       const x = tm.pos * width
       ctx.beginPath()
-      ctx.strokeStyle = 'rgba(128, 128, 128, 0.1)'
+      ctx.strokeStyle = isEink ? '#000000' : 'rgba(128, 128, 128, 0.12)'
       ctx.moveTo(x, 0)
       ctx.lineTo(x, height - bottomPadding)
       ctx.stroke()
 
-      ctx.fillStyle = 'rgba(128, 128, 128, 0.6)'
+      ctx.fillStyle = isEink ? '#000000' : 'rgba(128, 128, 128, 0.6)'
       const textX = tm.pos === 1 ? x - 26 : tm.pos === 0 ? x + 4 : x - 10
       ctx.fillText(tm.label, textX, height - 3)
     })
@@ -215,11 +220,10 @@ export function SoundMeter({ locale = 'en', setHeader }: ToolComponentProps) {
 
     const usableH = height - bottomPadding
     ctx.beginPath()
-    ctx.strokeStyle = '#ffffff'
-    ctx.lineWidth = 2
+    ctx.strokeStyle = isEink ? '#000000' : '#ffffff'
+    ctx.lineWidth = isEink ? 2.5 : 2
     ctx.lineJoin = 'round'
 
-    // Step across full 60s window (300 points)
     const step = width / (MAX_SAMPLES - 1)
     const offsetIndex = MAX_SAMPLES - history.length
 
@@ -232,171 +236,196 @@ export function SoundMeter({ locale = 'en', setHeader }: ToolComponentProps) {
       else ctx.lineTo(x, y)
     })
     ctx.stroke()
-  }, [currentDb, activeMode, isPl])
+  }, [isEink, t.now])
 
-  const modeOptions = [
-    { value: 'meter' as const, label: isPl ? 'Miernik' : 'Meter' },
-    { value: 'settings' as const, label: isPl ? 'Kalibracja' : 'Settings' },
-  ]
+  useEffect(() => {
+    if (!isEink) {
+      drawCanvas()
+    }
+  }, [currentDb, isEink, drawCanvas])
 
   return (
-    <div className="sound-root">
-      {/* 1. Header Title */}
-      <div className="sound-status">
-        <div className="sound-status-text">
-          {isActive
-            ? reference.label
-            : isPl
-            ? 'Uruchom mikrofon, aby rozpocząć pomiar'
-            : 'Start microphone to measure noise levels'}
-        </div>
-      </div>
+    <div className={`sound-root ${isEink ? 'is-eink' : ''}`.trim()}>
+      <BoardLayout
+        variant="wide"
+        align="center"
+        board={
+          <div className="sound-stage">
+            {permissionDenied && (
+              <div className="sound-permission-denied">
+                <p className="sound-permission-title">{t.permissionRequired}</p>
+                <p className="sound-permission-desc">{t.permissionHelp}</p>
+              </div>
+            )}
 
-      {/* 2. Main Center Viewport */}
-      <div className="sound-center-area">
-        <div className="sound-card">
-          {/* Permission Error State */}
-          {permissionDenied && (
-            <div style={{ color: 'var(--text-dim)', textAlign: 'center', padding: '2rem' }}>
-              <p style={{ margin: 0, fontWeight: 600, color: 'var(--text)' }}>
-                {isPl ? 'Brak dostępu do mikrofonu' : 'Microphone Permission Required'}
-              </p>
-              <p style={{ fontSize: '0.8125rem', marginTop: '0.5rem' }}>
-                {isPl
-                  ? 'Zezwól przeglądarce na dostęp do mikrofonu, aby korzystać z decybelomierza.'
-                  : 'Please allow microphone access in your browser settings to measure noise.'}
-              </p>
-            </div>
-          )}
+            {!permissionDenied && (
+              <div className="sound-instrument">
+                {/* Acoustic Classification Tag */}
+                <div className="sound-badge-row">
+                  <span className="sound-status-badge">
+                    {isActive
+                      ? reference.label
+                      : isEink && t.einkStaticNotice
+                      ? t.einkStaticNotice
+                      : t.startMicrophone}
+                  </span>
+                </div>
 
-          {!permissionDenied && (
-            <>
-              {/* ─── MAIN METER VIEW: GAUGE + METRICS + INTEGRATED CHART ─── */}
-              {activeMode === 'meter' && (
-                <>
-                  {/* Big Digital Decibel Screen */}
-                  <div className="sound-display-gauge">
-                    <div className="sound-db-value-row">
-                      <span className="sound-db-number">
-                        {isActive ? currentDb.toFixed(1) : '--.-'}
-                      </span>
-                      <span className="sound-db-unit">{weighting}</span>
-                    </div>
-                    <div className="sound-reference-tag">
-                      {isActive ? reference.label : (isPl ? 'Gotowy do pomiaru' : 'Ready to measure')}
-                    </div>
-                    <div className="sound-level-track">
-                      <div
-                        className="sound-level-fill"
-                        style={{ width: `${Math.min(100, Math.max(0, ((currentDb - 20) / 100) * 100))}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Metric Cells (MIN / AVG / MAX) */}
-                  <div className="sound-metrics-grid">
-                    <div className="sound-metric-cell">
-                      <span className="sound-metric-label">{isPl ? 'Minimum' : 'Min'}</span>
-                      <span className="sound-metric-val">{minDb < 999 ? `${minDb.toFixed(1)} dB` : '--'}</span>
-                    </div>
-                    <div className="sound-metric-cell">
-                      <span className="sound-metric-label">{isPl ? 'Średnia' : 'Average'}</span>
-                      <span className="sound-metric-val">{avgDb > 0 ? `${avgDb.toFixed(1)} dB` : '--'}</span>
-                    </div>
-                    <div className="sound-metric-cell">
-                      <span className="sound-metric-label">{isPl ? 'Szczyt' : 'Max / Peak'}</span>
-                      <span className="sound-metric-val">{maxDb > 0 ? `${maxDb.toFixed(1)} dB` : '--'}</span>
-                    </div>
-                  </div>
-
-                  {/* Integrated 60-Second Live Rolling Waveform Canvas */}
-                  <div className="sound-canvas-container">
-                    <canvas ref={canvasRef} className="sound-canvas-elem" />
-                  </div>
-                </>
-              )}
-
-              {/* ─── SETTINGS / CALIBRATION VIEW ─── */}
-              {activeMode === 'settings' && (
-                <div className="sound-calibration-box">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text)' }}>
-                      {isPl ? 'Krzywa ważenia:' : 'Frequency Weighting:'}
+                {/* Digital Decibel Gauge Display */}
+                <div className="sound-gauge">
+                  <div className="sound-db-value-row">
+                    <span className="sound-db-number">
+                      {isActive ? currentDb.toFixed(1) : '--.-'}
                     </span>
-                    <PillGroup
-                      options={[
-                        { value: 'dBA', label: isPl ? 'dBA (Ucho)' : 'dBA (Human Ear)' },
-                        { value: 'dBZ', label: isPl ? 'dBZ (Płaski)' : 'dBZ (Flat)' },
-                      ]}
-                      value={weighting}
-                      onChange={(w) => setWeighting(w as SoundWeighting)}
-                    />
+                    <span className="sound-db-unit">{weighting}</span>
                   </div>
-
-                  <div className="sound-slider-row" style={{ marginTop: '0.75rem' }}>
-                    <label htmlFor={calSliderId}>
-                      {isPl ? 'Kompensacja mikrofonu:' : 'Offset Calibration:'}{' '}
-                      <strong>{calibration > 0 ? `+${calibration}` : calibration} dB</strong>
-                    </label>
-                    <input
-                      id={calSliderId}
-                      type="range"
-                      min="-20"
-                      max="20"
-                      value={calibration}
-                      onChange={(e) => setCalibration(parseInt(e.target.value, 10))}
-                      className="sound-slider"
+                  <div className="sound-reference-tag">
+                    {isActive ? reference.label : t.readyToMeasure}
+                  </div>
+                  <div className="sound-level-track">
+                    <div
+                      className="sound-level-fill"
+                      style={{ width: `${Math.min(100, Math.max(0, ((currentDb - 20) / 100) * 100))}%` }}
                     />
                   </div>
                 </div>
-              )}
-            </>
-          )}
-        </div>
-      </div>
 
-      {/* 3. Bottom Controls Bar */}
-      <div className="sound-controls-container">
-        <ControlsBar>
-          <PillGroup
-            options={modeOptions}
-            value={activeMode}
-            onChange={(m) => setActiveMode(m)}
-          />
+                {/* 3-Column Metrics Row (MIN / AVG / PEAK) */}
+                <div className="sound-metrics-grid">
+                  <div className="sound-metric-cell">
+                    <span className="sound-metric-label">{t.min}</span>
+                    <span className="sound-metric-val">{minDb < 999 ? `${minDb.toFixed(1)} dB` : '--'}</span>
+                  </div>
+                  <div className="sound-metric-cell">
+                    <span className="sound-metric-label">{t.average}</span>
+                    <span className="sound-metric-val">{avgDb > 0 ? `${avgDb.toFixed(1)} dB` : '--'}</span>
+                  </div>
+                  <div className="sound-metric-cell">
+                    <span className="sound-metric-label">{t.maxPeak}</span>
+                    <span className="sound-metric-val">{maxDb > 0 ? `${maxDb.toFixed(1)} dB` : '--'}</span>
+                  </div>
+                </div>
 
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            {!isActive ? (
-              <GameButton
-                variant="primary"
-                size="md"
-                onClick={startMeasurement}
-                icon={<IconPlay size={14} />}
-              >
-                {isPl ? 'Start' : 'Start'}
-              </GameButton>
-            ) : (
-              <GameButton
-                variant="secondary"
-                size="md"
-                onClick={stopMeasurement}
-                icon={<IconPause size={14} />}
-              >
-                {isPl ? 'Pauza' : 'Pause'}
-              </GameButton>
+                {/* 60-Second Real-Time Live Waveform Canvas */}
+                <div className="sound-canvas-container">
+                  <canvas ref={canvasRef} className="sound-canvas-elem" />
+                </div>
+              </div>
             )}
-
-            <GameButton
-              variant="ghost"
-              size="md"
-              onClick={resetMetrics}
-              icon={<IconRotateCcw size={14} />}
-              title={isPl ? 'Zresetuj statystyki' : 'Reset metrics'}
-            >
-              {isPl ? 'Reset' : 'Reset'}
-            </GameButton>
           </div>
-        </ControlsBar>
-      </div>
+        }
+        controls={
+          <ControlsBar>
+            <Button
+              id="sound-start-pause-btn"
+              variant="primary"
+              size="sm"
+              onClick={isActive ? stopMeasurement : startMeasurement}
+              icon={isActive ? <PauseIcon /> : <PlayIcon />}
+            >
+              {isActive ? t.pause : t.start}
+            </Button>
+
+            <Button
+              id="sound-reset-btn"
+              variant="secondary"
+              size="sm"
+              onClick={resetMetrics}
+              icon={<RestartIcon />}
+              title={t.resetTooltip}
+            >
+              {t.reset}
+            </Button>
+
+            <PillGroup<SoundWeighting>
+              size="sm"
+              options={[
+                { value: 'dBA', label: 'dBA', id: 'sound-filter-dba' },
+                { value: 'dBZ', label: 'dBZ', id: 'sound-filter-dbz' },
+              ]}
+              value={weighting}
+              onChange={(w) => setWeighting(w)}
+            />
+
+            <Button
+              id="sound-settings-btn"
+              variant="secondary"
+              size="sm"
+              onClick={() => setIsSettingsOpen(true)}
+              icon={<SettingsIcon />}
+              title={t.settings}
+            >
+              {t.settings}
+            </Button>
+          </ControlsBar>
+        }
+      />
+
+      {/* Calibration & Settings Dialog Modal */}
+      <Dialog
+        open={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        title={t.settings}
+        maxWidth="sm"
+      >
+        <div className="sound-dialog-content">
+          <div className="sound-dialog-group">
+            <label className="sound-dialog-label">{t.frequencyWeighting}</label>
+            <PillGroup<SoundWeighting>
+              size="sm"
+              options={[
+                { value: 'dBA', label: t.humanEar, id: 'settings-weighting-dba' },
+                { value: 'dBZ', label: t.flat, id: 'settings-weighting-dbz' },
+              ]}
+              value={weighting}
+              onChange={(w) => setWeighting(w)}
+            />
+          </div>
+
+          <div className="sound-dialog-group">
+            <div className="sound-dialog-label-row">
+              <label htmlFor={calSliderId} className="sound-dialog-label">
+                {t.offsetCalibration}
+              </label>
+              <span className="sound-dialog-badge">
+                {calibration > 0 ? `+${calibration}` : calibration} dB
+              </span>
+            </div>
+            <input
+              id={calSliderId}
+              type="range"
+              min="-20"
+              max="20"
+              value={calibration}
+              onChange={(e) => setCalibration(parseInt(e.target.value, 10))}
+              className="sound-slider"
+            />
+            <div className="sound-slider-hints">
+              <span>-20 dB</span>
+              <button
+                type="button"
+                className="sound-reset-cal-link"
+                onClick={() => setCalibration(0)}
+              >
+                0 dB (Default)
+              </button>
+              <span>+20 dB</span>
+            </div>
+          </div>
+
+          <div className="sound-dialog-footer">
+            <Button
+              id="sound-dialog-close-btn"
+              variant="primary"
+              size="sm"
+              onClick={() => setIsSettingsOpen(false)}
+            >
+              {t.close}
+            </Button>
+          </div>
+        </div>
+      </Dialog>
     </div>
   )
 }
+export default SoundMeter

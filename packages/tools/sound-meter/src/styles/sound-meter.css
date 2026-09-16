@@ -1,184 +1,197 @@
-/* ─── Sound Meter Suite Root (Zero Scroll / Strict 1-Page App) ──── */
+/* ─── Sound Meter Suite Styles (Aligned with AllGames / BoardLayout) ─── */
+
 .sound-root {
-  position: relative;
   width: 100%;
   height: 100%;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.15rem 0 0.4rem;
-  box-sizing: border-box;
   overflow: hidden;
-  user-select: none;
+  box-sizing: border-box;
 }
 
-/* ─── Top Status ─────────────────────────────────────────── */
-.sound-status {
-  text-align: center;
-  min-height: 1.5rem;
+/* ─── Main Instrument Stage (Occupies Full Workspace in BoardLayout) ─── */
+.sound-root .all-board-layout__board-stage {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+}
+
+.sound-stage {
+  width: 100%;
+  max-width: 680px;
+  height: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  padding: 0.1rem 0;
+  justify-content: stretch;
+  box-sizing: border-box;
+  padding: 0 var(--all-space-2, 0.5rem);
 }
 
-.sound-status-text {
-  font-family: var(--font-sans);
+.sound-instrument {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--all-space-3, 0.75rem);
+  background: var(--all-surface, var(--surface));
+  border: 1px solid var(--all-border, var(--border));
+  border-radius: var(--all-radius-md, 8px);
+  padding: var(--all-space-3, 0.75rem) var(--all-space-4, 1rem);
+  box-sizing: border-box;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* ─── Status Badge / Classification Row ─── */
+.sound-badge-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.sound-status-badge {
+  font-family: var(--all-font-sans, inherit);
+  font-size: 0.75rem;
   font-weight: 600;
-  font-size: 1rem;
-  color: var(--text);
-  letter-spacing: -0.01em;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--all-text-muted, var(--text-muted));
+  text-align: center;
   line-height: 1.2;
 }
 
-/* ─── Center Viewport Area (Zero Outer Scroll) ───────────── */
-.sound-center-area {
-  flex: 1;
-  min-height: 0;
+/* ─── Digital Decibel Big Gauge ─── */
+.sound-gauge {
   width: 100%;
-  max-width: 520px;
+  background: var(--all-surface-2, var(--surface-2));
+  border: 1px solid var(--all-border-2, var(--border-2));
+  border-radius: var(--all-radius-sm, 6px);
+  padding: var(--all-space-3, 0.75rem) var(--all-space-4, 1rem);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
-  overflow: hidden;
-  padding: 0.1rem 0;
+  gap: 0.2rem;
   box-sizing: border-box;
-}
-
-/* ─── Main Editor / Meter Card ───────────────────────────── */
-.sound-card {
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.65rem 0.85rem;
-  box-sizing: border-box;
-  gap: 0.45rem;
-  overflow: hidden;
-}
-
-/* ─── Digital Decibel Big Gauge ──────────────────────────── */
-.sound-display-gauge {
-  width: 100%;
-  background: var(--surface-2);
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius-sm);
-  padding: 0.45rem 0.75rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.1rem;
-  box-sizing: border-box;
-  flex-shrink: 0;
 }
 
 .sound-db-value-row {
   display: flex;
   align-items: baseline;
-  gap: 0.35rem;
+  gap: 0.4rem;
 }
 
 .sound-db-number {
-  font-family: var(--font-mono);
-  font-size: 2.25rem;
+  font-family: var(--all-font-mono, monospace);
+  font-size: clamp(2.5rem, 8vw, 3.5rem);
   font-weight: 800;
-  color: var(--text);
+  color: var(--all-text, var(--text));
   letter-spacing: -0.03em;
   line-height: 1;
 }
 
 .sound-db-unit {
-  font-family: var(--font-mono);
-  font-size: 0.875rem;
+  font-family: var(--all-font-mono, monospace);
+  font-size: 0.9375rem;
   font-weight: 700;
-  color: var(--text-muted);
+  color: var(--all-text-muted, var(--text-muted));
 }
 
 .sound-reference-tag {
-  font-family: var(--font-sans);
-  font-size: 0.75rem;
+  font-family: var(--all-font-sans, inherit);
+  font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--text-dim);
+  color: var(--all-text-dim, var(--text-dim));
   text-align: center;
 }
 
 /* Progress / Acoustic Level Bar */
 .sound-level-track {
   width: 100%;
-  height: 4px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 2px;
+  height: 6px;
+  background: var(--all-surface, var(--surface));
+  border: 1px solid var(--all-border, var(--border));
+  border-radius: 3px;
   overflow: hidden;
-  margin-top: 0.15rem;
+  margin-top: 0.35rem;
 }
 
 .sound-level-fill {
   height: 100%;
-  background: var(--text);
+  background: var(--all-text, var(--text));
   transition: width 80ms linear;
 }
 
-/* ─── Stat Metrics Row (Min, Avg, Peak) ──────────────────── */
+/* ─── Stat Metrics Row (Min, Avg, Peak) ─── */
 .sound-metrics-grid {
   width: 100%;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.35rem;
+  gap: var(--all-space-2, 0.5rem);
   box-sizing: border-box;
-  flex-shrink: 0;
 }
 
 .sound-metric-cell {
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 0.3rem 0.4rem;
+  background: var(--all-surface-2, var(--surface-2));
+  border: 1px solid var(--all-border, var(--border));
+  border-radius: var(--all-radius-sm, 4px);
+  padding: 0.4rem 0.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.05rem;
+  gap: 0.15rem;
 }
 
 .sound-metric-label {
-  font-family: var(--font-mono);
+  font-family: var(--all-font-mono, monospace);
   font-size: 0.6875rem;
-  color: var(--text-dim);
+  color: var(--all-text-dim, var(--text-dim));
   text-transform: uppercase;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
 }
 
 .sound-metric-val {
-  font-family: var(--font-mono);
-  font-size: 0.9375rem;
+  font-family: var(--all-font-mono, monospace);
+  font-size: 1rem;
   font-weight: 700;
-  color: var(--text);
+  color: var(--all-text, var(--text));
 }
 
-/* ─── Live Waveform History Canvas ───────────────────────── */
+/* ─── Live Waveform History Canvas (Fills Available Height) ─── */
 .sound-canvas-container {
   width: 100%;
-  flex: 1;
-  min-height: 80px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  flex: 1 1 0;
+  min-height: 140px;
+  background: var(--all-surface-2, var(--surface-2));
+  border: 1px solid var(--all-border, var(--border));
+  border-radius: var(--all-radius-sm, 4px);
   position: relative;
   overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* ─── Bottom Controls Bar Height Alignment ─── */
+.sound-root .all-controls-bar {
+  align-items: center;
+}
+
+.sound-root .all-controls-bar .all-pill-group--sm {
+  height: 32px;
+  box-sizing: border-box;
+}
+
+.sound-root .all-controls-bar .all-pill-group--sm .all-pill-btn {
+  height: 100%;
   box-sizing: border-box;
 }
 
@@ -188,53 +201,114 @@
   display: block;
 }
 
-/* ─── Calibration Controls ───────────────────────────────── */
-.sound-calibration-box {
+/* ─── Permission Error Notice ─── */
+.sound-permission-denied {
+  color: var(--all-text-dim, var(--text-dim));
+  text-align: center;
+  padding: var(--all-space-6, 1.5rem);
+  background: var(--all-surface, var(--surface));
+  border: 1px solid var(--all-border, var(--border));
+  border-radius: var(--all-radius-md, 8px);
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 0.75rem 0.9rem;
   box-sizing: border-box;
 }
 
-.sound-slider-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  font-family: var(--font-mono);
+.sound-permission-title {
+  margin: 0;
+  font-weight: 600;
+  color: var(--all-text, var(--text));
+  font-size: 0.9375rem;
+}
+
+.sound-permission-desc {
   font-size: 0.8125rem;
-  color: var(--text);
+  margin-top: 0.5rem;
+  line-height: 1.5;
+}
+
+/* ─── Calibration & Settings Dialog Modal ─── */
+.sound-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--all-space-4, 1rem);
+  padding: var(--all-space-2, 0.5rem) 0;
+}
+
+.sound-dialog-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sound-dialog-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sound-dialog-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--all-text, var(--text));
+}
+
+.sound-dialog-badge {
+  font-family: var(--all-font-mono, monospace);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--all-text, var(--text));
 }
 
 .sound-slider {
-  flex: 1;
-  accent-color: var(--text);
+  width: 100%;
+  accent-color: var(--all-text, var(--text));
   cursor: pointer;
+  margin: 0.25rem 0;
 }
 
-/* ─── Bottom Controls Bar (Exact Matched Max-Width) ──────── */
-.sound-controls-container {
-  width: 100%;
-  max-width: 520px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.35rem;
-  flex-shrink: 0;
-  margin-top: auto;
-  box-sizing: border-box;
-}
-
-.sound-controls-container .game-controls-bar,
-.sound-controls-container .tool-controls-bar {
-  width: 100%;
+.sound-slider-hints {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 0.5rem;
+  font-family: var(--all-font-mono, monospace);
+  font-size: 0.6875rem;
+  color: var(--all-text-dim, var(--text-dim));
+}
+
+.sound-reset-cal-link {
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--all-text, var(--text));
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+
+.sound-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+/* ─── E-Ink High Contrast Mode ─── */
+[data-theme^='e-ink'] .sound-instrument,
+[data-theme^='e-ink'] .sound-gauge,
+[data-theme^='e-ink'] .sound-metric-cell,
+[data-theme^='e-ink'] .sound-canvas-container,
+[data-theme^='e-ink'] .sound-permission-denied,
+.sound-root.is-eink .sound-instrument,
+.sound-root.is-eink .sound-gauge,
+.sound-root.is-eink .sound-metric-cell,
+.sound-root.is-eink .sound-canvas-container,
+.sound-root.is-eink .sound-permission-denied {
+  border: var(--all-border-width, 2px) solid var(--all-border, var(--border)) !important;
+  background: var(--all-surface, var(--surface)) !important;
+  box-shadow: none !important;
+}
+
+[data-theme^='e-ink'] .sound-level-fill,
+.sound-root.is-eink .sound-level-fill {
+  transition: none !important;
 }
