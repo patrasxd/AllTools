@@ -1,96 +1,103 @@
-/* ─── DevVault Root & Single-Page Layout (No Scroll) ────── */
+/* ─── DevVault Suite Styles (Aligned with AllUI / BoardLayout) ─── */
+
 .vault-root {
-  position: relative;
   width: 100%;
   height: 100%;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.25rem 0 0.5rem;
-  box-sizing: border-box;
   overflow: hidden;
-  user-select: none;
+  box-sizing: border-box;
 }
 
-/* ─── Status Header ──────────────────────────────────────── */
-.vault-status {
-  text-align: center;
-  min-height: 1.75rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  padding: 0.25rem 0;
-}
-
-.vault-status-text {
-  font-family: var(--font-sans);
-  font-weight: 600;
-  font-size: 1.125rem;
-  color: var(--text);
-  letter-spacing: -0.01em;
-  line-height: 1.2;
-}
-
-/* ─── Center Viewport (Exact 680px Unified Max-Width) ─────── */
-.vault-center-area {
-  flex: 1;
+/* ─── Stage inside BoardLayout ─── */
+.vault-root .all-board-layout__board-stage {
+  width: 100%;
+  height: 100%;
   min-height: 0;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+}
+
+.vault-stage {
   width: 100%;
   max-width: 680px;
+  height: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  overflow: hidden;
-  padding: 0.25rem 0;
+  justify-content: stretch;
   box-sizing: border-box;
+  padding: 0 var(--all-space-2, 0.5rem);
+  gap: var(--all-space-2, 0.5rem);
+}
+
+/* ─── Classification / Status Badge Row ─── */
+.vault-badge-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.vault-status-badge {
+  font-family: var(--all-font-sans, inherit);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--all-text-muted, var(--text-muted, #888));
+  text-align: center;
+  line-height: 1.2;
 }
 
 /* ─── Main Editor Card ────────────────────────────────────── */
 .vault-card {
   width: 100%;
-  height: 100%;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  flex: 1 1 auto;
+  min-height: 0;
+  background: var(--all-surface, var(--surface, #1e1e24));
+  border: 1px solid var(--all-border, var(--border, #333));
+  border-radius: var(--all-radius-md, 8px);
   display: flex;
   flex-direction: column;
-  padding: 1.25rem;
+  padding: var(--all-space-3, 0.75rem) var(--all-space-4, 1rem);
   box-sizing: border-box;
   overflow-y: auto;
-  gap: 1rem;
+  gap: var(--all-space-3, 0.75rem);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
 }
 
 /* ─── 1. Password Generator Display Box ──────────────────── */
 .vault-screen {
   width: 100%;
-  background: var(--surface-2);
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius-sm);
-  padding: 0.85rem 1rem;
+  background: var(--all-surface-2, var(--surface-2, #2a2a32));
+  border: 1px solid var(--all-border-2, var(--border-2, #444));
+  border-radius: var(--all-radius-sm, 6px);
+  padding: 0.75rem 1rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  min-height: 58px;
+  min-height: 54px;
   box-sizing: border-box;
   cursor: pointer;
   transition: border-color 150ms ease;
+  flex-shrink: 0;
 }
 .vault-screen:hover {
-  border-color: var(--text-dim);
+  border-color: var(--all-text-muted, var(--text-muted, #aaa));
 }
 
 .vault-screen-val {
-  font-family: var(--font-mono);
-  font-size: 1.25rem;
+  font-family: var(--all-font-mono, monospace);
+  font-size: clamp(1rem, 3.5vw, 1.25rem);
   font-weight: 700;
-  color: var(--text);
+  color: var(--all-text, var(--text, #fff));
   letter-spacing: 0.04em;
   word-break: break-all;
   user-select: all;
@@ -104,38 +111,40 @@
   flex-direction: column;
   gap: 0.35rem;
   box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .vault-strength-meta {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-family: var(--font-mono);
+  font-family: var(--all-font-mono, monospace);
   font-size: 0.75rem;
-  color: var(--text-dim);
+  color: var(--all-text-muted, var(--text-muted, #888));
 }
 
 .vault-strength-badge {
   font-weight: 600;
-  color: var(--text);
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  color: var(--all-text, var(--text, #fff));
+  background: var(--all-surface-2, var(--surface-2, #2a2a32));
+  border: 1px solid var(--all-border, var(--border, #444));
   padding: 0.15rem 0.45rem;
-  border-radius: var(--radius-sm);
+  border-radius: var(--all-radius-sm, 6px);
+  font-size: 0.75rem;
 }
 
 .vault-strength-track {
   width: 100%;
-  height: 4px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: 2px;
+  height: 5px;
+  background: var(--all-surface-2, var(--surface-2, #2a2a32));
+  border: 1px solid var(--all-border, var(--border, #444));
+  border-radius: 3px;
   overflow: hidden;
 }
 
 .vault-strength-bar {
   height: 100%;
-  background: var(--text);
+  background: var(--all-text, var(--text, #fff));
   transition: width 200ms ease;
 }
 
@@ -146,26 +155,34 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  font-family: var(--font-mono);
+  font-family: var(--all-font-mono, monospace);
   font-size: 0.8125rem;
-  color: var(--text);
+  color: var(--all-text, var(--text, #fff));
   box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .vault-slider {
   flex: 1;
-  accent-color: var(--text);
+  accent-color: var(--all-text, var(--text, #fff));
   cursor: pointer;
   height: 6px;
 }
 
-/* Button Grid (Using unified GameButton sizing & colors) */
+/* Button Grid (Using Button from @all/ui) */
 .vault-chips-grid {
   width: 100%;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
   gap: 0.5rem;
   box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.vault-chips-grid .all-btn {
+  border: var(--all-border-width, 1.5px) solid var(--all-border-2, var(--border-2, #444));
+  font-weight: 600;
+  border-radius: var(--all-radius-sm, 6px);
 }
 
 /* ─── 2. Subnet Calculator Grid ──────────────────────────── */
@@ -175,12 +192,13 @@
   flex-direction: column;
   gap: 0.35rem;
   box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .vault-field-label {
-  font-family: var(--font-mono);
+  font-family: var(--all-font-mono, monospace);
   font-size: 0.6875rem;
-  color: var(--text-dim);
+  color: var(--all-text-muted, var(--text-muted, #888));
   font-weight: 600;
   text-transform: uppercase;
 }
@@ -188,19 +206,19 @@
 .vault-text-field {
   width: 100%;
   padding: 0.6rem 0.75rem;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-family: var(--font-mono);
+  background: var(--all-surface-2, var(--surface-2, #2a2a32));
+  border: 1px solid var(--all-border, var(--border, #444));
+  border-radius: var(--all-radius-sm, 6px);
+  font-family: var(--all-font-mono, monospace);
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--text);
+  color: var(--all-text, var(--text, #fff));
   outline: none;
   box-sizing: border-box;
   transition: border-color 120ms ease;
 }
 .vault-text-field:focus {
-  border-color: var(--text);
+  border-color: var(--all-text, var(--text, #fff));
 }
 
 .vault-subnet-grid {
@@ -212,9 +230,9 @@
 }
 
 .vault-grid-cell {
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  background: var(--all-surface-2, var(--surface-2, #2a2a32));
+  border: 1px solid var(--all-border, var(--border, #444));
+  border-radius: var(--all-radius-sm, 6px);
   padding: 0.5rem 0.75rem;
   display: flex;
   flex-direction: column;
@@ -222,17 +240,17 @@
 }
 
 .vault-cell-title {
-  font-family: var(--font-mono);
+  font-family: var(--all-font-mono, monospace);
   font-size: 0.625rem;
-  color: var(--text-dim);
+  color: var(--all-text-muted, var(--text-muted, #888));
   text-transform: uppercase;
 }
 
 .vault-cell-value {
-  font-family: var(--font-mono);
+  font-family: var(--all-font-mono, monospace);
   font-size: 0.8125rem;
   font-weight: 700;
-  color: var(--text);
+  color: var(--all-text, var(--text, #fff));
   word-break: break-all;
 }
 
@@ -243,46 +261,104 @@
   flex-direction: column;
   gap: 0.6rem;
   flex: 1;
+  min-height: 0;
   box-sizing: border-box;
 }
 
 .vault-textarea-styled {
   width: 100%;
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 80px;
   padding: 0.6rem 0.75rem;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-family: var(--font-mono);
+  background: var(--all-surface-2, var(--surface-2, #2a2a32));
+  border: 1px solid var(--all-border, var(--border, #444));
+  border-radius: var(--all-radius-sm, 6px);
+  font-family: var(--all-font-mono, monospace);
   font-size: 0.8125rem;
-  color: var(--text);
+  color: var(--all-text, var(--text, #fff));
   outline: none;
   resize: none;
   box-sizing: border-box;
 }
 .vault-textarea-styled:focus {
-  border-color: var(--text);
+  border-color: var(--all-text, var(--text, #fff));
 }
 
-/* ─── Bottom Controls Bar (Exact 680px Max-Width) ────────── */
-.vault-controls-container {
-  width: 100%;
-  max-width: 680px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  flex-shrink: 0;
-  margin-top: auto;
-  box-sizing: border-box;
+/* ─── E-Ink High-Contrast & Reduced Motion (Respects Light & Dark) ─── */
+[data-theme^='e-ink'] .vault-card,
+.vault-root.is-eink .vault-card {
+  border: var(--all-border-width, 2px) solid var(--all-border, var(--border)) !important;
+  background: var(--all-surface, var(--surface)) !important;
+  color: var(--all-text, var(--text)) !important;
+  box-shadow: none !important;
 }
 
-.vault-controls-container .game-controls-bar,
-.vault-controls-container .tool-controls-bar {
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.5rem;
+[data-theme^='e-ink'] .vault-screen,
+[data-theme^='e-ink'] .vault-grid-cell,
+[data-theme^='e-ink'] .vault-text-field,
+[data-theme^='e-ink'] .vault-textarea-styled,
+[data-theme^='e-ink'] .vault-strength-track,
+[data-theme^='e-ink'] .vault-strength-badge,
+.vault-root.is-eink .vault-screen,
+.vault-root.is-eink .vault-grid-cell,
+.vault-root.is-eink .vault-text-field,
+.vault-root.is-eink .vault-textarea-styled,
+.vault-root.is-eink .vault-strength-track,
+.vault-root.is-eink .vault-strength-badge {
+  background: var(--all-surface-2, var(--surface-2)) !important;
+  border: var(--all-border-width, 1.5px) solid var(--all-border, var(--border)) !important;
+  color: var(--all-text, var(--text)) !important;
+}
+
+[data-theme^='e-ink'] .vault-status-badge,
+.vault-root.is-eink .vault-status-badge {
+  color: var(--all-text, var(--text)) !important;
+  font-weight: 700 !important;
+}
+
+[data-theme^='e-ink'] .vault-screen-val,
+[data-theme^='e-ink'] .vault-cell-value,
+[data-theme^='e-ink'] .vault-control-row,
+.vault-root.is-eink .vault-screen-val,
+.vault-root.is-eink .vault-cell-value,
+.vault-root.is-eink .vault-control-row {
+  color: var(--all-text, var(--text)) !important;
+}
+
+[data-theme^='e-ink'] .vault-strength-meta,
+[data-theme^='e-ink'] .vault-cell-title,
+[data-theme^='e-ink'] .vault-field-label,
+.vault-root.is-eink .vault-strength-meta,
+.vault-root.is-eink .vault-cell-title,
+.vault-root.is-eink .vault-field-label {
+  color: var(--all-text-muted, var(--text-muted)) !important;
+  font-weight: 700 !important;
+}
+
+[data-theme^='e-ink'] .vault-strength-bar,
+.vault-root.is-eink .vault-strength-bar {
+  background: var(--all-text, var(--text)) !important;
+  transition: none !important;
+}
+
+[data-theme^='e-ink'] .vault-slider,
+.vault-root.is-eink .vault-slider {
+  accent-color: var(--all-text, var(--text)) !important;
+}
+
+[data-theme^='e-ink'] .vault-chips-grid .all-btn,
+.vault-root.is-eink .vault-chips-grid .all-btn {
+  border: var(--all-border-width, 2px) solid var(--all-border, var(--border)) !important;
+  border-radius: var(--all-radius-sm, 0px) !important;
+  transition: none !important;
+}
+
+@media (max-width: 540px) {
+  .vault-subnet-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .vault-chips-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }

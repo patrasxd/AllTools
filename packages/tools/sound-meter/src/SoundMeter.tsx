@@ -27,10 +27,16 @@ export interface ToolComponentProps {
   onSave?: (data: unknown) => void
 }
 
-export function SoundMeter({ locale = 'en', setHeader, isEink = false }: ToolComponentProps) {
+export function SoundMeter({ locale = 'en', setHeader, isEink = false, theme }: ToolComponentProps) {
   const isPl = locale === 'pl'
   const t = soundMeterTranslations[locale] || soundMeterTranslations.en
   const calSliderId = useId()
+
+  const isDark = theme
+    ? theme === 'dark' || theme === 'e-ink-dark'
+    : typeof document !== 'undefined'
+    ? (document.documentElement.getAttribute('data-theme')?.includes('dark') ?? true)
+    : true
 
   const [isActive, setIsActive] = useState<boolean>(false)
   const [permissionDenied, setPermissionDenied] = useState<boolean>(false)
@@ -175,12 +181,18 @@ export function SoundMeter({ locale = 'en', setHeader, isEink = false }: ToolCom
 
     ctx.clearRect(0, 0, width, height)
 
+    const fgColor = isDark ? '#ffffff' : '#000000'
+    const mutedColor = isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+    const gridColor = isEink
+      ? (isDark ? 'rgba(255, 255, 255, 0.35)' : 'rgba(0, 0, 0, 0.35)')
+      : (isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)')
+
     // Decibel Horizontal Grid lines (30dB, 60dB, 90dB, 120dB)
-    ctx.strokeStyle = isEink ? '#000000' : 'rgba(128, 128, 128, 0.18)'
+    ctx.strokeStyle = gridColor
     ctx.lineWidth = isEink ? 1.5 : 1
     const levels = [30, 60, 90, 120]
     ctx.font = '9px monospace'
-    ctx.fillStyle = isEink ? '#000000' : 'rgba(128, 128, 128, 0.5)'
+    ctx.fillStyle = isEink ? fgColor : mutedColor
 
     levels.forEach((lvl) => {
       const usableH = height - bottomPadding
@@ -204,12 +216,12 @@ export function SoundMeter({ locale = 'en', setHeader, isEink = false }: ToolCom
     timeMarkers.forEach((tm) => {
       const x = tm.pos * width
       ctx.beginPath()
-      ctx.strokeStyle = isEink ? '#000000' : 'rgba(128, 128, 128, 0.12)'
+      ctx.strokeStyle = gridColor
       ctx.moveTo(x, 0)
       ctx.lineTo(x, height - bottomPadding)
       ctx.stroke()
 
-      ctx.fillStyle = isEink ? '#000000' : 'rgba(128, 128, 128, 0.6)'
+      ctx.fillStyle = isEink ? fgColor : mutedColor
       const textX = tm.pos === 1 ? x - 26 : tm.pos === 0 ? x + 4 : x - 10
       ctx.fillText(tm.label, textX, height - 3)
     })
@@ -220,7 +232,7 @@ export function SoundMeter({ locale = 'en', setHeader, isEink = false }: ToolCom
 
     const usableH = height - bottomPadding
     ctx.beginPath()
-    ctx.strokeStyle = isEink ? '#000000' : '#ffffff'
+    ctx.strokeStyle = fgColor
     ctx.lineWidth = isEink ? 2.5 : 2
     ctx.lineJoin = 'round'
 
@@ -236,13 +248,18 @@ export function SoundMeter({ locale = 'en', setHeader, isEink = false }: ToolCom
       else ctx.lineTo(x, y)
     })
     ctx.stroke()
-  }, [isEink, t.now])
+  }, [isEink, isDark, t.now])
 
   useEffect(() => {
-    if (!isEink) {
-      drawCanvas()
-    }
-  }, [currentDb, isEink, drawCanvas])
+    drawCanvas()
+  }, [currentDb, isEink, isDark, drawCanvas])
+
+  useEffect(() => {
+    drawCanvas()
+    const handleResize = () => drawCanvas()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [drawCanvas])
 
   return (
     <div className={`sound-root ${isEink ? 'is-eink' : ''}`.trim()}>
@@ -263,11 +280,7 @@ export function SoundMeter({ locale = 'en', setHeader, isEink = false }: ToolCom
                 {/* Acoustic Classification Tag */}
                 <div className="sound-badge-row">
                   <span className="sound-status-badge">
-                    {isActive
-                      ? reference.label
-                      : isEink && t.einkStaticNotice
-                      ? t.einkStaticNotice
-                      : t.startMicrophone}
+                    {isActive ? reference.label : t.startMicrophone}
                   </span>
                 </div>
 

@@ -1,19 +1,21 @@
-import React, { useState, useEffect, useMemo, useId } from 'react'
+import React, { useState, useEffect, useMemo, useId, useCallback } from 'react'
 import {
-  GameButton,
+  BoardLayout,
+  Button,
   PillGroup,
   StatsHeader,
   ControlsBar,
-  IconCopy,
-  IconCheck,
-  IconRotateCw,
-} from '@alltools/ui'
+  CopyIcon,
+  CheckIcon,
+  RestartIcon,
+} from '@all/ui'
 import type {
   DevVaultMode,
   PasswordConfig,
   EncoderFormat,
   HashAlgorithm,
 } from './types'
+import { devVaultTranslations } from './i18n'
 import {
   generateSecurePassword,
   calculatePasswordStrength,
@@ -34,11 +36,12 @@ export interface ToolComponentProps {
   locale?: 'en' | 'pl'
   setHeader?: (header: React.ReactNode) => void
   isEink?: boolean
+  theme?: string
   onSave?: (data: unknown) => void
 }
 
-export function DevVault({ locale = 'en', setHeader }: ToolComponentProps) {
-  const isPl = locale === 'pl'
+export function DevVault({ locale = 'en', setHeader, isEink = false }: ToolComponentProps) {
+  const t = devVaultTranslations[locale] || devVaultTranslations.en
   const sliderId = useId()
   const ipInputId = useId()
   const codecInputId = useId()
@@ -61,14 +64,14 @@ export function DevVault({ locale = 'en', setHeader }: ToolComponentProps) {
   })
   const [generatedPassword, setGeneratedPassword] = useState<string>('')
 
-  const regeneratePassword = () => {
+  const regeneratePassword = useCallback(() => {
     const pwd = generateSecurePassword(pwdConfig, locale)
     setGeneratedPassword(pwd)
-  }
+  }, [pwdConfig, locale])
 
   useEffect(() => {
     regeneratePassword()
-  }, [pwdConfig, locale])
+  }, [regeneratePassword])
 
   const strength = useMemo(() => {
     return calculatePasswordStrength(generatedPassword)
@@ -147,28 +150,34 @@ export function DevVault({ locale = 'en', setHeader }: ToolComponentProps) {
     if (!setHeader) return
 
     let items: { key: string; label: string; value: string | number }[] = []
+    let headerTitle = t.headerPassword
 
     if (activeMode === 'password') {
+      headerTitle = t.headerPassword
       items = [
-        { key: 'len', label: isPl ? 'DŁUGOŚĆ' : 'LENGTH', value: pwdConfig.length },
-        { key: 'ent', label: isPl ? 'ENTROPIA' : 'ENTROPY', value: `${strength.entropy} ${isPl ? 'bitów' : 'bits'}` },
+        { key: 'len', label: t.labelLength, value: pwdConfig.length },
+        { key: 'ent', label: t.labelEntropy, value: `${strength.entropy} ${t.labelBits}` },
       ]
     } else if (activeMode === 'network') {
+      headerTitle = t.headerSubnet
       items = [
         { key: 'cidr', label: 'CIDR', value: subnetInfo ? `/${subnetInfo.cidr}` : '--' },
-        { key: 'hosts', label: isPl ? 'HOSTY' : 'HOSTS', value: subnetInfo ? subnetInfo.usableHosts.toLocaleString() : '--' },
+        { key: 'hosts', label: t.labelHosts, value: subnetInfo ? subnetInfo.usableHosts.toLocaleString() : '--' },
       ]
     } else if (activeMode === 'encoder') {
+      headerTitle = t.headerEncoder
       items = [
-        { key: 'fmt', label: isPl ? 'FORMAT' : 'FORMAT', value: encoderFmt.toUpperCase() },
-        { key: 'len', label: isPl ? 'ROZMIAR' : 'SIZE', value: `${codecOutput.length} B` },
+        { key: 'fmt', label: t.labelFormat, value: encoderFmt.toUpperCase() },
+        { key: 'len', label: t.labelSize, value: `${codecOutput.length} B` },
       ]
     } else if (activeMode === 'hash') {
+      headerTitle = t.headerHash
       items = [
-        { key: 'algo', label: 'ALGO', value: hashAlgo },
+        { key: 'algo', label: t.labelAlgo, value: hashAlgo },
         { key: 'len', label: 'BITS', value: hashAlgo === 'SHA-512' ? '512' : hashAlgo === 'SHA-256' ? '256' : '128' },
       ]
     } else {
+      headerTitle = t.headerUuid
       items = [
         { key: 'uuid', label: 'UUID', value: 'v4' },
         { key: 'epoch', label: 'EPOCH', value: epochNow.s },
@@ -177,398 +186,427 @@ export function DevVault({ locale = 'en', setHeader }: ToolComponentProps) {
 
     setHeader(
       <StatsHeader
-        label={
-          activeMode === 'password'
-            ? (isPl ? 'GENERATOR HASEŁ' : 'PASSWORD GENERATOR')
-            : activeMode === 'network'
-            ? (isPl ? 'KALKULATOR PODSIECI' : 'SUBNET CALCULATOR')
-            : activeMode === 'encoder'
-            ? (isPl ? 'ENKODER & DEKODER' : 'ENCODER & DECODER')
-            : activeMode === 'hash'
-            ? (isPl ? 'SUMY HASH' : 'HASH CHECKSUM')
-            : (isPl ? 'IDENTYFIKATORY' : 'UUID & EPOCH')
-        }
+        label={headerTitle}
         items={items}
       />
     )
-  }, [setHeader, isPl, activeMode, pwdConfig, strength, subnetInfo, encoderFmt, codecOutput, hashAlgo, epochNow])
+
+    return () => {
+      setHeader(null)
+    }
+  }, [setHeader, t, activeMode, pwdConfig, strength, subnetInfo, encoderFmt, codecOutput, hashAlgo, epochNow])
 
   const copyToClipboard = (text: string) => {
+    if (!navigator.clipboard) return
     navigator.clipboard.writeText(text)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
 
   const modeOptions = [
-    { value: 'password' as const, label: isPl ? 'Hasła' : 'Password' },
-    { value: 'network' as const, label: isPl ? 'Podsieć' : 'Subnet' },
-    { value: 'encoder' as const, label: isPl ? 'Enkoder' : 'Encoder' },
-    { value: 'hash' as const, label: isPl ? 'Hasze' : 'Hashes' },
-    { value: 'uuid' as const, label: 'UUID' },
+    { value: 'password' as const, label: t.modePassword, id: 'mode-opt-password' },
+    { value: 'network' as const, label: t.modeSubnet, id: 'mode-opt-subnet' },
+    { value: 'encoder' as const, label: t.modeEncoder, id: 'mode-opt-encoder' },
+    { value: 'hash' as const, label: t.modeHash, id: 'mode-opt-hash' },
+    { value: 'uuid' as const, label: t.modeUuid, id: 'mode-opt-uuid' },
   ]
 
+  const statusTitle = useMemo(() => {
+    switch (activeMode) {
+      case 'password':
+        return t.statusPassword
+      case 'network':
+        return t.statusSubnet
+      case 'encoder':
+        return t.statusEncoder
+      case 'hash':
+        return t.statusHash
+      case 'uuid':
+        return t.statusUuid
+      default:
+        return ''
+    }
+  }, [activeMode, t])
+
   return (
-    <div className="vault-root">
-      {/* 1. Header Title */}
-      <div className="vault-status">
-        <div className="vault-status-text">
-          {activeMode === 'password'
-            ? (isPl ? 'Generator haseł CSPRNG' : 'CSPRNG Password Generator')
-            : activeMode === 'network'
-            ? (isPl ? 'Kalkulator podsieci IPv4 & CIDR' : 'IPv4 & CIDR Subnet Calculator')
-            : activeMode === 'encoder'
-            ? (isPl ? 'Enkoder i dekoder danych' : 'Data Encoder & Decoder')
-            : activeMode === 'hash'
-            ? (isPl ? 'Kryptograficzne sumy kontrolne' : 'Cryptographic Hash Checksums')
-            : (isPl ? 'Generator UUID v4 i czas Unix' : 'UUID v4 & Unix Epoch Generator')}
-        </div>
-      </div>
+    <div className={`vault-root ${isEink ? 'is-eink' : ''}`.trim()}>
+      <BoardLayout
+        variant="wide"
+        align="center"
+        board={
+          <div className="vault-stage">
+            {/* Status / Title Tag */}
+            <div className="vault-badge-row">
+              <span className="vault-status-badge">{statusTitle}</span>
+            </div>
 
-      {/* 2. Main Center Viewport */}
-      <div className="vault-center-area">
-        <div className="vault-card">
-          {/* ─── MODE: PASSWORD GENERATOR ─── */}
-          {activeMode === 'password' && (
-            <>
-              {/* Full Width Monospace Display Screen */}
-              <div
-                className="vault-screen"
-                onClick={() => copyToClipboard(generatedPassword)}
-                title={isPl ? 'Kliknij, aby skopiować' : 'Click to copy'}
-              >
-                <span className="vault-screen-val">{generatedPassword}</span>
-                <GameButton
-                  variant="ghost"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    copyToClipboard(generatedPassword)
-                  }}
-                  icon={copied ? <IconCheck size={14} /> : <IconCopy size={14} />}
-                >
-                  {copied ? (isPl ? 'Skopiowano' : 'Copied') : (isPl ? 'Kopiuj' : 'Copy')}
-                </GameButton>
-              </div>
+            {/* Active Mode Card */}
+            <div className="vault-card">
+              {/* ─── MODE: PASSWORD GENERATOR ─── */}
+              {activeMode === 'password' && (
+                <>
+                  <div
+                    className="vault-screen"
+                    onClick={() => copyToClipboard(generatedPassword)}
+                    title={t.clickToCopy}
+                  >
+                    <span className="vault-screen-val">{generatedPassword}</span>
+                    <Button
+                      id="vault-screen-copy-pwd"
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        copyToClipboard(generatedPassword)
+                      }}
+                      icon={copied ? <CheckIcon /> : <CopyIcon />}
+                    >
+                      {copied ? t.copied : t.copy}
+                    </Button>
+                  </div>
 
-              {/* Entropy & Strength with Dynamic Colors */}
-              <div className="vault-strength-box">
-                <div className="vault-strength-meta">
-                  <span>
-                    {isPl ? 'Siła:' : 'Strength:'}{' '}
-                    <span
-                      className="vault-strength-badge"
-                      style={{
-                        color: strength.color,
-                        borderColor: `${strength.color}66`,
-                        backgroundColor: `${strength.color}15`,
+                  {/* Entropy & Strength */}
+                  <div className="vault-strength-box">
+                    <div className="vault-strength-meta">
+                      <span>
+                        {t.strength}{' '}
+                        <span
+                          className="vault-strength-badge"
+                          style={
+                            isEink
+                              ? undefined
+                              : {
+                                  color: strength.color,
+                                  borderColor: `${strength.color}66`,
+                                  backgroundColor: `${strength.color}15`,
+                                }
+                          }
+                        >
+                          {locale === 'pl' ? strength.labelPl : strength.labelEn}
+                        </span>{' '}
+                        ({strength.entropy} {t.labelBits})
+                      </span>
+                    </div>
+                    <div className="vault-strength-track">
+                      <div
+                        className="vault-strength-bar"
+                        style={{
+                          width: `${strength.score}%`,
+                          backgroundColor: isEink ? 'var(--all-text)' : strength.color,
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Length Slider */}
+                  <div className="vault-control-row">
+                    <label htmlFor={sliderId}>
+                      {t.charsLength} <strong>{pwdConfig.length}</strong> {t.charsCount}
+                    </label>
+                    <input
+                      id={sliderId}
+                      type="range"
+                      min="8"
+                      max="48"
+                      value={pwdConfig.length}
+                      onChange={(e) =>
+                        setPwdConfig((p) => ({ ...p, length: parseInt(e.target.value, 10) }))
+                      }
+                      className="vault-slider"
+                    />
+                  </div>
+
+                  {/* Character toggles */}
+                  <div className="vault-chips-grid">
+                    <Button
+                      id="pwd-toggle-upper"
+                      variant={pwdConfig.includeUpper ? 'primary' : 'secondary'}
+                      size="sm"
+                      onClick={() => setPwdConfig((p) => ({ ...p, includeUpper: !p.includeUpper }))}
+                    >
+                      A-Z {t.upper}
+                    </Button>
+
+                    <Button
+                      id="pwd-toggle-lower"
+                      variant={pwdConfig.includeLower ? 'primary' : 'secondary'}
+                      size="sm"
+                      onClick={() => setPwdConfig((p) => ({ ...p, includeLower: !p.includeLower }))}
+                    >
+                      a-z {t.lower}
+                    </Button>
+
+                    <Button
+                      id="pwd-toggle-digits"
+                      variant={pwdConfig.includeNumbers ? 'primary' : 'secondary'}
+                      size="sm"
+                      onClick={() => setPwdConfig((p) => ({ ...p, includeNumbers: !p.includeNumbers }))}
+                    >
+                      0-9 {t.digits}
+                    </Button>
+
+                    <Button
+                      id="pwd-toggle-symbols"
+                      variant={pwdConfig.includeSymbols ? 'primary' : 'secondary'}
+                      size="sm"
+                      onClick={() => setPwdConfig((p) => ({ ...p, includeSymbols: !p.includeSymbols }))}
+                    >
+                      !@# {t.symbols}
+                    </Button>
+
+                    <Button
+                      id="pwd-toggle-ambiguous"
+                      variant={pwdConfig.excludeAmbiguous ? 'primary' : 'secondary'}
+                      size="sm"
+                      onClick={() => setPwdConfig((p) => ({ ...p, excludeAmbiguous: !p.excludeAmbiguous }))}
+                    >
+                      Ø {t.noAmbiguous}
+                    </Button>
+                  </div>
+                </>
+              )}
+
+              {/* ─── MODE: SUBNET CALCULATOR ─── */}
+              {activeMode === 'network' && (
+                <>
+                  <div className="vault-input-wrap">
+                    <label htmlFor={ipInputId} className="vault-field-label">
+                      {t.ipCidrLabel}
+                    </label>
+                    <input
+                      id={ipInputId}
+                      type="text"
+                      className="vault-text-field"
+                      value={ipInput}
+                      onChange={(e) => setIpInput(e.target.value)}
+                      placeholder={t.ipPlaceholder}
+                    />
+                  </div>
+
+                  {subnetInfo ? (
+                    <div className="vault-subnet-grid">
+                      <div className="vault-grid-cell">
+                        <span className="vault-cell-title">{t.networkAddress}</span>
+                        <span className="vault-cell-value">{subnetInfo.networkAddress}</span>
+                      </div>
+                      <div className="vault-grid-cell">
+                        <span className="vault-cell-title">{t.broadcastAddress}</span>
+                        <span className="vault-cell-value">{subnetInfo.broadcastAddress}</span>
+                      </div>
+                      <div className="vault-grid-cell">
+                        <span className="vault-cell-title">{t.firstHost}</span>
+                        <span className="vault-cell-value">{subnetInfo.firstHost}</span>
+                      </div>
+                      <div className="vault-grid-cell">
+                        <span className="vault-cell-title">{t.lastHost}</span>
+                        <span className="vault-cell-value">{subnetInfo.lastHost}</span>
+                      </div>
+                      <div className="vault-grid-cell">
+                        <span className="vault-cell-title">{t.netmask}</span>
+                        <span className="vault-cell-value">{subnetInfo.netmask}</span>
+                      </div>
+                      <div className="vault-grid-cell">
+                        <span className="vault-cell-title">{t.usableHosts}</span>
+                        <span className="vault-cell-value">{subnetInfo.usableHosts.toLocaleString()}</span>
+                      </div>
+                      <div className="vault-grid-cell" style={{ gridColumn: 'span 2' }}>
+                        <span className="vault-cell-title">{t.classification}</span>
+                        <span className="vault-cell-value">
+                          {locale === 'pl' ? subnetInfo.ipTypePl : subnetInfo.ipTypeEn}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ color: 'var(--all-text-muted, var(--text-muted))', textAlign: 'center', padding: '1rem' }}>
+                      {t.invalidIpNotice}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* ─── MODE: ENCODER / DECODER ─── */}
+              {activeMode === 'encoder' && (
+                <div className="vault-dual-pane">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <PillGroup<EncoderFormat>
+                      size="sm"
+                      options={[
+                        { value: 'base64', label: 'Base64', id: 'enc-fmt-base64' },
+                        { value: 'url', label: 'URL', id: 'enc-fmt-url' },
+                        { value: 'html', label: 'HTML', id: 'enc-fmt-html' },
+                        { value: 'jwt', label: 'JWT', id: 'enc-fmt-jwt' },
+                      ]}
+                      value={encoderFmt}
+                      onChange={(fmt) => setEncoderFmt(fmt)}
+                    />
+                    <Button
+                      id="enc-decode-btn"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        if (encoderFmt === 'base64') setCodecInput(decodeBase64(codecInput))
+                        else if (encoderFmt === 'url') setCodecInput(decodeUrl(codecInput))
+                        else if (encoderFmt === 'html') setCodecInput(decodeHtml(codecInput))
                       }}
                     >
-                      {isPl ? strength.labelPl : strength.labelEn}
-                    </span>{' '}
-                    ({strength.entropy} {isPl ? 'bitów' : 'bits'})
-                  </span>
-                  <span>
-                    {isPl ? 'Czas złamania:' : 'Crack time:'}{' '}
-                    <strong>{isPl ? strength.crackTimePl : strength.crackTimeEn}</strong>
-                  </span>
-                </div>
-                <div className="vault-strength-track">
-                  <div
-                    className="vault-strength-bar"
-                    style={{
-                      width: `${strength.score}%`,
-                      backgroundColor: strength.color,
-                    }}
+                      {t.decodeInput}
+                    </Button>
+                  </div>
+
+                  <textarea
+                    id={codecInputId}
+                    className="vault-textarea-styled"
+                    value={codecInput}
+                    onChange={(e) => setCodecInput(e.target.value)}
+                    placeholder={t.enterInputPlaceholder}
+                  />
+
+                  <textarea
+                    readOnly
+                    className="vault-textarea-styled"
+                    value={codecOutput}
+                    placeholder={t.encodedResultPlaceholder}
+                    style={{ background: 'var(--all-surface, var(--surface))' }}
                   />
                 </div>
-              </div>
+              )}
 
-              {/* Length Slider */}
-              <div className="vault-control-row">
-                <label htmlFor={sliderId}>
-                  {isPl ? 'Długość:' : 'Length:'} <strong>{pwdConfig.length}</strong> {isPl ? 'znaków' : 'chars'}
-                </label>
-                <input
-                  id={sliderId}
-                  type="range"
-                  min="8"
-                  max="48"
-                  value={pwdConfig.length}
-                  onChange={(e) =>
-                    setPwdConfig((p) => ({ ...p, length: parseInt(e.target.value, 10) }))
-                  }
-                  className="vault-slider"
-                />
-              </div>
+              {/* ─── MODE: HASH CHECKSUMS ─── */}
+              {activeMode === 'hash' && (
+                <div className="vault-dual-pane">
+                  <PillGroup<HashAlgorithm>
+                    size="sm"
+                    options={[
+                      { value: 'SHA-256', label: t.sha256, id: 'hash-sha256' },
+                      { value: 'SHA-512', label: t.sha512, id: 'hash-sha512' },
+                      { value: 'SHA-1', label: t.sha1, id: 'hash-sha1' },
+                      { value: 'MD5', label: t.md5, id: 'hash-md5' },
+                    ]}
+                    value={hashAlgo}
+                    onChange={(algo) => setHashAlgo(algo)}
+                  />
 
-              {/* Reusable GameButtons for character toggles (DRY & consistent hover/theme styles) */}
-              <div className="vault-chips-grid">
-                <GameButton
-                  variant={pwdConfig.includeUpper ? 'primary' : 'secondary'}
-                  size="sm"
-                  onClick={() => setPwdConfig((p) => ({ ...p, includeUpper: !p.includeUpper }))}
-                >
-                  A-Z {isPl ? 'Wielkie' : 'Upper'}
-                </GameButton>
+                  <textarea
+                    id={hashInputId}
+                    className="vault-textarea-styled"
+                    value={hashInput}
+                    onChange={(e) => setHashInput(e.target.value)}
+                    placeholder={t.enterHashPlaceholder}
+                  />
 
-                <GameButton
-                  variant={pwdConfig.includeLower ? 'primary' : 'secondary'}
-                  size="sm"
-                  onClick={() => setPwdConfig((p) => ({ ...p, includeLower: !p.includeLower }))}
-                >
-                  a-z {isPl ? 'Małe' : 'Lower'}
-                </GameButton>
-
-                <GameButton
-                  variant={pwdConfig.includeNumbers ? 'primary' : 'secondary'}
-                  size="sm"
-                  onClick={() => setPwdConfig((p) => ({ ...p, includeNumbers: !p.includeNumbers }))}
-                >
-                  0-9 {isPl ? 'Cyfry' : 'Digits'}
-                </GameButton>
-
-                <GameButton
-                  variant={pwdConfig.includeSymbols ? 'primary' : 'secondary'}
-                  size="sm"
-                  onClick={() => setPwdConfig((p) => ({ ...p, includeSymbols: !p.includeSymbols }))}
-                >
-                  !@# {isPl ? 'Symbole' : 'Symbols'}
-                </GameButton>
-
-                <GameButton
-                  variant={pwdConfig.excludeAmbiguous ? 'primary' : 'secondary'}
-                  size="sm"
-                  onClick={() => setPwdConfig((p) => ({ ...p, excludeAmbiguous: !p.excludeAmbiguous }))}
-                >
-                  Ø {isPl ? 'Bez mylących' : 'No ambiguous'}
-                </GameButton>
-              </div>
-            </>
-          )}
-
-          {/* ─── MODE: SUBNET CALCULATOR ─── */}
-          {activeMode === 'network' && (
-            <>
-              <div className="vault-input-wrap">
-                <label htmlFor={ipInputId} className="vault-field-label">
-                  {isPl ? 'Adres IPv4 i prefiks CIDR (np. 192.168.1.1/24)' : 'IPv4 Address & CIDR Prefix (e.g. 192.168.1.1/24)'}
-                </label>
-                <input
-                  id={ipInputId}
-                  type="text"
-                  className="vault-text-field"
-                  value={ipInput}
-                  onChange={(e) => setIpInput(e.target.value)}
-                  placeholder="192.168.1.1/24"
-                />
-              </div>
-
-              {subnetInfo ? (
-                <div className="vault-subnet-grid">
-                  <div className="vault-grid-cell">
-                    <span className="vault-cell-title">{isPl ? 'Adres sieci' : 'Network'}</span>
-                    <span className="vault-cell-value">{subnetInfo.networkAddress}</span>
+                  <div
+                    className="vault-screen"
+                    onClick={() => copyToClipboard(hashOutput)}
+                    title={t.clickToCopy}
+                  >
+                    <span className="vault-screen-val" style={{ fontSize: '0.8125rem' }}>
+                      {hashOutput}
+                    </span>
+                    <Button
+                      id="hash-copy-output"
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        copyToClipboard(hashOutput)
+                      }}
+                      icon={copied ? <CheckIcon /> : <CopyIcon />}
+                    >
+                      {copied ? t.copied : t.copy}
+                    </Button>
                   </div>
-                  <div className="vault-grid-cell">
-                    <span className="vault-cell-title">{isPl ? 'Broadcast' : 'Broadcast'}</span>
-                    <span className="vault-cell-value">{subnetInfo.broadcastAddress}</span>
-                  </div>
-                  <div className="vault-grid-cell">
-                    <span className="vault-cell-title">{isPl ? 'Pierwszy host' : 'First Host'}</span>
-                    <span className="vault-cell-value">{subnetInfo.firstHost}</span>
-                  </div>
-                  <div className="vault-grid-cell">
-                    <span className="vault-cell-title">{isPl ? 'Ostatni host' : 'Last Host'}</span>
-                    <span className="vault-cell-value">{subnetInfo.lastHost}</span>
-                  </div>
-                  <div className="vault-grid-cell">
-                    <span className="vault-cell-title">{isPl ? 'Maska dziesiętna' : 'Netmask'}</span>
-                    <span className="vault-cell-value">{subnetInfo.netmask}</span>
-                  </div>
-                  <div className="vault-grid-cell">
-                    <span className="vault-cell-title">{isPl ? 'Użyteczne hosty' : 'Usable Hosts'}</span>
-                    <span className="vault-cell-value">{subnetInfo.usableHosts.toLocaleString()}</span>
-                  </div>
-                  <div className="vault-grid-cell" style={{ gridColumn: 'span 2' }}>
-                    <span className="vault-cell-title">{isPl ? 'Typ i klasyfikacja' : 'Classification'}</span>
-                    <span className="vault-cell-value">{isPl ? subnetInfo.ipTypePl : subnetInfo.ipTypeEn}</span>
-                  </div>
-                </div>
-              ) : (
-                <div style={{ color: 'var(--text-dim)', textAlign: 'center', padding: '1rem' }}>
-                  {isPl ? 'Wprowadź poprawny adres IPv4 (np. 10.0.0.1/16)' : 'Enter valid IPv4 (e.g. 10.0.0.1/16)'}
                 </div>
               )}
-            </>
-          )}
 
-          {/* ─── MODE: ENCODER / DECODER ─── */}
-          {activeMode === 'encoder' && (
-            <div className="vault-dual-pane">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <PillGroup
-                  options={[
-                    { value: 'base64', label: 'Base64' },
-                    { value: 'url', label: 'URL' },
-                    { value: 'html', label: 'HTML' },
-                    { value: 'jwt', label: 'JWT' },
-                  ]}
-                  value={encoderFmt}
-                  onChange={(fmt) => setEncoderFmt(fmt as EncoderFormat)}
-                />
-                <GameButton
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    if (encoderFmt === 'base64') setCodecInput(decodeBase64(codecInput))
-                    else if (encoderFmt === 'url') setCodecInput(decodeUrl(codecInput))
-                    else if (encoderFmt === 'html') setCodecInput(decodeHtml(codecInput))
-                  }}
-                >
-                  {isPl ? '↺ Dekoduj wprost' : '↺ Decode input'}
-                </GameButton>
-              </div>
+              {/* ─── MODE: UUID / EPOCH ─── */}
+              {activeMode === 'uuid' && (
+                <div className="vault-subnet-grid">
+                  <div className="vault-grid-cell" style={{ gridColumn: 'span 2' }}>
+                    <span className="vault-cell-title">{t.uuidV4}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.2rem' }}>
+                      <span className="vault-cell-value" style={{ fontSize: '0.95rem' }}>
+                        {uuid}
+                      </span>
+                      <Button
+                        id="uuid-copy-btn"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => copyToClipboard(uuid)}
+                        icon={copied ? <CheckIcon /> : <CopyIcon />}
+                      >
+                        {copied ? t.copied : t.copy}
+                      </Button>
+                    </div>
+                  </div>
 
-              <textarea
-                id={codecInputId}
-                className="vault-textarea-styled"
-                value={codecInput}
-                onChange={(e) => setCodecInput(e.target.value)}
-                placeholder="Enter input text..."
-              />
+                  <div className="vault-grid-cell">
+                    <span className="vault-cell-title">{t.unixEpochSeconds}</span>
+                    <span className="vault-cell-value">{epochNow.s}</span>
+                  </div>
 
-              <textarea
-                readOnly
-                className="vault-textarea-styled"
-                value={codecOutput}
-                placeholder="Encoded result..."
-                style={{ background: 'var(--surface)' }}
-              />
-            </div>
-          )}
+                  <div className="vault-grid-cell">
+                    <span className="vault-cell-title">{t.unixEpochMillis}</span>
+                    <span className="vault-cell-value">{epochNow.ms}</span>
+                  </div>
 
-          {/* ─── MODE: HASH CHECKSUMS ─── */}
-          {activeMode === 'hash' && (
-            <div className="vault-dual-pane">
-              <PillGroup
-                options={[
-                  { value: 'SHA-256', label: 'SHA-256' },
-                  { value: 'SHA-512', label: 'SHA-512' },
-                  { value: 'SHA-1', label: 'SHA-1' },
-                  { value: 'MD5', label: 'MD5' },
-                ]}
-                value={hashAlgo}
-                onChange={(algo) => setHashAlgo(algo as HashAlgorithm)}
-              />
-
-              <textarea
-                id={hashInputId}
-                className="vault-textarea-styled"
-                value={hashInput}
-                onChange={(e) => setHashInput(e.target.value)}
-                placeholder="Enter string to hash..."
-              />
-
-              <div
-                className="vault-screen"
-                onClick={() => copyToClipboard(hashOutput)}
-                title={isPl ? 'Kliknij, aby skopiować' : 'Click to copy'}
-              >
-                <span className="vault-screen-val" style={{ fontSize: '0.8125rem' }}>{hashOutput}</span>
-                <GameButton
-                  variant="ghost"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    copyToClipboard(hashOutput)
-                  }}
-                  icon={copied ? <IconCheck size={14} /> : <IconCopy size={14} />}
-                >
-                  {copied ? (isPl ? 'Skopiowano' : 'Copied') : (isPl ? 'Kopiuj' : 'Copy')}
-                </GameButton>
-              </div>
-            </div>
-          )}
-
-          {/* ─── MODE: UUID / EPOCH ─── */}
-          {activeMode === 'uuid' && (
-            <div className="vault-subnet-grid">
-              <div className="vault-grid-cell" style={{ gridColumn: 'span 2' }}>
-                <span className="vault-cell-title">UUID v4</span>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.2rem' }}>
-                  <span className="vault-cell-value" style={{ fontSize: '1rem' }}>{uuid}</span>
-                  <GameButton
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => copyToClipboard(uuid)}
-                    icon={copied ? <IconCheck size={14} /> : <IconCopy size={14} />}
-                  >
-                    {copied ? (isPl ? 'Skopiowano' : 'Copied') : (isPl ? 'Kopiuj' : 'Copy')}
-                  </GameButton>
+                  <div className="vault-grid-cell" style={{ gridColumn: 'span 2' }}>
+                    <span className="vault-cell-title">{t.iso8601Utc}</span>
+                    <span className="vault-cell-value">{epochNow.iso}</span>
+                  </div>
                 </div>
-              </div>
-
-              <div className="vault-grid-cell">
-                <span className="vault-cell-title">Unix Epoch (Seconds)</span>
-                <span className="vault-cell-value">{epochNow.s}</span>
-              </div>
-
-              <div className="vault-grid-cell">
-                <span className="vault-cell-title">Unix Epoch (Milliseconds)</span>
-                <span className="vault-cell-value">{epochNow.ms}</span>
-              </div>
-
-              <div className="vault-grid-cell" style={{ gridColumn: 'span 2' }}>
-                <span className="vault-cell-title">ISO 8601 UTC</span>
-                <span className="vault-cell-value">{epochNow.iso}</span>
-              </div>
+              )}
             </div>
-          )}
-        </div>
-      </div>
+          </div>
+        }
+        controls={
+          <ControlsBar>
+            <PillGroup<DevVaultMode>
+              size="sm"
+              options={modeOptions}
+              value={activeMode}
+              onChange={(m) => setActiveMode(m)}
+            />
 
-      {/* 3. Bottom Controls Bar */}
-      <div className="vault-controls-container">
-        <ControlsBar>
-          <PillGroup
-            options={modeOptions}
-            value={activeMode}
-            onChange={(m) => setActiveMode(m)}
-          />
+            {activeMode === 'password' && (
+              <>
+                <Button
+                  id="vault-ctrl-copy-pwd"
+                  variant="primary"
+                  size="sm"
+                  onClick={() => copyToClipboard(generatedPassword)}
+                  icon={copied ? <CheckIcon /> : <CopyIcon />}
+                >
+                  {copied ? t.copied : t.copy}
+                </Button>
+                <Button
+                  id="vault-ctrl-regen-pwd"
+                  variant="secondary"
+                  size="sm"
+                  onClick={regeneratePassword}
+                  icon={<RestartIcon />}
+                  title={t.regenerate}
+                >
+                  {t.regenerate}
+                </Button>
+              </>
+            )}
 
-          {activeMode === 'password' && (
-            <>
-              <GameButton
-                variant="primary"
-                size="md"
-                onClick={() => copyToClipboard(generatedPassword)}
-                icon={copied ? <IconCheck size={14} /> : <IconCopy size={14} />}
-              >
-                {copied ? (isPl ? 'Skopiowano' : 'Copied') : (isPl ? 'Kopiuj' : 'Copy')}
-              </GameButton>
-              <GameButton
+            {activeMode === 'uuid' && (
+              <Button
+                id="vault-ctrl-regen-uuid"
                 variant="secondary"
-                size="md"
-                onClick={regeneratePassword}
-                icon={<IconRotateCw size={14} />}
+                size="sm"
+                onClick={() => setUuid(generateUuid())}
+                icon={<RestartIcon />}
+                title={t.newUuid}
               >
-                {isPl ? 'Losuj' : 'Regenerate'}
-              </GameButton>
-            </>
-          )}
-
-          {activeMode === 'uuid' && (
-            <GameButton
-              variant="secondary"
-              size="md"
-              onClick={() => setUuid(generateUuid())}
-              icon={<IconRotateCw size={14} />}
-            >
-              {isPl ? 'Nowy UUID' : 'New UUID'}
-            </GameButton>
-          )}
-        </ControlsBar>
-      </div>
+                {t.newUuid}
+              </Button>
+            )}
+          </ControlsBar>
+        }
+      />
     </div>
   )
 }
+export default DevVault

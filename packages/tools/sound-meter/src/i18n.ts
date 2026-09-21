@@ -23,7 +23,6 @@ export interface SoundMeterTranslations {
   resetTooltip: string
   now: string
   close: string
-  einkStaticNotice?: string
 }
 
 export const soundMeterTranslations: Record<'en' | 'pl', SoundMeterTranslations> = {
@@ -52,7 +51,6 @@ export const soundMeterTranslations: Record<'en' | 'pl', SoundMeterTranslations>
     resetTooltip: 'Reset metrics',
     now: 'Now',
     close: 'Done',
-    einkStaticNotice: 'E-Ink mode active (low-frequency redraw)',
   },
   pl: {
     title: 'DECYBELOMIERZ',
@@ -79,6 +77,5 @@ export const soundMeterTranslations: Record<'en' | 'pl', SoundMeterTranslations>
     resetTooltip: 'Zresetuj statystyki',
     now: 'Teraz',
     close: 'Gotowe',
-    einkStaticNotice: 'Tryb E-Ink aktywny (zredukowane odświeżanie)',
   },
 }

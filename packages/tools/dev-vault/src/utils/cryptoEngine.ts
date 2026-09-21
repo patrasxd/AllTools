@@ -120,8 +120,8 @@ export function calculatePasswordStrength(password: string): PasswordStrength {
       score: 0,
       labelEn: 'Empty',
       labelPl: 'Puste',
-      crackTimeEn: 'Instant',
-      crackTimePl: 'Natychmiast',
+      crackTimeEn: 'Trivial',
+      crackTimePl: 'Błahe',
       color: '#ef4444',
     }
   }
@@ -139,33 +139,33 @@ export function calculatePasswordStrength(password: string): PasswordStrength {
 
   let labelEn = 'Weak'
   let labelPl = 'Słabe'
-  let crackTimeEn = 'Seconds'
-  let crackTimePl = 'Sekundy'
+  let crackTimeEn = 'Easy'
+  let crackTimePl = 'Łatwe'
   let color = '#ef4444' // Red
 
   if (entropy >= 80) {
-    labelEn = 'Military Grade'
+    labelEn = 'Very Strong'
     labelPl = 'Bardzo silne'
-    crackTimeEn = 'Centuries'
-    crackTimePl = 'Stulecia'
+    crackTimeEn = 'Very Hard'
+    crackTimePl = 'Bardzo trudne'
     color = '#10b981' // Green
   } else if (entropy >= 60) {
     labelEn = 'Strong'
     labelPl = 'Silne'
-    crackTimeEn = 'Years'
-    crackTimePl = 'Lata'
+    crackTimeEn = 'Hard'
+    crackTimePl = 'Trudne'
     color = '#84cc16' // Light green / Lime
   } else if (entropy >= 40) {
     labelEn = 'Medium'
     labelPl = 'Średnie'
-    crackTimeEn = 'Days'
-    crackTimePl = 'Dni'
+    crackTimeEn = 'Medium'
+    crackTimePl = 'Średnie'
     color = '#f59e0b' // Amber / Orange
   } else {
     labelEn = 'Weak'
     labelPl = 'Słabe'
-    crackTimeEn = 'Minutes'
-    crackTimePl = 'Minuty'
+    crackTimeEn = 'Easy'
+    crackTimePl = 'Łatwe'
     color = '#ef4444' // Red
   }
 

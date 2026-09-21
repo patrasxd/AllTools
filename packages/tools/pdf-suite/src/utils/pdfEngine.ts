@@ -1,6 +1,6 @@
 import { PDFDocument, degrees } from 'pdf-lib'
 import * as pdfjsLib from 'pdfjs-dist'
-import type { PdfPageItem } from '../types'
+import type { PdfPageItem, SignaturePosition } from '../types'
 
 // Set worker source for offline PDF.js rendering using standard URL resolution
 try {
@@ -13,28 +13,36 @@ try {
 /**
  * Renders small JPEG thumbnails for each page of a PDF document using PDF.js.
  */
-export async function renderPdfThumbnails(file: File): Promise<string[]> {
+export async function renderPdfThumbnails(
+  file: File
+): Promise<{ url: string; aspectRatio: number }[]> {
   try {
     const arrayBuffer = await file.arrayBuffer()
     const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) })
     const pdf = await loadingTask.promise
-    const thumbnails: string[] = []
+    const thumbnails: { url: string; aspectRatio: number }[] = []
 
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i)
-      const viewport = page.getViewport({ scale: 0.35 })
+      // High-resolution rendering (scale 1.5) for crystal-clear document preview
+      const viewport = page.getViewport({ scale: 1.5 })
       const canvas = document.createElement('canvas')
       const context = canvas.getContext('2d')
       canvas.width = viewport.width
       canvas.height = viewport.height
 
+      const aspect = viewport.width / viewport.height
+
       if (context) {
         context.fillStyle = '#ffffff'
         context.fillRect(0, 0, canvas.width, canvas.height)
         await (page.render as any)({ canvasContext: context, viewport, canvas }).promise
-        thumbnails.push(canvas.toDataURL('image/jpeg', 0.85))
+        thumbnails.push({
+          url: canvas.toDataURL('image/jpeg', 0.95),
+          aspectRatio: aspect,
+        })
       } else {
-        thumbnails.push('')
+        thumbnails.push({ url: '', aspectRatio: 1 / 1.414 })
       }
     }
     return thumbnails
@@ -54,7 +62,7 @@ export async function loadPdfInfo(
   const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true })
   const pageCount = pdfDoc.getPageCount()
 
-  // Generate real page thumbnails
+  // Generate high-resolution page thumbnails with real aspect ratios
   const thumbnails = await renderPdfThumbnails(file)
 
   const pages: PdfPageItem[] = []
@@ -72,7 +80,8 @@ export async function loadPdfInfo(
       displayNumber: i + 1,
       rotation: existingRotation,
       selected: true,
-      thumbnailUrl: thumbnails[i] || undefined,
+      thumbnailUrl: thumbnails[i]?.url || undefined,
+      aspectRatio: thumbnails[i]?.aspectRatio || 1 / 1.414,
     })
   }
 
@@ -150,6 +159,86 @@ export async function imagesToPdf(imageFiles: File[]): Promise<Blob> {
       height,
     })
   }
+
+  const pdfBytes = await pdfDoc.save()
+  return new Blob([pdfBytes.buffer as ArrayBuffer], { type: 'application/pdf' })
+}
+
+/**
+ * Embeds a PNG signature into a specific page of a PDF document.
+ * Supports presets ('bottom-right', 'bottom-left', 'bottom-center', 'top-right', 'center')
+ * as well as custom/manual (xPercent, yPercent) percentage coordinates on the page.
+ */
+export async function signPdf(
+  file: File | Blob,
+  signatureDataUrl: string,
+  targetPageIndex: number = 0,
+  position: SignaturePosition = 'bottom-right',
+  customCoordinates?: { xPercent: number; yPercent: number },
+  scale: number = 1
+): Promise<Blob> {
+  const arrayBuffer = await file.arrayBuffer()
+  const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true })
+
+  // Extract raw base64 PNG bytes
+  const base64Data = signatureDataUrl.replace(/^data:image\/\w+;base64,/, '')
+  const binaryString = atob(base64Data)
+  const bytes = new Uint8Array(binaryString.length)
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i)
+  }
+
+  const pngImage = await pdfDoc.embedPng(bytes)
+  const pageCount = pdfDoc.getPageCount()
+  const safeIndex = Math.max(0, Math.min(targetPageIndex, pageCount - 1))
+  const page = pdfDoc.getPage(safeIndex)
+
+  const { width: pageWidth, height: pageHeight } = page.getSize()
+
+  // Proportional signature bounding box scaled by user factor
+  const aspect = pngImage.width / pngImage.height
+  const maxW = 170 * scale
+  const maxH = 70 * scale
+  let sigWidth = maxW
+  let sigHeight = sigWidth / aspect
+  if (sigHeight > maxH) {
+    sigHeight = maxH
+    sigWidth = sigHeight * aspect
+  }
+
+  let x = pageWidth - sigWidth - 45 // default bottom-right
+  let y = 45 // 45 points margin from bottom edge
+
+  if (position === 'custom' && customCoordinates) {
+    // Convert 0..100 percentage from top-left (screen) to PDF coordinates (origin at bottom-left)
+    const centerX = (customCoordinates.xPercent / 100) * pageWidth
+    const centerY = (customCoordinates.yPercent / 100) * pageHeight
+    x = centerX - (sigWidth / 2)
+    y = pageHeight - centerY - (sigHeight / 2)
+  } else if (position === 'bottom-left') {
+    x = 45
+    y = 45
+  } else if (position === 'bottom-center') {
+    x = (pageWidth - sigWidth) / 2
+    y = 45
+  } else if (position === 'top-right') {
+    x = pageWidth - sigWidth - 45
+    y = pageHeight - sigHeight - 45
+  } else if (position === 'center') {
+    x = (pageWidth - sigWidth) / 2
+    y = (pageHeight - sigHeight) / 2
+  }
+
+  // Safety clamp within page boundaries
+  x = Math.max(5, Math.min(x, pageWidth - sigWidth - 5))
+  y = Math.max(5, Math.min(y, pageHeight - sigHeight - 5))
+
+  page.drawImage(pngImage, {
+    x,
+    y,
+    width: sigWidth,
+    height: sigHeight,
+  })
 
   const pdfBytes = await pdfDoc.save()
   return new Blob([pdfBytes.buffer as ArrayBuffer], { type: 'application/pdf' })
