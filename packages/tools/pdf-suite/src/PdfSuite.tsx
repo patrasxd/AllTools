@@ -21,6 +21,9 @@ import type {
   PdfPageItem,
   SignaturePosition,
   SignatureFont,
+  EditableImageItem,
+  DocumentFilter,
+  Point2D,
 } from './types'
 import { pdfSuiteTranslations } from './i18n'
 import {
@@ -30,6 +33,12 @@ import {
   imagesToPdf,
   signPdf,
 } from './utils/pdfEngine'
+import {
+  loadImageElement,
+  rotateCanvas,
+  applyDocumentFilter,
+  processEditableImage,
+} from './utils/imageEngine'
 import './styles/pdf-suite.css'
 
 export interface ToolComponentProps {
@@ -123,13 +132,25 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
   const [targetPageChoice, setTargetPageChoice] = useState<string>('1')
   const [sigPosition, setSigPosition] = useState<SignaturePosition>('bottom-right')
   const [sigScale, setSigScale] = useState<number | string>(100)
-  const [customCoords, setCustomCoords] = useState<{ xPercent: number; yPercent: number }>({ xPercent: 82, yPercent: 91 })
+  const [boxWidthPercent, setBoxWidthPercent] = useState<number>(32)
+  const [boxHeightPercent, setBoxHeightPercent] = useState<number>(12)
+  const [customCoords, setCustomCoords] = useState<{ xPercent: number; yPercent: number }>({ xPercent: 80, yPercent: 90 })
   const [isDraggingSig, setIsDraggingSig] = useState<boolean>(false)
+  const [isResizingSig, setIsResizingSig] = useState<boolean>(false)
   const [drawSigDataUrl, setDrawSigDataUrl] = useState<string>('')
   const [isDrawing, setIsDrawing] = useState<boolean>(false)
 
+  // Editable Images (Images to PDF & Document Scanner)
+  const [editableImages, setEditableImages] = useState<EditableImageItem[]>([])
+  const [activeImageIndex, setActiveImageIndex] = useState<number>(0)
+  const [activePinIndex, setActivePinIndex] = useState<number | null>(null)
+  const [generatingPdf, setGeneratingPdf] = useState<boolean>(false)
+
   const fileInputRef = useRef<HTMLInputElement>(null)
   const sigCanvasRef = useRef<HTMLCanvasElement>(null)
+  const previewCanvasRef = useRef<HTMLCanvasElement>(null)
+  const imgWrapperRef = useRef<HTMLDivElement>(null)
+  const viewportRef = useRef<HTMLDivElement>(null)
 
   // ─── Top StatsHeader Sync ───────────────────────────────────
   useEffect(() => {
@@ -157,9 +178,11 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
         { key: 'step', label: t.labelStep, value: '3 / 3' },
       ]
     } else {
+      const activeImg = editableImages[activeImageIndex]
       items = [
-        { key: 'imgs', label: t.labelImages, value: imageFiles.length },
-        { key: 'fmt', label: 'PDF', value: 'A4' },
+        { key: 'imgs', label: t.labelImages, value: editableImages.length },
+        { key: 'page', label: t.labelPages, value: `${activeImageIndex + 1}/${editableImages.length}` },
+        { key: 'filter', label: 'FILTER', value: (activeImg?.filter || 'COLOR').toUpperCase() },
       ]
     }
 
@@ -172,7 +195,7 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
     return () => {
       setHeader(null)
     }
-  }, [setHeader, t, step, pdfFiles, pdfPages, imageFiles])
+  }, [setHeader, t, step, pdfFiles, pdfPages, editableImages, activeImageIndex])
 
   // ─── File Upload Handler (Guided Flow) ───────────────────────
   const handleFilesAdded = async (files: FileList | File[]) => {
@@ -200,8 +223,68 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
         }
       }
 
-      if (newImages.length > 0 && newPdfFiles.length === 0 && pdfFiles.length === 0) {
+      if (step === 'images' && newImages.length > 0) {
+        const items: EditableImageItem[] = []
+        for (let i = 0; i < newImages.length; i++) {
+          const file = newImages[i]
+          const url = URL.createObjectURL(file)
+          const img = await loadImageElement(url)
+          const naturalW = img.naturalWidth || 1200
+          const naturalH = img.naturalHeight || 800
+          items.push({
+            id: `${Date.now()}-${i}-${Math.random().toString(36).slice(2, 7)}`,
+            name: file.name,
+            sizeBytes: file.size,
+            file,
+            originalUrl: url,
+            width: naturalW,
+            height: naturalH,
+            rotation: 0,
+            filter: 'original',
+            corners: [
+              { x: 0, y: 0 },
+              { x: 1, y: 0 },
+              { x: 1, y: 1 },
+              { x: 0, y: 1 },
+            ],
+            previewUrl: url,
+          })
+        }
+        setEditableImages((prev) => [...prev, ...items])
         setImageFiles((prev) => [...prev, ...newImages])
+        return
+      }
+
+      if (newImages.length > 0 && newPdfFiles.length === 0 && pdfFiles.length === 0) {
+        const items: EditableImageItem[] = []
+        for (let i = 0; i < newImages.length; i++) {
+          const file = newImages[i]
+          const url = URL.createObjectURL(file)
+          const img = await loadImageElement(url)
+          const naturalW = img.naturalWidth || 1200
+          const naturalH = img.naturalHeight || 800
+          items.push({
+            id: `${Date.now()}-${i}-${Math.random().toString(36).slice(2, 7)}`,
+            name: file.name,
+            sizeBytes: file.size,
+            file,
+            originalUrl: url,
+            width: naturalW,
+            height: naturalH,
+            rotation: 0,
+            filter: 'original',
+            corners: [
+              { x: 0, y: 0 },
+              { x: 1, y: 0 },
+              { x: 1, y: 1 },
+              { x: 0, y: 1 },
+            ],
+            previewUrl: url,
+          })
+        }
+        setEditableImages(items)
+        setImageFiles(newImages)
+        setActiveImageIndex(0)
         setStep('images')
       } else {
         const combinedFiles = [...pdfFiles, ...newPdfFiles]
@@ -221,6 +304,211 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
       alert(t.errorReading)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  // ─── Live Canvas Preview Render (for Edit Images) ────────────
+  useEffect(() => {
+    if (step !== 'images' || editableImages.length === 0 || !previewCanvasRef.current) return
+    const activeItem = editableImages[activeImageIndex]
+    if (!activeItem) return
+
+    let isCancelled = false
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => {
+      if (isCancelled || !previewCanvasRef.current) return
+      const canvas = previewCanvasRef.current
+
+      const naturalW = img.naturalWidth || activeItem.width || 1200
+      const naturalH = img.naturalHeight || activeItem.height || 800
+
+      // Sync activeItem width and height if they differed from natural image
+      if (activeItem.width !== naturalW || activeItem.height !== naturalH) {
+        setEditableImages((prev) => {
+          const updated = [...prev]
+          if (updated[activeImageIndex]) {
+            updated[activeImageIndex] = {
+              ...updated[activeImageIndex],
+              width: naturalW,
+              height: naturalH,
+            }
+          }
+          return updated
+        })
+      }
+
+      // Offscreen canvas for rotation and filter preview
+      const tempCanvas = document.createElement('canvas')
+      tempCanvas.width = naturalW
+      tempCanvas.height = naturalH
+      const tCtx = tempCanvas.getContext('2d')
+      if (tCtx) {
+        tCtx.drawImage(img, 0, 0, naturalW, naturalH)
+      }
+
+      const rotated = rotateCanvas(tempCanvas, activeItem.rotation)
+      const filtered = applyDocumentFilter(rotated, activeItem.filter)
+
+      canvas.width = filtered.width
+      canvas.height = filtered.height
+      const ctx = canvas.getContext('2d')
+      if (ctx) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        ctx.drawImage(filtered, 0, 0)
+      }
+    }
+    img.src = activeItem.originalUrl
+
+    return () => {
+      isCancelled = true
+    }
+  }, [step, editableImages, activeImageIndex])
+
+  // ─── 4-Corner Perspective Pin Interaction ───────────────────
+  const handlePinPointerDown = (e: React.PointerEvent, pinIdx: number) => {
+    e.stopPropagation()
+    e.preventDefault()
+    setActivePinIndex(pinIdx)
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId)
+    } catch {}
+  }
+
+  const handlePinPointerMove = (e: React.PointerEvent) => {
+    if (activePinIndex === null || !imgWrapperRef.current) return
+    const rect = imgWrapperRef.current.getBoundingClientRect()
+    if (rect.width <= 0 || rect.height <= 0) return
+
+    const normX = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
+    const normY = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height))
+
+    setEditableImages((prev) => {
+      const updated = [...prev]
+      const curr = updated[activeImageIndex]
+      if (!curr) return prev
+      const newCorners = [...curr.corners] as [Point2D, Point2D, Point2D, Point2D]
+      newCorners[activePinIndex] = {
+        x: Number(normX.toFixed(3)),
+        y: Number(normY.toFixed(3)),
+      }
+      updated[activeImageIndex] = {
+        ...curr,
+        corners: newCorners,
+      }
+      return updated
+    })
+  }
+
+  const handlePinPointerUp = (e: React.PointerEvent) => {
+    if (activePinIndex !== null) {
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId)
+      } catch {}
+      setActivePinIndex(null)
+    }
+  }
+
+  // ─── Active Image Controls ──────────────────────────────────
+  const setFilterForActive = (filter: DocumentFilter) => {
+    setEditableImages((prev) => {
+      const updated = [...prev]
+      if (updated[activeImageIndex]) {
+        updated[activeImageIndex] = { ...updated[activeImageIndex], filter }
+      }
+      return updated
+    })
+  }
+
+  const rotateActiveImage = () => {
+    setEditableImages((prev) => {
+      const updated = [...prev]
+      const curr = updated[activeImageIndex]
+      if (curr) {
+        updated[activeImageIndex] = {
+          ...curr,
+          rotation: (curr.rotation + 90) % 360,
+        }
+      }
+      return updated
+    })
+  }
+
+  const resetCornersActive = () => {
+    setEditableImages((prev) => {
+      const updated = [...prev]
+      if (updated[activeImageIndex]) {
+        updated[activeImageIndex] = {
+          ...updated[activeImageIndex],
+          corners: [
+            { x: 0, y: 0 },
+            { x: 1, y: 0 },
+            { x: 1, y: 1 },
+            { x: 0, y: 1 },
+          ],
+        }
+      }
+      return updated
+    })
+  }
+
+  const moveImage = (fromIdx: number, toIdx: number) => {
+    if (toIdx < 0 || toIdx >= editableImages.length || fromIdx === toIdx) return
+    setEditableImages((prev) => {
+      const updated = [...prev]
+      const [moved] = updated.splice(fromIdx, 1)
+      updated.splice(toIdx, 0, moved)
+      return updated
+    })
+    setActiveImageIndex(toIdx)
+  }
+
+  const deleteImage = (idx: number) => {
+    setEditableImages((prev) => {
+      const updated = prev.filter((_, i) => i !== idx)
+      if (updated.length === 0) {
+        setStep('upload')
+      }
+      return updated
+    })
+    setActiveImageIndex((curr) => Math.max(0, Math.min(curr, editableImages.length - 2)))
+  }
+
+  // ─── Convert Edited Images to PDF & Transition to Edit PDF ──
+  const handleContinueToPdf = async () => {
+    if (editableImages.length === 0) return
+    setIsLoading(true)
+    setGeneratingPdf(true)
+    try {
+      const processedFiles: File[] = []
+      for (let i = 0; i < editableImages.length; i++) {
+        const item = editableImages[i]
+        const blob = await processEditableImage(item)
+        const file = new File([blob], `scanned_page_${i + 1}.jpg`, { type: 'image/jpeg' })
+        processedFiles.push(file)
+      }
+
+      const pdfBlob = await imagesToPdf(processedFiles)
+      const pdfFile = new File([pdfBlob], 'scanned_document.pdf', { type: 'application/pdf' })
+      const info = await loadPdfInfo(pdfFile)
+
+      setPdfFiles([
+        {
+          id: `${Date.now()}-scanned`,
+          name: 'scanned_document.pdf',
+          sizeBytes: pdfBlob.size,
+          pageCount: info.pageCount,
+          file: pdfFile,
+        },
+      ])
+      setPdfPages(info.pages)
+      setStep('edit_pages')
+    } catch (err) {
+      console.error('Error generating PDF from scanned images:', err)
+      alert(t.errorGenerating)
+    } finally {
+      setIsLoading(false)
+      setGeneratingPdf(false)
     }
   }
 
@@ -338,6 +626,8 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
     setPdfFiles([])
     setPdfPages([])
     setImageFiles([])
+    setEditableImages([])
+    setActiveImageIndex(0)
     setStep('upload')
   }
 
@@ -445,12 +735,25 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
     setDrawSigDataUrl('')
   }
 
-  const numericScale = typeof sigScale === 'number' ? sigScale : (parseInt(sigScale, 10) || 1)
-  const effectiveScale = Math.max(1, Math.min(500, numericScale))
-  const boxWidthPercent = Math.max(1, Math.round(28 * (effectiveScale / 100)))
-  const boxHeightPercent = Math.max(1, Math.round(10 * (effectiveScale / 100)))
+  const numericScale = typeof sigScale === 'number' ? sigScale : (parseInt(sigScale, 10) || 100)
+  const effectiveScale = Math.max(10, Math.min(500, numericScale))
+
   const halfW = Math.max(1, Math.round(boxWidthPercent / 2))
   const halfH = Math.max(1, Math.round(boxHeightPercent / 2))
+
+  const handleScaleChange = (valStr: string) => {
+    if (valStr === '') {
+      setSigScale('')
+      return
+    }
+    const val = parseInt(valStr, 10)
+    if (!isNaN(val)) {
+      const clamped = Math.max(10, Math.min(500, val))
+      setSigScale(clamped)
+      setBoxWidthPercent(Math.max(10, Math.min(95, Math.round(32 * (clamped / 100)))))
+      setBoxHeightPercent(Math.max(4, Math.min(60, Math.round(12 * (clamped / 100)))))
+    }
+  }
 
   // Preset position selector (clamped safely inside margins to prevent overflow)
   const handleSelectPreset = (pos: SignaturePosition) => {
@@ -465,18 +768,43 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
 
   // Manual interactive click / drag handler on document preview (safely clamped so box never overflows paper edges)
   const handlePlacementPointer = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect()
+    if (!viewportRef.current) return
+    const rect = viewportRef.current.getBoundingClientRect()
     const x = e.clientX - rect.left
     const y = e.clientY - rect.top
-    const minX = halfW + 2
-    const maxX = 100 - halfW - 2
-    const minY = halfH + 2
-    const maxY = 100 - halfH - 2
+    const minX = halfW + 1
+    const maxX = 100 - halfW - 1
+    const minY = halfH + 1
+    const maxY = 100 - halfH - 1
     const xPercent = Math.max(minX, Math.min(maxX, Math.round((x / rect.width) * 100)))
     const yPercent = Math.max(minY, Math.min(maxY, Math.round((y / rect.height) * 100)))
     setCustomCoords({ xPercent, yPercent })
     setSigPosition('custom')
   }, [halfW, halfH])
+
+  // Interactive resize handle dragging (resizes both the blue box and text proportionally)
+  const handleResizePointer = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (!viewportRef.current) return
+    const rect = viewportRef.current.getBoundingClientRect()
+    const pointerX = e.clientX - rect.left
+    const pointerY = e.clientY - rect.top
+
+    // Center of the signature box in pixels
+    const centerX = (customCoords.xPercent / 100) * rect.width
+    const centerY = (customCoords.yPercent / 100) * rect.height
+
+    // Distance from center to pointer
+    const distX = Math.abs(pointerX - centerX)
+    const distY = Math.abs(pointerY - centerY)
+
+    const newW = Math.max(10, Math.min(95, Math.round(((distX * 2) / rect.width) * 100)))
+    const newH = Math.max(4, Math.min(60, Math.round(((distY * 2) / rect.height) * 100)))
+
+    setBoxWidthPercent(newW)
+    setBoxHeightPercent(newH)
+    setSigScale(Math.round((newW / 32) * 100))
+    setSigPosition('custom')
+  }, [customCoords.xPercent, customCoords.yPercent])
 
   const resolvedPageIndex = useMemo(() => {
     const pageCount = pdfPages.length
@@ -491,11 +819,9 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
   const targetPageThumbnail = pdfPages[resolvedPageIndex]?.thumbnailUrl
   const currentPageAspectRatio = pdfPages[resolvedPageIndex]?.aspectRatio || 1 / 1.414
 
-  // Render typed signature to transparent PNG
+  // Render typed signature to transparent PNG with dynamic measurement & padding
   const renderTypedSignaturePng = (text: string, font: SignatureFont): string => {
     const offscreen = document.createElement('canvas')
-    offscreen.width = 600
-    offscreen.height = 200
     const ctx = offscreen.getContext('2d')
     if (!ctx) return ''
 
@@ -505,15 +831,37 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
     else if (font === 'calligraphy') fontName = "'Great Vibes', cursive"
     else if (font === 'cursive') fontName = "'Sacramento', cursive"
 
+    const label = text.trim() || 'Signature'
+
+    // High resolution base font size for crisp, unclipped signature
+    const baseFontSize = 72
+    ctx.font = `${baseFontSize}px ${fontName}`
+    const metrics = ctx.measureText(label)
+    const textWidth = Math.ceil(metrics.width) || 300
+
+    // Set canvas dimensions with generous padding so glyph ascenders/descenders never clip
+    const paddingX = 60
+    const paddingY = 40
+    offscreen.width = Math.max(400, textWidth + paddingX * 2)
+    offscreen.height = Math.max(160, Math.ceil(baseFontSize * 2) + paddingY * 2)
+
+    // Clear and redraw with font setting on resized canvas
     ctx.clearRect(0, 0, offscreen.width, offscreen.height)
-    ctx.font = `60px ${fontName}`
+    ctx.font = `${baseFontSize}px ${fontName}`
     ctx.fillStyle = '#111111'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
-    ctx.fillText(text || 'Signature', offscreen.width / 2, offscreen.height / 2)
+    ctx.fillText(label, offscreen.width / 2, offscreen.height / 2)
 
     return trimCanvas(offscreen)
   }
+
+  const activeSignatureDataUrl = useMemo(() => {
+    if (signMode === 'draw') {
+      return drawSigDataUrl || (sigCanvasRef.current ? trimCanvas(sigCanvasRef.current) : '')
+    }
+    return renderTypedSignaturePng(typedName, selectedFont)
+  }, [signMode, drawSigDataUrl, typedName, selectedFont])
 
   const handleProceedToPlacement = () => {
     if (signMode === 'draw' && sigCanvasRef.current) {
@@ -539,7 +887,19 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
       const pageIdx = resolvedPageIndex
 
       const sourceFile = pdfFiles[0].file
-      const signedBlob = await signPdf(sourceFile, signatureDataUrl, pageIdx, sigPosition, customCoords, effectiveScale / 100)
+      const signedBlob = await signPdf(
+        sourceFile,
+        signatureDataUrl,
+        pageIdx,
+        sigPosition,
+        {
+          xPercent: customCoords.xPercent,
+          yPercent: customCoords.yPercent,
+          widthPercent: boxWidthPercent,
+          heightPercent: boxHeightPercent,
+        },
+        1
+      )
       const signedFile = new File([signedBlob], `${pdfFiles[0].name.replace(/\.pdf$/i, '')}_signed.pdf`, { type: 'application/pdf' })
 
       const info = await loadPdfInfo(signedFile)
@@ -566,7 +926,7 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
   const statusTitle = useMemo(() => {
     if (step === 'upload') return t.titleUpload
     if (step === 'merge_files') return t.titleMerge
-    if (step === 'images') return t.titleImages
+    if (step === 'images') return t.titleEditImages
     return t.titleOrganize
   }, [step, t])
 
@@ -839,13 +1199,36 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
                 </>
               )}
 
-              {/* ─── IMAGES TO PDF ─── */}
+              {/* ─── STEP: EDIT IMAGES & DOCUMENT SCANNER ─── */}
               {step === 'images' && (
-                <>
-                  <div className="pdf-toolbar">
-                    <span className="pdf-toolbar-info">
-                      {imageFiles.length} {t.labelImages.toLowerCase()}
-                    </span>
+                <div className="pdf-images-workspace">
+                  {/* Thumbnail Strip for all image pages */}
+                  <div className="pdf-img-strip-wrap">
+                    <div className="pdf-img-strip">
+                      {editableImages.map((imgItem, idx) => (
+                        <div
+                          key={imgItem.id}
+                          className={`pdf-img-thumb-card ${activeImageIndex === idx ? 'pdf-img-thumb-card--active' : ''}`}
+                          onClick={() => setActiveImageIndex(idx)}
+                          title={`${t.editImagePage} ${idx + 1}`}
+                        >
+                          <img src={imgItem.originalUrl} alt={imgItem.name} className="pdf-img-thumb-img" />
+                          <span className="pdf-img-thumb-badge">{idx + 1}</span>
+                          <button
+                            type="button"
+                            className="pdf-img-thumb-delete"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              deleteImage(idx)
+                            }}
+                            title={t.remove}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
                     <div className="pdf-toolbar-actions">
                       <Button
                         id="pdf-add-more-imgs-btn"
@@ -858,36 +1241,134 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
                     </div>
                   </div>
 
-                  <div className="pdf-items-container">
-                    <div className="pdf-file-list">
-                      {imageFiles.map((img, idx) => (
-                        <div key={`${img.name}-${idx}`} className="pdf-file-row">
-                          <div className="pdf-file-left">
-                            <span className="pdf-file-index">{idx + 1}</span>
-                            <div className="pdf-file-meta">
-                              <span className="pdf-file-name">{img.name}</span>
-                              <span className="pdf-file-sub">{formatBytes(img.size)}</span>
-                            </div>
-                          </div>
-                          <div className="pdf-file-right">
-                            <button
-                              type="button"
-                              className="pdf-arrow-btn"
-                              onClick={() => {
-                                const rem = imageFiles.filter((_, i) => i !== idx)
-                                setImageFiles(rem)
-                                if (rem.length === 0) setStep('upload')
-                              }}
-                              title={t.remove}
-                            >
-                              <TrashIcon />
-                            </button>
+                  {/* Main Large Editor Area */}
+                  {(() => {
+                    const activeItem = editableImages[activeImageIndex]
+                    const isRotated90 = activeItem ? activeItem.rotation === 90 || activeItem.rotation === 270 : false
+                    const displayW = activeItem ? (isRotated90 ? activeItem.height : activeItem.width) : 800
+                    const displayH = activeItem ? (isRotated90 ? activeItem.width : activeItem.height) : 600
+
+                    return (
+                      <div className="pdf-img-stage-area">
+                        <div className="pdf-img-viewport">
+                          <div
+                            className="pdf-img-wrapper"
+                            ref={imgWrapperRef}
+                            style={{
+                              aspectRatio: `${displayW} / ${displayH}`,
+                            }}
+                          >
+                            <canvas ref={previewCanvasRef} className="pdf-img-preview-canvas" />
+
+                            {activeItem && (
+                              <svg className="pdf-perspective-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                <polygon
+                                  points={`${activeItem.corners[0].x * 100},${activeItem.corners[0].y * 100} ${activeItem.corners[1].x * 100},${activeItem.corners[1].y * 100} ${activeItem.corners[2].x * 100},${activeItem.corners[2].y * 100} ${activeItem.corners[3].x * 100},${activeItem.corners[3].y * 100}`}
+                                  fill="rgba(59, 130, 246, 0.16)"
+                                  stroke="var(--all-text, #fff)"
+                                  strokeWidth="1.5"
+                                  strokeDasharray="4 2"
+                                  vectorEffect="non-scaling-stroke"
+                                />
+                              </svg>
+                            )}
+
+                            {activeItem &&
+                              activeItem.corners.map((corner, pinIdx) => (
+                                <div
+                                  key={pinIdx}
+                                  className={`pdf-corner-pin ${activePinIndex === pinIdx ? 'pdf-corner-pin--dragging' : ''}`}
+                                  style={{
+                                    left: `${corner.x * 100}%`,
+                                    top: `${corner.y * 100}%`,
+                                  }}
+                                  onPointerDown={(e) => handlePinPointerDown(e, pinIdx)}
+                                  onPointerMove={handlePinPointerMove}
+                                  onPointerUp={handlePinPointerUp}
+                                  title={`Corner ${pinIdx + 1}`}
+                                />
+                              ))}
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
+
+                        <p className="pdf-img-hint-text">
+                          {t.perspectiveHint}
+                        </p>
+
+                        {/* Filter, Rotation & Perspective Controls Toolbar */}
+                        <div className="pdf-img-edit-bar">
+                          <div className="pdf-img-filters-group">
+                            <Button
+                              variant={activeItem?.filter === 'original' ? 'primary' : 'secondary'}
+                              size="sm"
+                              onClick={() => setFilterForActive('original')}
+                            >
+                              {t.filterOriginal}
+                            </Button>
+                            <Button
+                              variant={activeItem?.filter === 'bw' ? 'primary' : 'secondary'}
+                              size="sm"
+                              onClick={() => setFilterForActive('bw')}
+                            >
+                              {t.filterBw}
+                            </Button>
+                            <Button
+                              variant={activeItem?.filter === 'grayscale' ? 'primary' : 'secondary'}
+                              size="sm"
+                              onClick={() => setFilterForActive('grayscale')}
+                            >
+                              {t.filterGrayscale}
+                            </Button>
+                            <Button
+                              variant={activeItem?.filter === 'contrast' ? 'primary' : 'secondary'}
+                              size="sm"
+                              onClick={() => setFilterForActive('contrast')}
+                            >
+                              {t.filterContrast}
+                            </Button>
+                          </div>
+
+                          <div className="pdf-img-actions-group">
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={rotateActiveImage}
+                              title={t.rotatePage90}
+                            >
+                              ↻ 90°
+                            </Button>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={resetCornersActive}
+                              title={t.resetCorners}
+                            >
+                              {t.resetCorners}
+                            </Button>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              disabled={activeImageIndex === 0}
+                              onClick={() => moveImage(activeImageIndex, activeImageIndex - 1)}
+                              title={t.moveLeft}
+                            >
+                              ◀
+                            </Button>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              disabled={activeImageIndex === editableImages.length - 1}
+                              onClick={() => moveImage(activeImageIndex, activeImageIndex + 1)}
+                              title={t.moveRight}
+                            >
+                              ▶
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })()}
+                </div>
               )}
             </div>
           </div>
@@ -908,31 +1389,41 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
                 </Button>
               )}
 
-              {(step === 'edit_pages' || step === 'images') && (
-                <>
-                  <Button
-                    id="pdf-export-btn"
-                    variant="primary"
-                    size="sm"
-                    onClick={handleExport}
-                    icon={downloadSuccess ? <CheckIcon /> : <DownloadIcon />}
-                    disabled={isLoading}
-                  >
-                    {downloadSuccess ? t.downloaded : isLoading ? t.exporting : t.exportPdf}
-                  </Button>
-
-                  <Button
-                    id="pdf-reset-btn"
-                    variant="secondary"
-                    size="sm"
-                    onClick={handleReset}
-                    icon={<RestartIcon />}
-                    title={t.reset}
-                  >
-                    {t.reset}
-                  </Button>
-                </>
+              {step === 'images' && (
+                <Button
+                  id="pdf-images-continue-btn"
+                  variant="primary"
+                  size="sm"
+                  onClick={handleContinueToPdf}
+                  disabled={isLoading || editableImages.length === 0}
+                >
+                  {generatingPdf ? t.generatingPdf : `${t.continueToEditPdf} →`}
+                </Button>
               )}
+
+              {step === 'edit_pages' && (
+                <Button
+                  id="pdf-export-btn"
+                  variant="primary"
+                  size="sm"
+                  onClick={handleExport}
+                  icon={downloadSuccess ? <CheckIcon /> : <DownloadIcon />}
+                  disabled={isLoading}
+                >
+                  {downloadSuccess ? t.downloaded : isLoading ? t.exporting : t.exportPdf}
+                </Button>
+              )}
+
+              <Button
+                id="pdf-reset-btn"
+                variant="secondary"
+                size="sm"
+                onClick={handleReset}
+                icon={<RestartIcon />}
+                title={t.reset}
+              >
+                {t.reset}
+              </Button>
             </ControlsBar>
           ) : undefined
         }
@@ -1081,7 +1572,7 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
           {/* ─── STEP 2: PLACE ON DOCUMENT ─── */}
           {sigStep === 'place' && (
             <>
-              {/* Target Page, Position & Scale Selections using AllUI Select */}
+              {/* Target Page, Position, Box Size & Text Size Selections */}
               <div className="pdf-placement-header">
                 <Select
                   label={t.targetPage}
@@ -1112,35 +1603,28 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
                 <Input
                   label={t.scaleLabel}
                   type="number"
-                  min={1}
+                  min={10}
                   max={500}
-                  step={1}
+                  step={5}
                   value={sigScale}
-                  onChange={(e) => {
-                    const valStr = e.target.value
-                    if (valStr === '') {
-                      setSigScale('')
-                      return
-                    }
-                    const val = parseInt(valStr, 10)
-                    if (!isNaN(val)) {
-                      setSigScale(Math.max(1, Math.min(500, val)))
-                    }
-                  }}
+                  onChange={(e) => handleScaleChange(e.target.value)}
                   onBlur={() => {
                     if (sigScale === '' || (typeof sigScale !== 'number' && isNaN(parseInt(sigScale, 10)))) {
                       setSigScale(100)
+                      setBoxWidthPercent(32)
+                      setBoxHeightPercent(12)
                     }
                   }}
                   fullWidth
                 />
               </div>
 
-              <span className="pdf-placement-hint">{t.manualPlacementHint}</span>
+              <span className="pdf-placement-hint">{t.manualPlacementHint} • {t.resizeBoxHint}</span>
 
               {/* Centered Document Page with Real Page Format & Proportions */}
               <div className="pdf-placement-stage">
                 <div
+                  ref={viewportRef}
                   className="pdf-placement-viewport"
                   style={{
                     aspectRatio: `${currentPageAspectRatio}`,
@@ -1150,12 +1634,20 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
                     setIsDraggingSig(true)
                   }}
                   onPointerMove={(e) => {
-                    if (isDraggingSig) {
+                    if (isResizingSig) {
+                      handleResizePointer(e)
+                    } else if (isDraggingSig) {
                       handlePlacementPointer(e)
                     }
                   }}
-                  onPointerUp={() => setIsDraggingSig(false)}
-                  onPointerLeave={() => setIsDraggingSig(false)}
+                  onPointerUp={() => {
+                    setIsDraggingSig(false)
+                    setIsResizingSig(false)
+                  }}
+                  onPointerLeave={() => {
+                    setIsDraggingSig(false)
+                    setIsResizingSig(false)
+                  }}
                 >
                   {targetPageThumbnail ? (
                     <img
@@ -1170,9 +1662,9 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
                     </div>
                   )}
 
-                  {/* Draggable Signature Overlay Box (Safely clamped inside paper) */}
+                  {/* Draggable & Resizable Signature Overlay Box (Safely clamped inside paper) */}
                   <div
-                    className={`pdf-placement-sig-box ${isDraggingSig ? 'is-dragging' : ''}`}
+                    className={`pdf-placement-sig-box ${isDraggingSig ? 'is-dragging' : ''} ${isResizingSig ? 'is-resizing' : ''}`}
                     style={{
                       left: `${customCoords.xPercent}%`,
                       top: `${customCoords.yPercent}%`,
@@ -1184,33 +1676,27 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
                       setIsDraggingSig(true)
                     }}
                   >
-                    {signMode === 'draw' ? (
-                      drawSigDataUrl ? (
-                        <img
-                          src={drawSigDataUrl}
-                          alt="Signature"
-                          className="pdf-placement-sig-preview"
-                        />
-                      ) : (
-                        <span className="pdf-placement-sig-text" style={{ fontStyle: 'italic', fontSize: '0.75rem' }}>
-                          Signature
-                        </span>
-                      )
+                    {activeSignatureDataUrl ? (
+                      <img
+                        src={activeSignatureDataUrl}
+                        alt="Signature"
+                        className="pdf-placement-sig-preview"
+                      />
                     ) : (
-                      <span
-                        className={`pdf-placement-sig-text ${
-                          selectedFont === 'dancing-script'
-                            ? 'font-style-dancingscript'
-                            : selectedFont === 'caveat'
-                            ? 'font-style-caveat'
-                            : selectedFont === 'calligraphy'
-                            ? 'font-style-greatvibes'
-                            : 'font-style-sacramento'
-                        }`}
-                      >
+                      <span className="pdf-placement-sig-fallback">
                         {typedName || 'Signature'}
                       </span>
                     )}
+
+                    {/* Interactive Corner Resize Handle */}
+                    <div
+                      className="pdf-sig-resize-handle"
+                      title={t.resizeBoxHint}
+                      onPointerDown={(e) => {
+                        e.stopPropagation()
+                        setIsResizingSig(true)
+                      }}
+                    />
                   </div>
                 </div>
               </div>

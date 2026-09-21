@@ -13,6 +13,8 @@ export type SignaturePosition =
 export interface SignatureCoordinates {
   xPercent: number // 0 to 100 (% from left)
   yPercent: number // 0 to 100 (% from top)
+  widthPercent?: number // 0 to 100 (% box width)
+  heightPercent?: number // 0 to 100 (% box height)
 }
 
 export type SignatureFont = 'dancing-script' | 'cursive' | 'caveat' | 'calligraphy'
@@ -50,5 +52,26 @@ export interface ImageFileItem {
   name: string
   sizeBytes: number
   file: File
+  previewUrl: string
+}
+
+export type DocumentFilter = 'original' | 'grayscale' | 'bw' | 'contrast'
+
+export interface Point2D {
+  x: number // 0 to 1
+  y: number // 0 to 1
+}
+
+export interface EditableImageItem {
+  id: string
+  name: string
+  sizeBytes: number
+  file: File
+  originalUrl: string
+  width: number
+  height: number
+  rotation: number // 0, 90, 180, 270
+  filter: DocumentFilter
+  corners: [Point2D, Point2D, Point2D, Point2D] // TL, TR, BR, BL
   previewUrl: string
 }

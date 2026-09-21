@@ -4,6 +4,7 @@ import { useI18n } from '../i18n'
 import { getLocalizedText, getLocalizedTags } from '../types/tool'
 import type { ToolMetadata } from '../types/tool'
 import { Badge } from '@alltools/ui'
+import { setLastActiveCardId } from '@all/ui'
 
 interface ToolCardProps {
   metadata: ToolMetadata
@@ -32,7 +33,10 @@ export function ToolCard({ metadata, index }: ToolCardProps) {
   const tags = getLocalizedTags(metadata.tags, locale)
   const visibleTags = tags.slice(0, 4)
 
-  const handleClick = () => navigate(`/tools/${metadata.slug}`)
+  const handleClick = () => {
+    setLastActiveCardId(`tool-card-${metadata.slug}`)
+    navigate(`/tools/${metadata.slug}`)
+  }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {

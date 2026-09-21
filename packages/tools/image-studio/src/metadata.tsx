@@ -1,5 +1,5 @@
 import React from 'react'
-import { IconPhoto } from '@alltools/ui'
+import { PhotoIcon } from '@all/ui'
 
 export const metadata = {
   slug: 'image-studio',
@@ -11,7 +11,7 @@ export const metadata = {
     en: 'Watermark, aspect ratio crop (ID/Passport), format converter (HEIC/JPG/PNG/WebP), and smart size compression.',
     pl: 'Znak wodny po przekątnej, kadrowanie do dowodu/paszportu, konwersja (HEIC/JPG/PNG/WebP) i kompresja wagi.',
   },
-  icon: <IconPhoto size={24} strokeWidth={1.5} />,
+  icon: <PhotoIcon width={24} height={24} strokeWidth={1.5} />,
   category: 'media' as const,
   tags: {
     en: ['Photo', 'Converter'],

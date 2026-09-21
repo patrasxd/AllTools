@@ -100,5 +100,22 @@ describe('PDF Suite pdfEngine', () => {
       const doc = await PDFDocument.load(buffer)
       expect(doc.getPageCount()).toBe(3)
     })
+
+    it('embeds signature PNG with custom box dimensions and scale', async () => {
+      const sourcePdf = await createMockPdf(1, 'SinglePageDoc')
+      const signedBlob = await signPdf(
+        sourcePdf,
+        MOCK_PNG_DATA_URL,
+        0,
+        'custom',
+        { xPercent: 50, yPercent: 50, widthPercent: 40, heightPercent: 15 },
+        1.2
+      )
+
+      expect(signedBlob).toBeInstanceOf(Blob)
+      const buffer = await signedBlob.arrayBuffer()
+      const doc = await PDFDocument.load(buffer)
+      expect(doc.getPageCount()).toBe(1)
+    })
   })
 })

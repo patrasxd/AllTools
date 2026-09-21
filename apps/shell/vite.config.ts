@@ -18,7 +18,7 @@ export default defineConfig({
       manifest: {
         name: 'AllTools',
         short_name: 'AllTools',
-        description: 'Clean, minimalist utility suite: Guitar Tuner, Level, Protractor, Screen Ruler, QR Studio, Stopwatch & Notes',
+        description: 'Essential browser utilities. No registration, no ads. All your data stays on this device.',
         theme_color: '#0a0a0a',
         background_color: '#0a0a0a',
         display: 'standalone',

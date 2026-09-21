@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { AppFooter } from '@all/ui'
+import { AppFooter, useCardScrollRestoration } from '@all/ui'
 import { TOOLS_METADATA } from '../tools/registry'
 import { ToolCard } from '../components/ToolCard'
 import { useI18n } from '../i18n'
@@ -53,6 +53,9 @@ export function HomePage() {
       return tags.includes(normalizedSelected)
     })
   }, [selectedTag, locale])
+
+  // Restore scroll position to the last active tool card when returning from a tool
+  useCardScrollRestoration({ dependencies: [filteredTools.length] })
 
   return (
     <div className="home-page">

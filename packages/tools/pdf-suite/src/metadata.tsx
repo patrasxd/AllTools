@@ -8,8 +8,8 @@ export const metadata = {
     pl: 'Menedżer PDF & Narzędzia',
   },
   description: {
-    en: '100% offline & private PDF suite: merge multiple PDFs, extract/split pages, rotate, reorder, and convert images to PDF.',
-    pl: 'Bezpieczny menedżer PDF w 100% offline: łącz pliki PDF, dziel/wyciągaj strony, obracaj, usuwaj i twórz PDF ze zdjęć.',
+    en: 'Merge PDFs, organize & rotate pages, digital signature, and convert images to PDF.',
+    pl: 'Łączenie PDF, organizacja i obracanie stron, podpis cyfrowy oraz konwersja zdjęć do PDF.',
   },
   icon: <IconFileText size={24} strokeWidth={1.5} />,
   category: 'utility' as const,

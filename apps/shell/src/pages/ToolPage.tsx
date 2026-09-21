@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Button, BackLink } from '@all/ui'
+import { Button, BackLink, setLastActiveCardId } from '@all/ui'
 import { TOOLS_METADATA, loadToolComponent } from '../tools/registry'
 import { useI18n } from '../i18n'
 import { useTheme } from '../hooks/useTheme'
@@ -40,7 +40,10 @@ function NotFound({ slug }: { slug: string }) {
       <Button
         variant="secondary"
         size="sm"
-        onClick={() => navigate('/')}
+        onClick={() => {
+          if (slug) setLastActiveCardId(`tool-card-${slug}`)
+          navigate('/')
+        }}
         style={{ marginTop: '1rem' }}
       >
         {t.returnToTools}
@@ -62,9 +65,18 @@ export function ToolPage() {
   const { theme, isEink } = useTheme()
   const metadata = TOOLS_METADATA.find(item => item.slug === slug)
 
+  useEffect(() => {
+    if (slug) {
+      setLastActiveCardId(`tool-card-${slug}`)
+    }
+  }, [slug])
+
   const handleBackToTools = useCallback(() => {
+    if (slug) {
+      setLastActiveCardId(`tool-card-${slug}`)
+    }
     navigate('/')
-  }, [navigate])
+  }, [navigate, slug])
 
   const [ToolComp, setToolComp] = useState<React.ComponentType<any> | null>(null)
   const [loading, setLoading] = useState<boolean>(true)

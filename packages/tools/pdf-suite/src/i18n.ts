@@ -71,6 +71,9 @@ export interface PdfSuiteTranslations {
   positionCenter: string
   positionCustom: string
   scaleLabel: string
+  boxSizeLabel: string
+  textSizeLabel: string
+  resizeBoxHint: string
   scaleSmall: string
   scaleNormal: string
   scaleLarge: string
@@ -94,6 +97,19 @@ export interface PdfSuiteTranslations {
   errorReading: string
   errorGenerating: string
   selectAtLeastOnePage: string
+
+  // Edit Images & Scanner
+  stepEditImages: string
+  titleEditImages: string
+  continueToEditPdf: string
+  filterOriginal: string
+  filterBw: string
+  filterGrayscale: string
+  filterContrast: string
+  resetCorners: string
+  perspectiveHint: string
+  generatingPdf: string
+  editImagePage: string
 }
 
 export const pdfSuiteTranslations: Record<'en' | 'pl', PdfSuiteTranslations> = {
@@ -116,9 +132,9 @@ export const pdfSuiteTranslations: Record<'en' | 'pl', PdfSuiteTranslations> = {
     labelSize: 'SIZE',
     labelStep: 'STEP',
 
-    dropTitle: 'Drop PDF files or images here',
-    dropSubtitle: '100% client-side in your browser — zero cloud upload, fully private',
-    browseFiles: 'Browse Files',
+    dropTitle: 'Drop or browse PDF documents',
+    dropSubtitle: 'PDF, JPG, PNG, WebP & Scanned Documents',
+    browseFiles: 'Browse File',
     demoDocument: 'Demo Document',
     demoLoaded: 'Sample document loaded',
 
@@ -163,6 +179,9 @@ export const pdfSuiteTranslations: Record<'en' | 'pl', PdfSuiteTranslations> = {
     positionCenter: 'Center',
     positionCustom: 'Manual Position',
     scaleLabel: 'Scale (%):',
+    boxSizeLabel: 'Box Size (%):',
+    textSizeLabel: 'Text Size (%):',
+    resizeBoxHint: 'Drag corner to resize box',
     scaleSmall: '75% (Small)',
     scaleNormal: '100% (Normal)',
     scaleLarge: '125% (Large)',
@@ -185,6 +204,18 @@ export const pdfSuiteTranslations: Record<'en' | 'pl', PdfSuiteTranslations> = {
     errorReading: 'Failed to read PDF file',
     errorGenerating: 'Failed to generate PDF document',
     selectAtLeastOnePage: 'Please select at least one page to export',
+
+    stepEditImages: 'Edit Images',
+    titleEditImages: 'Edit Scanned Images',
+    continueToEditPdf: 'Continue to Edit PDF',
+    filterOriginal: 'Color',
+    filterBw: 'B&W (Scan)',
+    filterGrayscale: 'Grayscale',
+    filterContrast: 'Contrast',
+    resetCorners: 'Reset Corners',
+    perspectiveHint: 'Drag the 4 corners to straighten and crop the document',
+    generatingPdf: 'Synthesizing PDF document...',
+    editImagePage: 'Image Page',
   },
   pl: {
     stepUpload: 'Wgraj',
@@ -205,9 +236,9 @@ export const pdfSuiteTranslations: Record<'en' | 'pl', PdfSuiteTranslations> = {
     labelSize: 'ROZMIAR',
     labelStep: 'KROK',
 
-    dropTitle: 'Upuść pliki PDF lub zdjęcia tutaj',
-    dropSubtitle: '100% lokalnie w przeglądarce — bez wysyłania do chmury, pełna prywatność',
-    browseFiles: 'Wybierz pliki',
+    dropTitle: 'Upuść lub wybierz dokument PDF',
+    dropSubtitle: 'PDF, JPG, PNG, WebP i skany dokumentów',
+    browseFiles: 'Wybierz plik',
     demoDocument: 'Dokument demo',
     demoLoaded: 'Wczytano dokument testowy',
 
@@ -252,6 +283,9 @@ export const pdfSuiteTranslations: Record<'en' | 'pl', PdfSuiteTranslations> = {
     positionCenter: 'Środek',
     positionCustom: 'Własna pozycja (ręczna)',
     scaleLabel: 'Skala (%):',
+    boxSizeLabel: 'Rozmiar ramki (%):',
+    textSizeLabel: 'Rozmiar tekstu (%):',
+    resizeBoxHint: 'Przeciągnij róg, aby zmienić rozmiar ramki',
     scaleSmall: '75% (Mały)',
     scaleNormal: '100% (Normalny)',
     scaleLarge: '125% (Duży)',
@@ -274,5 +308,17 @@ export const pdfSuiteTranslations: Record<'en' | 'pl', PdfSuiteTranslations> = {
     errorReading: 'Błąd podczas odczytu pliku PDF',
     errorGenerating: 'Błąd podczas generowania pliku PDF',
     selectAtLeastOnePage: 'Zaznacz co najmniej jedną stronę do eksportu',
+
+    stepEditImages: 'Edycja zdjęć',
+    titleEditImages: 'Edycja zeskanowanych zdjęć',
+    continueToEditPdf: 'Dalej do edycji PDF',
+    filterOriginal: 'Kolor',
+    filterBw: 'Czarno-biały (Skan)',
+    filterGrayscale: 'Odcienie szarości',
+    filterContrast: 'Kontrast',
+    resetCorners: 'Resetuj rogi',
+    perspectiveHint: 'Przeciągnij 4 rogi, aby wyprostować i przyciąć dokument',
+    generatingPdf: 'Tworzenie dokumentu PDF...',
+    editImagePage: 'Strona ze zdjęciem',
   },
 }

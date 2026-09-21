@@ -1,6 +1,6 @@
 import { PDFDocument, degrees } from 'pdf-lib'
 import * as pdfjsLib from 'pdfjs-dist'
-import type { PdfPageItem, SignaturePosition } from '../types'
+import type { PdfPageItem, SignaturePosition, SignatureCoordinates } from '../types'
 
 // Set worker source for offline PDF.js rendering using standard URL resolution
 try {
@@ -174,7 +174,7 @@ export async function signPdf(
   signatureDataUrl: string,
   targetPageIndex: number = 0,
   position: SignaturePosition = 'bottom-right',
-  customCoordinates?: { xPercent: number; yPercent: number },
+  customCoordinates?: SignatureCoordinates,
   scale: number = 1
 ): Promise<Blob> {
   const arrayBuffer = await file.arrayBuffer()
@@ -195,10 +195,17 @@ export async function signPdf(
 
   const { width: pageWidth, height: pageHeight } = page.getSize()
 
-  // Proportional signature bounding box scaled by user factor
+  // Proportional signature bounding box based on box dimensions and scale
   const aspect = pngImage.width / pngImage.height
-  const maxW = 170 * scale
-  const maxH = 70 * scale
+  let maxW = 170
+  let maxH = 70
+  if (customCoordinates?.widthPercent && customCoordinates?.heightPercent) {
+    maxW = (customCoordinates.widthPercent / 100) * pageWidth
+    maxH = (customCoordinates.heightPercent / 100) * pageHeight
+  }
+  maxW *= scale
+  maxH *= scale
+
   let sigWidth = maxW
   let sigHeight = sigWidth / aspect
   if (sigHeight > maxH) {
@@ -209,7 +216,7 @@ export async function signPdf(
   let x = pageWidth - sigWidth - 45 // default bottom-right
   let y = 45 // 45 points margin from bottom edge
 
-  if (position === 'custom' && customCoordinates) {
+  if (customCoordinates) {
     // Convert 0..100 percentage from top-left (screen) to PDF coordinates (origin at bottom-left)
     const centerX = (customCoordinates.xPercent / 100) * pageWidth
     const centerY = (customCoordinates.yPercent / 100) * pageHeight

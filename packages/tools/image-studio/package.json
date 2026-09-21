@@ -5,6 +5,7 @@
   "type": "module",
   "main": "src/index.tsx",
   "dependencies": {
+    "@all/ui": "file:../../AllUI",
     "@alltools/ui": "*",
     "heic2any": "^0.0.4",
     "react": "^18.3.1",
