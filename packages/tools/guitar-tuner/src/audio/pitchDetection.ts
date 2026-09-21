@@ -5,29 +5,46 @@ export interface NoteInfo {
   midi: number
 }
 
+export interface TuningString {
+  note: string
+  octave: number
+  freq: number
+}
+
 export interface TuningPreset {
   id: string
   name: { en: string; pl: string }
-  strings: { note: string; octave: number; freq: number }[]
+  strings: TuningString[]
 }
 
-const NOTE_NAMES = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B']
-const A4_FREQ = 440
+export const NOTE_NAMES = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'] as const
+export const DEFAULT_A4 = 440
 
-/** Calculate frequency from MIDI note number (69 = A4 = 440Hz) */
-export function midiToFreq(midi: number): number {
-  return A4_FREQ * Math.pow(2, (midi - 69) / 12)
+export const NOISE_GATE_THRESHOLDS = {
+  low: 0.006,
+  medium: 0.012,
+  high: 0.025,
+} as const
+
+/** Calculate frequency from MIDI note number with customizable A4 standard */
+export function midiToFreq(midi: number, a4: number = DEFAULT_A4): number {
+  return a4 * Math.pow(2, (midi - 69) / 12)
 }
 
-/** Convert frequency to closest MIDI note and cents offset */
-export function freqToNote(freq: number): { note: string; octave: number; midi: number; targetFreq: number; cents: number } {
-  if (freq <= 0) return { note: '-', octave: 0, midi: 0, targetFreq: 0, cents: 0 }
-  
-  const midiFraction = 69 + 12 * Math.log2(freq / A4_FREQ)
+/** Convert frequency to closest MIDI note and cents offset with customizable A4 standard */
+export function freqToNote(
+  freq: number,
+  a4: number = DEFAULT_A4
+): { note: string; octave: number; midi: number; targetFreq: number; cents: number } {
+  if (freq <= 0 || !Number.isFinite(freq)) {
+    return { note: '-', octave: 0, midi: 0, targetFreq: 0, cents: 0 }
+  }
+
+  const midiFraction = 69 + 12 * Math.log2(freq / a4)
   const midi = Math.round(midiFraction)
   const noteIndex = ((midi % 12) + 12) % 12
   const octave = Math.floor(midi / 12) - 1
-  const targetFreq = midiToFreq(midi)
+  const targetFreq = midiToFreq(midi, a4)
   const cents = Math.floor(1200 * Math.log2(freq / targetFreq))
 
   return {
@@ -91,11 +108,27 @@ export const TUNING_PRESETS: TuningPreset[] = [
   },
 ]
 
+/** Returns calibrated string frequencies for the given preset based on A4 reference */
+export function getCalibratedStrings(strings: TuningString[], a4: number = DEFAULT_A4): TuningString[] {
+  if (a4 === DEFAULT_A4) return strings
+  const ratio = a4 / DEFAULT_A4
+  return strings.map((s) => ({
+    ...s,
+    freq: Math.round(s.freq * ratio * 100) / 100,
+  }))
+}
+
 /**
  * Autocorrelation algorithm with parabolic interpolation
  */
-export function autoCorrelate(buffer: Float32Array, sampleRate: number): number {
+export function autoCorrelate(
+  buffer: Float32Array,
+  sampleRate: number,
+  noiseGateThreshold: number = NOISE_GATE_THRESHOLDS.medium
+): number {
   const SIZE = buffer.length
+  if (SIZE < 4) return -1
+
   let sumOfSquares = 0
   for (let i = 0; i < SIZE; i++) {
     const val = buffer[i]
@@ -104,7 +137,7 @@ export function autoCorrelate(buffer: Float32Array, sampleRate: number): number 
   const rootMeanSquare = Math.sqrt(sumOfSquares / SIZE)
 
   // Noise gate threshold: ignore quiet sounds
-  if (rootMeanSquare < 0.012) {
+  if (rootMeanSquare < noiseGateThreshold) {
     return -1
   }
 
@@ -126,6 +159,8 @@ export function autoCorrelate(buffer: Float32Array, sampleRate: number): number 
   }
 
   const trimmed = buffer.slice(r1, r2)
+  if (trimmed.length < 4) return -1
+
   const c = new Array(trimmed.length).fill(0)
   for (let i = 0; i < trimmed.length; i++) {
     for (let j = 0; j < trimmed.length - i; j++) {
@@ -134,7 +169,9 @@ export function autoCorrelate(buffer: Float32Array, sampleRate: number): number 
   }
 
   let d = 0
-  while (c[d] > c[d + 1]) d++
+  while (d < trimmed.length - 1 && c[d] > c[d + 1]) {
+    d++
+  }
   let maxval = -1
   let maxpos = -1
   for (let i = d; i < trimmed.length; i++) {
@@ -165,15 +202,17 @@ let globalAudioCtx: AudioContext | null = null
 let activeOscillator: OscillatorNode | null = null
 let activeGain: GainNode | null = null
 
-export function playReferenceTone(freq: number, onStop?: () => void) {
+export function playReferenceTone(freq: number) {
   stopReferenceTone()
   try {
-    const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
-    if (!globalAudioCtx) {
+    const AudioContextClass =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+    if (!globalAudioCtx || globalAudioCtx.state === 'closed') {
       globalAudioCtx = new AudioContextClass()
     }
     if (globalAudioCtx.state === 'suspended') {
-      globalAudioCtx.resume()
+      globalAudioCtx.resume().catch(() => {})
     }
 
     const osc = globalAudioCtx.createOscillator()
@@ -183,7 +222,7 @@ export function playReferenceTone(freq: number, onStop?: () => void) {
     osc.frequency.setValueAtTime(freq, globalAudioCtx.currentTime)
 
     gain.gain.setValueAtTime(0.001, globalAudioCtx.currentTime)
-    gain.gain.exponentialRampToValueAtTime(0.2, globalAudioCtx.currentTime + 0.05)
+    gain.gain.exponentialRampToValueAtTime(0.18, globalAudioCtx.currentTime + 0.05)
 
     osc.connect(gain)
     gain.connect(globalAudioCtx.destination)
@@ -197,22 +236,46 @@ export function playReferenceTone(freq: number, onStop?: () => void) {
 }
 
 export function stopReferenceTone() {
-  if (activeGain && globalAudioCtx) {
+  if (activeGain && globalAudioCtx && globalAudioCtx.state !== 'closed') {
     try {
       activeGain.gain.setValueAtTime(activeGain.gain.value, globalAudioCtx.currentTime)
       activeGain.gain.exponentialRampToValueAtTime(0.0001, globalAudioCtx.currentTime + 0.05)
+      const currentOsc = activeOscillator
       setTimeout(() => {
-        if (activeOscillator) {
-          activeOscillator.stop()
-          activeOscillator.disconnect()
-          activeOscillator = null
+        try {
+          if (currentOsc) {
+            currentOsc.stop()
+            currentOsc.disconnect()
+          }
+        } catch {
+          // Ignore
         }
       }, 60)
     } catch {
       if (activeOscillator) {
-        activeOscillator.stop()
-        activeOscillator = null
+        try {
+          activeOscillator.stop()
+        } catch {
+          // Ignore
+        }
       }
     }
+  } else if (activeOscillator) {
+    try {
+      activeOscillator.stop()
+    } catch {
+      // Ignore
+    }
+  }
+  activeOscillator = null
+  activeGain = null
+}
+
+/** Cleanly closes tone generator audio context when tool unmounts */
+export function releaseGlobalAudio() {
+  stopReferenceTone()
+  if (globalAudioCtx && globalAudioCtx.state !== 'closed') {
+    globalAudioCtx.close().catch(() => {})
+    globalAudioCtx = null
   }
 }

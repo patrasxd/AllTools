@@ -3,13 +3,16 @@ import React from 'react'
 export type Locale = 'en' | 'pl'
 
 export interface ToolComponentProps {
-  locale: 'en' | 'pl'
+  locale?: 'en' | 'pl'
   setHeader?: (content: React.ReactNode) => void
+  isEink?: boolean
+  theme?: string
   onSave?: (data: unknown) => void
 }
 
 export type ToolMode = 'calc' | 'convert'
 export type CalcMode = 'standard' | 'scientific'
+export type ScientificFn = 'sqr' | 'sqrt' | 'inv' | 'sin' | 'cos' | 'tan' | 'ln' | 'log' | 'pi' | 'e'
 
 export interface UnitDefinition {
   id: string

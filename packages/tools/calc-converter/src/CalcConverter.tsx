@@ -1,28 +1,73 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import {
+  BoardLayout,
+  Card,
+  Button,
+  IconButton,
+  Input,
+  Select,
   PillGroup,
-  StatsHeader,
-  GameButton,
   ControlsBar,
-  IconCopy,
-  IconCheck,
-  IconSearch,
-  IconRotateCcw,
-  IconCalculator,
-  IconScale,
-} from '@alltools/ui'
-import { ToolComponentProps, ToolMode, CalcMode, CalcHistoryItem } from './types'
+  Dialog,
+  CopyIcon,
+  CheckIcon,
+  RotateCcwIcon,
+  TrashIcon,
+} from '@all/ui'
+import { ToolComponentProps, ToolMode, CalcMode, CalcHistoryItem, ScientificFn } from './types'
+import { calcConverterTranslations } from './i18n'
+import { safeEvaluate, evaluateScientific, formatCalcDisplay } from './utils/calcEngine'
 import { UNIT_CATEGORIES, convertValue, convertRadix, formatFormattedValue } from './conversionData'
 import './styles/calc-converter.css'
 
-export function CalcConverter({ locale = 'en', setHeader }: ToolComponentProps) {
+function BackspaceIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" />
+      <line x1="18" y1="9" x2="12" y2="15" />
+      <line x1="12" y1="9" x2="18" y2="15" />
+    </svg>
+  )
+}
+
+function SwapIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M7 16V4m0 0L3 8m4-4l4 4" />
+      <path d="M17 8v12m0 0l4-4m-4 4l-4-4" />
+    </svg>
+  )
+}
+
+function HistoryIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 14 14" />
+    </svg>
+  )
+}
+
+function SearchIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="8" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
+  )
+}
+
+export function CalcConverter({ locale = 'en', setHeader, isEink = false }: ToolComponentProps) {
+  const t = calcConverterTranslations[locale] || calcConverterTranslations.en
   const [activeMode, setActiveMode] = useState<ToolMode>('calc')
 
   // ─── Calculator State ───────────────────────────────────────
   const [calcMode, setCalcMode] = useState<CalcMode>('standard')
   const [expression, setExpression] = useState<string>('')
   const [displayVal, setDisplayVal] = useState<string>('0')
+  const [activeOperator, setActiveOperator] = useState<string | null>(null)
   const [isNewNumber, setIsNewNumber] = useState<boolean>(true)
+  const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false)
   const [history, setHistory] = useState<CalcHistoryItem[]>(() => {
     try {
       const saved = localStorage.getItem('alltools:calc-history')
@@ -36,47 +81,32 @@ export function CalcConverter({ locale = 'en', setHeader }: ToolComponentProps) 
   const [selectedCatId, setSelectedCatId] = useState<string>('weight')
   const [convInput, setConvInput] = useState<string>('1')
   const [fromUnitId, setFromUnitId] = useState<string>('kg')
+  const [toUnitId, setToUnitId] = useState<string>('lb')
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [copiedId, setCopiedId] = useState<string | null>(null)
+
+  // Clear any redundant top-right header
+  useEffect(() => {
+    setHeader?.(null)
+    return () => setHeader?.(null)
+  }, [setHeader])
 
   const activeCategory = useMemo(() => {
     return UNIT_CATEGORIES.find((c) => c.id === selectedCatId) || UNIT_CATEGORIES[0]
   }, [selectedCatId])
 
-  // Sync unit when category changes
+  // Sync units when category changes
   useEffect(() => {
-    if (!activeCategory.units.some((u) => u.id === fromUnitId)) {
-      setFromUnitId(activeCategory.units[0]?.id || activeCategory.baseUnit)
+    const validUnits = activeCategory.units
+    if (!validUnits.some((u) => u.id === fromUnitId)) {
+      setFromUnitId(validUnits[0]?.id || activeCategory.baseUnit)
     }
-  }, [activeCategory, fromUnitId])
-
-  // ─── Top StatsHeader Sync ───────────────────────────────────
-  useEffect(() => {
-    if (!setHeader) return
-    if (activeMode === 'calc') {
-      setHeader(
-        <StatsHeader
-          label={locale === 'pl' ? 'KALKULATOR' : 'CALCULATOR'}
-          items={[
-            { key: 'mode', label: locale === 'pl' ? 'TRYB' : 'MODE', value: calcMode === 'scientific' ? (locale === 'pl' ? 'NAUKOWY' : 'SCI') : (locale === 'pl' ? 'STANDARD' : 'STD') },
-            { key: 'hist', label: locale === 'pl' ? 'HISTORIA' : 'HISTORY', value: history.length },
-          ]}
-        />
-      )
-    } else {
-      setHeader(
-        <StatsHeader
-          label={locale === 'pl' ? 'PRZELICZNIK JEDNOSTEK' : 'UNIT CONVERTER'}
-          items={[
-            { key: 'cat', label: locale === 'pl' ? 'KATEGORIA' : 'CATEGORY', value: activeCategory.name[locale].toUpperCase() },
-            { key: 'unit', label: locale === 'pl' ? 'JEDNOSTKA' : 'UNIT', value: fromUnitId.toUpperCase() },
-          ]}
-        />
-      )
+    if (!validUnits.some((u) => u.id === toUnitId)) {
+      setToUnitId(validUnits[1]?.id || validUnits[0]?.id || activeCategory.baseUnit)
     }
-  }, [setHeader, activeMode, calcMode, history.length, activeCategory, fromUnitId, locale])
+  }, [activeCategory, fromUnitId, toUnitId])
 
-  // ─── Calculator Evaluation Engine ───────────────────────────
+  // ─── Calculator Actions & History ────────────────────────────
   const saveToHistory = (expr: string, res: string) => {
     const item: CalcHistoryItem = {
       id: `${Date.now()}-${Math.random()}`,
@@ -84,7 +114,7 @@ export function CalcConverter({ locale = 'en', setHeader }: ToolComponentProps) 
       result: res,
       timestamp: Date.now(),
     }
-    const updated = [item, ...history.filter((h) => h.expression !== expr)].slice(0, 10)
+    const updated = [item, ...history.filter((h) => h.expression !== expr)].slice(0, 30)
     setHistory(updated)
     try {
       localStorage.setItem('alltools:calc-history', JSON.stringify(updated))
@@ -93,156 +123,116 @@ export function CalcConverter({ locale = 'en', setHeader }: ToolComponentProps) 
     }
   }
 
-  const safeEvaluate = (exprStr: string): number => {
-    // Sanitize and replace math symbols
-    let sanitized = exprStr
-      .replace(/×/g, '*')
-      .replace(/÷/g, '/')
-      .replace(/−/g, '-')
-      .replace(/\^/g, '**')
-      .replace(/π/g, `${Math.PI}`)
-      .replace(/e(?![a-zA-Z0-9_])/g, `${Math.E}`)
-
-    // Handle functions like sqrt, sin, cos, tan, log, ln
-    sanitized = sanitized
-      .replace(/sqrt\(/g, 'Math.sqrt(')
-      .replace(/sin\(/g, 'Math.sin(')
-      .replace(/cos\(/g, 'Math.cos(')
-      .replace(/tan\(/g, 'Math.tan(')
-      .replace(/ln\(/g, 'Math.log(')
-      .replace(/log\(/g, 'Math.log10(')
-
-    // Verify sanitized expression contains only allowed mathematical characters
-    if (!/^[0-9+\-*/().,%\sMath.PIEsqrtincoatgl**]+$/.test(sanitized)) {
-      throw new Error('Invalid expression')
+  const clearHistory = () => {
+    setHistory([])
+    try {
+      localStorage.removeItem('alltools:calc-history')
+    } catch {
+      // ignore
     }
-
-    // eslint-disable-next-line no-new-func
-    const result = Function(`"use strict"; return (${sanitized})`)()
-    if (typeof result !== 'number' || isNaN(result) || !isFinite(result)) {
-      throw new Error('Math error')
-    }
-    return result
   }
 
-  const handleInputDigit = (digit: string) => {
-    if (isNewNumber || displayVal === '0') {
+  const handleInputDigit = useCallback((digit: string) => {
+    if (isNewNumber || displayVal === '0' || displayVal === 'Error') {
       setDisplayVal(digit)
       setIsNewNumber(false)
     } else {
-      setDisplayVal(displayVal + digit)
+      if (displayVal.replace(/[^0-9]/g, '').length < 15) {
+        setDisplayVal(displayVal + digit)
+      }
     }
-  }
+    setActiveOperator(null)
+  }, [isNewNumber, displayVal])
 
-  const handleInputDot = () => {
-    if (isNewNumber) {
+  const handleInputDot = useCallback(() => {
+    if (isNewNumber || displayVal === 'Error') {
       setDisplayVal('0.')
       setIsNewNumber(false)
     } else if (!displayVal.includes('.')) {
       setDisplayVal(displayVal + '.')
     }
-  }
+    setActiveOperator(null)
+  }, [isNewNumber, displayVal])
 
-  const handleOperator = (op: string) => {
-    const currentExpr = expression ? `${expression} ${displayVal} ${op}` : `${displayVal} ${op}`
-    setExpression(currentExpr)
+  const handleOperator = useCallback((op: string) => {
+    setActiveOperator(op)
+    if (expression && !isNewNumber) {
+      try {
+        const fullExpr = `${expression} ${displayVal}`
+        const intermediate = safeEvaluate(fullExpr)
+        const formatted = formatCalcDisplay(intermediate)
+        setExpression(`${formatted} ${op}`)
+        setDisplayVal(formatted)
+      } catch {
+        setExpression(`${displayVal} ${op}`)
+      }
+    } else {
+      setExpression(`${displayVal} ${op}`)
+    }
     setIsNewNumber(true)
-  }
+  }, [expression, isNewNumber, displayVal])
 
-  const handleEvaluate = () => {
+  const handleEvaluate = useCallback(() => {
     if (!expression && isNewNumber) return
     const fullExpr = expression ? `${expression} ${displayVal}` : displayVal
     try {
       const result = safeEvaluate(fullExpr)
-      const formatted = formatFormattedValue(result)
+      const formatted = formatCalcDisplay(result)
       saveToHistory(fullExpr, formatted)
       setExpression('')
       setDisplayVal(formatted)
+      setActiveOperator(null)
       setIsNewNumber(true)
     } catch {
       setDisplayVal('Error')
+      setActiveOperator(null)
       setIsNewNumber(true)
     }
-  }
+  }, [expression, isNewNumber, displayVal])
 
-  const handleClear = () => {
+  const handleClear = useCallback(() => {
     setDisplayVal('0')
     setExpression('')
+    setActiveOperator(null)
     setIsNewNumber(true)
-  }
+  }, [])
 
-  const handleBackspace = () => {
-    if (isNewNumber) return
-    if (displayVal.length <= 1 || displayVal === 'Error') {
+  const handleBackspace = useCallback(() => {
+    if (isNewNumber || displayVal === 'Error') return
+    if (displayVal.length <= 1 || (displayVal.length === 2 && displayVal.startsWith('-'))) {
       setDisplayVal('0')
       setIsNewNumber(true)
     } else {
       setDisplayVal(displayVal.slice(0, -1))
     }
-  }
+  }, [isNewNumber, displayVal])
 
-  const handleToggleSign = () => {
+  const handleToggleSign = useCallback(() => {
     if (displayVal === '0' || displayVal === 'Error') return
     if (displayVal.startsWith('-')) {
       setDisplayVal(displayVal.slice(1))
     } else {
       setDisplayVal('-' + displayVal)
     }
-  }
+  }, [displayVal])
 
-  const handlePercent = () => {
+  const handlePercent = useCallback(() => {
     try {
       const num = parseFloat(displayVal)
       if (!isNaN(num)) {
         const val = num / 100
-        setDisplayVal(formatFormattedValue(val))
+        setDisplayVal(formatCalcDisplay(val))
       }
     } catch {
       // ignore
     }
-  }
+  }, [displayVal])
 
-  const handleScientificFn = (fn: string) => {
+  const handleScientificFn = useCallback((fn: ScientificFn) => {
     try {
       const num = parseFloat(displayVal)
-      let res = 0
-      switch (fn) {
-        case 'sqr':
-          res = num * num
-          break
-        case 'sqrt':
-          if (num < 0) throw new Error('Negative sqrt')
-          res = Math.sqrt(num)
-          break
-        case 'inv':
-          if (num === 0) throw new Error('Division by zero')
-          res = 1 / num
-          break
-        case 'sin':
-          res = Math.sin((num * Math.PI) / 180)
-          break
-        case 'cos':
-          res = Math.cos((num * Math.PI) / 180)
-          break
-        case 'tan':
-          res = Math.tan((num * Math.PI) / 180)
-          break
-        case 'ln':
-          if (num <= 0) throw new Error('Non-positive ln')
-          res = Math.log(num)
-          break
-        case 'log':
-          if (num <= 0) throw new Error('Non-positive log')
-          res = Math.log10(num)
-          break
-        case 'pi':
-          res = Math.PI
-          break
-        case 'e':
-          res = Math.E
-          break
-      }
-      const formatted = formatFormattedValue(res)
+      const res = evaluateScientific(fn, num)
+      const formatted = formatCalcDisplay(res)
       saveToHistory(`${fn}(${displayVal})`, formatted)
       setDisplayVal(formatted)
       setIsNewNumber(true)
@@ -250,7 +240,7 @@ export function CalcConverter({ locale = 'en', setHeader }: ToolComponentProps) 
       setDisplayVal('Error')
       setIsNewNumber(true)
     }
-  }
+  }, [displayVal])
 
   // Keyboard support for calculator
   useEffect(() => {
@@ -285,33 +275,14 @@ export function CalcConverter({ locale = 'en', setHeader }: ToolComponentProps) 
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  })
+  }, [activeMode, handleInputDigit, handleInputDot, handleOperator, handleEvaluate, handleBackspace, handleClear, handlePercent])
 
-  // ─── Converter Search & Filter ──────────────────────────────
-  const handleSearchChange = (query: string) => {
-    setSearchQuery(query)
-    if (!query.trim()) return
-
-    const q = query.toLowerCase().trim()
-    // Find matching category or unit
-    for (const cat of UNIT_CATEGORIES) {
-      if (cat.name.en.toLowerCase().includes(q) || cat.name.pl.toLowerCase().includes(q)) {
-        setSelectedCatId(cat.id)
-        return
-      }
-      for (const unit of cat.units) {
-        if (
-          unit.symbol.toLowerCase() === q ||
-          unit.name.en.toLowerCase().includes(q) ||
-          unit.name.pl.toLowerCase().includes(q) ||
-          unit.keywords?.some((k) => k.toLowerCase().includes(q))
-        ) {
-          setSelectedCatId(cat.id)
-          setFromUnitId(unit.id)
-          return
-        }
-      }
-    }
+  // ─── Converter Logic ────────────────────────────────────────
+  const handleSwapUnits = () => {
+    const prevFrom = fromUnitId
+    const prevTo = toUnitId
+    setFromUnitId(prevTo)
+    setToUnitId(prevFrom)
   }
 
   const copyResult = (val: string, id: string) => {
@@ -320,289 +291,429 @@ export function CalcConverter({ locale = 'en', setHeader }: ToolComponentProps) 
     setTimeout(() => setCopiedId(null), 1800)
   }
 
-  // ─── Converter Multi-View Calculation ───────────────────────
+  const primaryConvertedValue = useMemo(() => {
+    const isRadix = activeCategory.id === 'radix'
+    if (isRadix) {
+      return fromUnitId === toUnitId ? convInput : convertRadix(convInput, fromUnitId, toUnitId)
+    }
+    const parsedNum = parseFloat(convInput)
+    if (isNaN(parsedNum)) return '0'
+    if (fromUnitId === toUnitId) return convInput
+    const res = convertValue(parsedNum, fromUnitId, toUnitId, activeCategory)
+    return formatFormattedValue(res)
+  }, [activeCategory, fromUnitId, toUnitId, convInput])
+
   const conversionResults = useMemo(() => {
     const isRadix = activeCategory.id === 'radix'
     const parsedNum = parseFloat(convInput)
+    const q = searchQuery.toLowerCase().trim()
 
-    return activeCategory.units.map((unit) => {
-      const isCurrent = unit.id === fromUnitId
-      let formatted = ''
+    return activeCategory.units
+      .filter((u) => {
+        if (!q) return true
+        return (
+          u.name.en.toLowerCase().includes(q) ||
+          u.name.pl.toLowerCase().includes(q) ||
+          u.symbol.toLowerCase().includes(q) ||
+          u.keywords?.some((k) => k.toLowerCase().includes(q))
+        )
+      })
+      .map((unit) => {
+        const isCurrent = unit.id === fromUnitId
+        let formatted = ''
 
-      if (isRadix) {
-        formatted = isCurrent ? convInput : convertRadix(convInput, fromUnitId, unit.id)
-      } else {
-        if (isNaN(parsedNum)) {
-          formatted = '0'
-        } else if (isCurrent) {
-          formatted = convInput
+        if (isRadix) {
+          formatted = isCurrent ? convInput : convertRadix(convInput, fromUnitId, unit.id)
         } else {
-          const res = convertValue(parsedNum, fromUnitId, unit.id, activeCategory)
-          formatted = formatFormattedValue(res)
+          if (isNaN(parsedNum)) {
+            formatted = '0'
+          } else if (isCurrent) {
+            formatted = convInput
+          } else {
+            const res = convertValue(parsedNum, fromUnitId, unit.id, activeCategory)
+            formatted = formatFormattedValue(res)
+          }
         }
-      }
 
-      return {
-        unit,
-        value: formatted,
-        isCurrent,
-      }
-    })
-  }, [activeCategory, fromUnitId, convInput])
+        return {
+          unit,
+          value: formatted,
+          isCurrent,
+        }
+      })
+  }, [activeCategory, fromUnitId, convInput, searchQuery])
 
-  const modeOptions = [
-    { value: 'calc' as const, label: locale === 'pl' ? 'Kalkulator' : 'Calculator' },
-    { value: 'convert' as const, label: locale === 'pl' ? 'Przelicznik' : 'Converter' },
-  ]
+  // Category options for PillGroup
+  const categoryPillOptions = useMemo(() => {
+    return UNIT_CATEGORIES.map((cat) => ({
+      value: cat.id,
+      label: cat.name[locale] || cat.name.en,
+    }))
+  }, [locale])
 
-  const categoryOptions = [
-    { id: 'weight', label: locale === 'pl' ? 'Masa / Waga' : 'Weight' },
-    { id: 'length', label: locale === 'pl' ? 'Długość' : 'Length' },
-    { id: 'volume', label: locale === 'pl' ? 'Kuchnia / Objętość' : 'Kitchen / Vol' },
-    { id: 'speed', label: locale === 'pl' ? 'Prędkość' : 'Speed' },
-    { id: 'temperature', label: locale === 'pl' ? 'Temperatura' : 'Temp' },
-    { id: 'fuel', label: locale === 'pl' ? 'Spalanie' : 'Fuel' },
-    { id: 'pressure', label: locale === 'pl' ? 'Ciśnienie' : 'Pressure' },
-    { id: 'area', label: locale === 'pl' ? 'Powierzchnia' : 'Area' },
-    { id: 'data', label: locale === 'pl' ? 'Dane' : 'Data' },
-    { id: 'radix', label: locale === 'pl' ? 'BIN / HEX' : 'Radix' },
-    { id: 'time', label: locale === 'pl' ? 'Czas' : 'Time' },
-  ]
+  // Mode options for PillGroup
+  const modeOptions = useMemo(() => [
+    { value: 'calc' as const, label: t.calculator },
+    { value: 'convert' as const, label: t.unitConverter },
+  ], [t])
+
+  // Select dropdown options for units
+  const unitSelectOptions = useMemo(() => {
+    return activeCategory.units.map((u) => ({
+      value: u.id,
+      label: `${u.symbol} — ${u.name[locale]}`,
+    }))
+  }, [activeCategory, locale])
 
   return (
-    <div className="calc-root">
-      {/* 1. Status Block (Top) */}
-      <div className="calc-status">
-        <div className="calc-status-text">
-          {activeMode === 'calc'
-            ? (locale === 'pl' ? 'Kalkulator' : 'Calculator')
-            : `${activeCategory.name[locale]}`}
-        </div>
-      </div>
-
-      {/* 2. Main Viewport (Center) */}
-      <div className={`calc-center-area ${activeMode === 'calc' ? 'calc-center-area--calc' : ''}`}>
-        {activeMode === 'calc' ? (
-          /* ─── CALCULATOR VIEW ─── */
-          <div className={`calc-view ${calcMode === 'scientific' ? 'calc-view--sci' : ''}`}>
-            {/* Screen */}
-            <div className="calc-screen">
-              <div className="calc-screen-expr">{expression || '\u00A0'}</div>
-              <div className="calc-screen-val">{displayVal}</div>
-            </div>
-
-            {/* History Strip */}
-            {history.length > 0 && (
-              <div className="calc-history-strip">
-                {history.slice(0, 5).map((h) => (
-                  <button
-                    key={h.id}
-                    type="button"
-                    className="calc-history-pill"
-                    onClick={() => {
-                      setDisplayVal(h.result)
-                      setIsNewNumber(true)
-                    }}
-                    title={h.expression}
-                  >
-                    {h.expression} = {h.result}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Keypad Container */}
-            <div className="calc-keypad-container">
-              {/* Scientific row (if scientific active) */}
-              {calcMode === 'scientific' && (
-                <div className="calc-sci-grid">
-                  <button type="button" className="calc-key calc-key--sci" onClick={() => handleScientificFn('sqrt')}>√</button>
-                  <button type="button" className="calc-key calc-key--sci" onClick={() => handleScientificFn('sqr')}>x²</button>
-                  <button type="button" className="calc-key calc-key--sci" onClick={() => handleOperator('^')}>^</button>
-                  <button type="button" className="calc-key calc-key--sci" onClick={() => handleScientificFn('inv')}>1/x</button>
-                  <button type="button" className="calc-key calc-key--sci" onClick={() => handleScientificFn('pi')}>π</button>
-
-                  <button type="button" className="calc-key calc-key--sci" onClick={() => handleScientificFn('sin')}>sin</button>
-                  <button type="button" className="calc-key calc-key--sci" onClick={() => handleScientificFn('cos')}>cos</button>
-                  <button type="button" className="calc-key calc-key--sci" onClick={() => handleScientificFn('tan')}>tan</button>
-                  <button type="button" className="calc-key calc-key--sci" onClick={() => handleScientificFn('ln')}>ln</button>
-                  <button type="button" className="calc-key calc-key--sci" onClick={() => handleScientificFn('log')}>log</button>
+    <div className="all-calc-suite" data-eink={isEink}>
+      <BoardLayout
+        variant="wide"
+        align="center"
+        board={
+          <div className="calc-stage">
+            {activeMode === 'calc' ? (
+              /* ─── CALCULATOR VIEW ─── */
+              <Card variant="outlined" padding="none" className={`calc-card ${calcMode === 'scientific' ? 'calc-card--scientific' : ''}`}>
+                {/* 1. Terminal Screen */}
+                <div className="calc-screen">
+                  <div className="calc-screen-meta">
+                    <span className="calc-screen-expr">{expression || '\u00A0'}</span>
+                    {activeOperator && (
+                      <span className="calc-screen-op-badge">{activeOperator}</span>
+                    )}
+                  </div>
+                  <div className={`calc-screen-digits ${displayVal.length > 12 ? 'calc-screen-digits--sm' : ''}`}>
+                    {displayVal}
+                  </div>
                 </div>
-              )}
 
-              {/* Main Keypad */}
-              <div className="calc-main-grid">
-                <button type="button" className="calc-key calc-key--action" onClick={handleClear}>AC</button>
-                <button type="button" className="calc-key calc-key--action" onClick={handleBackspace}>⌫</button>
-                <button type="button" className="calc-key calc-key--action" onClick={handlePercent}>%</button>
-                <button type="button" className="calc-key calc-key--op" onClick={() => handleOperator('÷')}>÷</button>
+                {/* 2. Scientific Keys (when toggled on) */}
+                {calcMode === 'scientific' && (
+                  <div className="calc-sci-grid">
+                    <Button variant="secondary" size="sm" className="calc-key calc-key--sci" onClick={() => handleScientificFn('sqrt')}>√</Button>
+                    <Button variant="secondary" size="sm" className="calc-key calc-key--sci" onClick={() => handleScientificFn('sqr')}>x²</Button>
+                    <Button variant="secondary" size="sm" className="calc-key calc-key--sci" onClick={() => handleOperator('^')}>^</Button>
+                    <Button variant="secondary" size="sm" className="calc-key calc-key--sci" onClick={() => handleScientificFn('inv')}>1/x</Button>
+                    <Button variant="secondary" size="sm" className="calc-key calc-key--sci" onClick={() => handleScientificFn('pi')}>π</Button>
+                    <Button variant="secondary" size="sm" className="calc-key calc-key--sci" onClick={() => handleScientificFn('e')}>e</Button>
+                    <Button variant="secondary" size="sm" className="calc-key calc-key--sci" onClick={() => handleScientificFn('sin')}>sin</Button>
+                    <Button variant="secondary" size="sm" className="calc-key calc-key--sci" onClick={() => handleScientificFn('cos')}>cos</Button>
+                    <Button variant="secondary" size="sm" className="calc-key calc-key--sci" onClick={() => handleScientificFn('tan')}>tan</Button>
+                    <Button variant="secondary" size="sm" className="calc-key calc-key--sci" onClick={() => handleScientificFn('ln')}>ln</Button>
+                    <Button variant="secondary" size="sm" className="calc-key calc-key--sci" onClick={() => handleScientificFn('log')}>log</Button>
+                  </div>
+                )}
 
-                <button type="button" className="calc-key" onClick={() => handleInputDigit('7')}>7</button>
-                <button type="button" className="calc-key" onClick={() => handleInputDigit('8')}>8</button>
-                <button type="button" className="calc-key" onClick={() => handleInputDigit('9')}>9</button>
-                <button type="button" className="calc-key calc-key--op" onClick={() => handleOperator('×')}>×</button>
+                {/* 3. Primary Keypad using AllUI Button */}
+                <div className="calc-numpad">
+                  <Button variant="secondary" className="calc-key calc-key--action" onClick={handleClear}>AC</Button>
+                  <Button variant="secondary" className="calc-key calc-key--action" onClick={handleBackspace} aria-label="Backspace">
+                    <BackspaceIcon />
+                  </Button>
+                  <Button variant="secondary" className="calc-key calc-key--action" onClick={handlePercent}>%</Button>
+                  <Button
+                    variant={activeOperator === '÷' ? 'primary' : 'secondary'}
+                    className={`calc-key calc-key--op ${activeOperator === '÷' ? 'calc-key--op-active' : ''}`}
+                    onClick={() => handleOperator('÷')}
+                  >
+                    ÷
+                  </Button>
 
-                <button type="button" className="calc-key" onClick={() => handleInputDigit('4')}>4</button>
-                <button type="button" className="calc-key" onClick={() => handleInputDigit('5')}>5</button>
-                <button type="button" className="calc-key" onClick={() => handleInputDigit('6')}>6</button>
-                <button type="button" className="calc-key calc-key--op" onClick={() => handleOperator('−')}>−</button>
+                  <Button variant="secondary" className="calc-key calc-key--num" onClick={() => handleInputDigit('7')}>7</Button>
+                  <Button variant="secondary" className="calc-key calc-key--num" onClick={() => handleInputDigit('8')}>8</Button>
+                  <Button variant="secondary" className="calc-key calc-key--num" onClick={() => handleInputDigit('9')}>9</Button>
+                  <Button
+                    variant={activeOperator === '×' ? 'primary' : 'secondary'}
+                    className={`calc-key calc-key--op ${activeOperator === '×' ? 'calc-key--op-active' : ''}`}
+                    onClick={() => handleOperator('×')}
+                  >
+                    ×
+                  </Button>
 
-                <button type="button" className="calc-key" onClick={() => handleInputDigit('1')}>1</button>
-                <button type="button" className="calc-key" onClick={() => handleInputDigit('2')}>2</button>
-                <button type="button" className="calc-key" onClick={() => handleInputDigit('3')}>3</button>
-                <button type="button" className="calc-key calc-key--op" onClick={() => handleOperator('+')}>+</button>
+                  <Button variant="secondary" className="calc-key calc-key--num" onClick={() => handleInputDigit('4')}>4</Button>
+                  <Button variant="secondary" className="calc-key calc-key--num" onClick={() => handleInputDigit('5')}>5</Button>
+                  <Button variant="secondary" className="calc-key calc-key--num" onClick={() => handleInputDigit('6')}>6</Button>
+                  <Button
+                    variant={activeOperator === '−' ? 'primary' : 'secondary'}
+                    className={`calc-key calc-key--op ${activeOperator === '−' ? 'calc-key--op-active' : ''}`}
+                    onClick={() => handleOperator('−')}
+                  >
+                    −</Button>
 
-                <button type="button" className="calc-key" onClick={handleToggleSign}>±</button>
-                <button type="button" className="calc-key" onClick={() => handleInputDigit('0')}>0</button>
-                <button type="button" className="calc-key" onClick={handleInputDot}>.</button>
-                <button type="button" className="calc-key calc-key--equals" onClick={handleEvaluate}>=</button>
-              </div>
-            </div>
+                  <Button variant="secondary" className="calc-key calc-key--num" onClick={() => handleInputDigit('1')}>1</Button>
+                  <Button variant="secondary" className="calc-key calc-key--num" onClick={() => handleInputDigit('2')}>2</Button>
+                  <Button variant="secondary" className="calc-key calc-key--num" onClick={() => handleInputDigit('3')}>3</Button>
+                  <Button
+                    variant={activeOperator === '+' ? 'primary' : 'secondary'}
+                    className={`calc-key calc-key--op ${activeOperator === '+' ? 'calc-key--op-active' : ''}`}
+                    onClick={() => handleOperator('+')}
+                  >
+                    +
+                  </Button>
+
+                  <Button variant="secondary" className="calc-key calc-key--action" onClick={handleToggleSign}>±</Button>
+                  <Button variant="secondary" className="calc-key calc-key--num" onClick={() => handleInputDigit('0')}>0</Button>
+                  <Button variant="secondary" className="calc-key calc-key--num" onClick={handleInputDot}>.</Button>
+                  <Button variant="primary" className="calc-key calc-key--equals" onClick={handleEvaluate}>=</Button>
+                </div>
+              </Card>
+            ) : (
+              /* ─── UNIT CONVERTER VIEW ─── */
+              <Card variant="outlined" padding="none" className="conv-card">
+                {/* 1. Category Bar using AllUI PillGroup */}
+                <div className="conv-category-strip">
+                  <PillGroup
+                    size="sm"
+                    options={categoryPillOptions}
+                    value={selectedCatId}
+                    onChange={(cat) => {
+                      setSelectedCatId(cat)
+                      setSearchQuery('')
+                    }}
+                  />
+                </div>
+
+                {/* 2. From & To Hero Conversion Box */}
+                <Card variant="flat" padding="none" className="conv-exchange-box">
+                  {/* From Row */}
+                  <div className="conv-unit-row">
+                    <div className="conv-input-wrap">
+                      <Input
+                        label={t.from}
+                        type={activeCategory.id === 'radix' ? 'text' : 'number'}
+                        value={convInput}
+                        onChange={(e) => setConvInput(e.target.value)}
+                        placeholder="0"
+                        step="any"
+                        fullWidth
+                      />
+                    </div>
+                    <div className="conv-select-wrap">
+                      <Select
+                        label={t.category}
+                        options={unitSelectOptions}
+                        value={fromUnitId}
+                        onChange={(e) => setFromUnitId(e.target.value)}
+                        fullWidth
+                      />
+                    </div>
+                  </div>
+
+                  {/* Centered Swap Divider */}
+                  <div className="conv-divider">
+                    <IconButton
+                      variant="secondary"
+                      size="sm"
+                      rounded
+                      icon={<SwapIcon />}
+                      aria-label={t.swap}
+                      title={t.swap}
+                      onClick={handleSwapUnits}
+                    />
+                  </div>
+
+                  {/* To Row */}
+                  <div className="conv-unit-row conv-unit-row--target">
+                    <div className="conv-input-wrap">
+                      <span className="conv-field-tag">{t.to}</span>
+                      <div className="conv-result-display">
+                        <span className="conv-result-num">{primaryConvertedValue}</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyResult(primaryConvertedValue, 'main-target')}
+                          icon={copiedId === 'main-target' ? <CheckIcon /> : <CopyIcon />}
+                          title={t.copy}
+                        >
+                          {copiedId === 'main-target' ? t.copied : t.copy}
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="conv-select-wrap">
+                      <Select
+                        label={t.to}
+                        options={unitSelectOptions}
+                        value={toUnitId}
+                        onChange={(e) => setToUnitId(e.target.value)}
+                        fullWidth
+                      />
+                    </div>
+                  </div>
+                </Card>
+
+                {/* 3. Live All Units Matrix with Search */}
+                <Card variant="flat" padding="none" className="conv-matrix-card">
+                  <div className="conv-matrix-header">
+                    <span className="conv-matrix-title">{t.equivalentInOtherUnits}</span>
+                    <div className="conv-matrix-search">
+                      <Input
+                        startIcon={<SearchIcon />}
+                        placeholder={t.searchUnitPlaceholder}
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="conv-matrix-list">
+                    {conversionResults.map(({ unit, value, isCurrent }) => (
+                      <div
+                        key={unit.id}
+                        className={`conv-matrix-item ${isCurrent ? 'conv-matrix-item--current' : ''}`}
+                        onClick={() => {
+                          if (!isCurrent) setToUnitId(unit.id)
+                        }}
+                      >
+                        <div className="conv-matrix-left">
+                          <span className="conv-matrix-unit-name">{unit.name[locale]}</span>
+                          <span className="conv-matrix-unit-val">{value}</span>
+                        </div>
+                        <div className="conv-matrix-right">
+                          <span className="conv-matrix-unit-sym">{unit.symbol}</span>
+                          <IconButton
+                            variant="ghost"
+                            size="sm"
+                            icon={copiedId === unit.id ? <CheckIcon /> : <CopyIcon />}
+                            aria-label={t.copy}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              copyResult(value, unit.id)
+                            }}
+                            title={t.copy}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              </Card>
+            )}
           </div>
-        ) : (
-          /* ─── UNIT CONVERTER VIEW ─── */
-          <div className="conv-view">
-            {/* Search Bar */}
-            <div className="conv-search-box">
-              <IconSearch size={14} className="conv-search-icon" />
-              <input
-                type="text"
-                className="conv-search-input"
-                value={searchQuery}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                placeholder={locale === 'pl' ? 'Szukaj jednostki... (np. psi, węzły, mpg, funty, hex)' : 'Search unit... (e.g. psi, knots, mpg, lb, hex)'}
-              />
-            </div>
+        }
+        controls={
+          <ControlsBar>
+            <PillGroup<ToolMode>
+              size="sm"
+              options={modeOptions}
+              value={activeMode}
+              onChange={(m) => setActiveMode(m)}
+            />
 
-            {/* Category Filter Pills */}
-            <div className="conv-cat-bar">
-              {categoryOptions.map((cat) => (
-                <button
-                  key={cat.id}
-                  type="button"
-                  className={`conv-cat-pill ${selectedCatId === cat.id ? 'conv-cat-pill--active' : ''}`}
+            {activeMode === 'calc' ? (
+              <>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setCalcMode((m) => (m === 'standard' ? 'scientific' : 'standard'))}
+                >
+                  {calcMode === 'standard' ? t.scientific : t.standard}
+                </Button>
+
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleClear}
+                  icon={<RotateCcwIcon />}
+                >
+                  {t.clear}
+                </Button>
+
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setIsHistoryOpen(true)}
+                  icon={<HistoryIcon />}
+                >
+                  {t.history} ({history.length})
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleSwapUnits}
+                  icon={<SwapIcon />}
+                >
+                  {t.swap}
+                </Button>
+
+                <Button
+                  variant="secondary"
+                  size="sm"
                   onClick={() => {
-                    setSelectedCatId(cat.id)
+                    setConvInput('1')
                     setSearchQuery('')
                   }}
+                  icon={<RotateCcwIcon />}
                 >
-                  {cat.label}
-                </button>
-              ))}
-            </div>
+                  {t.reset}
+                </Button>
+              </>
+            )}
+          </ControlsBar>
+        }
+      />
 
-            {/* Input Card */}
-            <div className="conv-input-card">
-              <div className="conv-input-row">
-                <input
-                  type={activeCategory.id === 'radix' ? 'text' : 'number'}
-                  className="conv-num-input"
-                  value={convInput}
-                  onChange={(e) => setConvInput(e.target.value)}
-                  placeholder="0"
-                  step="any"
-                />
-                <select
-                  className="conv-unit-select"
-                  value={fromUnitId}
-                  onChange={(e) => setFromUnitId(e.target.value)}
-                >
-                  {activeCategory.units.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.symbol} — {u.name[locale]}
-                    </option>
-                  ))}
-                </select>
-              </div>
+      {/* History Dialog Modal using AllUI Dialog */}
+      <Dialog
+        open={isHistoryOpen}
+        onClose={() => setIsHistoryOpen(false)}
+        title={t.history}
+        maxWidth="sm"
+      >
+        <div className="calc-history-dialog">
+          {history.length > 0 && (
+            <div className="calc-history-dialog-actions">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={clearHistory}
+                icon={<TrashIcon />}
+              >
+                {t.clearHistory}
+              </Button>
             </div>
+          )}
 
-            {/* Live Results Scrollable Table (Fixed Height like Stopwatch Laps) */}
-            <div className="conv-results-table">
-              {conversionResults.map(({ unit, value, isCurrent }) => (
+          <div className="calc-history-dialog-list">
+            {history.length === 0 ? (
+              <div className="calc-history-empty">{t.noHistory}</div>
+            ) : (
+              history.map((h) => (
                 <div
-                  key={unit.id}
-                  className={`conv-result-row ${isCurrent ? 'conv-result-row--active' : ''}`}
+                  key={h.id}
+                  className="calc-history-dialog-item"
                   onClick={() => {
-                    if (!isCurrent) {
-                      setFromUnitId(unit.id)
-                      setConvInput(value)
-                    }
+                    setDisplayVal(h.result)
+                    setIsNewNumber(true)
+                    setIsHistoryOpen(false)
                   }}
-                  title={locale === 'pl' ? 'Kliknij, aby ustawić jako jednostkę wejściową' : 'Click to set as active input unit'}
+                  title={t.clickToUse}
                 >
-                  <div className="conv-result-left">
-                    <span className="conv-result-name">{unit.name[locale]}</span>
-                    <span className="conv-result-val">{value}</span>
-                  </div>
-                  <div className="conv-result-right">
-                    <span className="conv-result-symbol">{unit.symbol}</span>
-                    <button
-                      type="button"
-                      className="conv-copy-btn"
+                  <span className="calc-history-dialog-expr">{h.expression}</span>
+                  <div className="calc-history-dialog-row">
+                    <span className="calc-history-dialog-res">= {h.result}</span>
+                    <IconButton
+                      variant="ghost"
+                      size="sm"
+                      icon={copiedId === h.id ? <CheckIcon /> : <CopyIcon />}
+                      aria-label={t.copy}
                       onClick={(e) => {
                         e.stopPropagation()
-                        copyResult(value, unit.id)
+                        copyResult(h.result, h.id)
                       }}
-                      title={locale === 'pl' ? 'Kopiuj' : 'Copy'}
-                    >
-                      {copiedId === unit.id ? <IconCheck size={13} /> : <IconCopy size={13} />}
-                    </button>
+                      title={t.copy}
+                    />
                   </div>
                 </div>
-              ))}
-            </div>
+              ))
+            )}
           </div>
-        )}
-      </div>
-
-      {/* 3. Bottom Controls Bar */}
-      <div className="calc-controls-container">
-        <ControlsBar>
-          {/* Mode Switcher Pills (Consistent position on the left across all views) */}
-          <PillGroup
-            options={modeOptions}
-            value={activeMode}
-            onChange={setActiveMode}
-          />
-
-          {activeMode === 'calc' ? (
-            <>
-              <GameButton
-                variant="secondary"
-                size="md"
-                onClick={() => setCalcMode((m) => (m === 'standard' ? 'scientific' : 'standard'))}
-                icon={<IconCalculator size={14} />}
-              >
-                {calcMode === 'standard'
-                  ? (locale === 'pl' ? 'Naukowy' : 'Scientific')
-                  : (locale === 'pl' ? 'Standard' : 'Standard')}
-              </GameButton>
-              <GameButton
-                variant="secondary"
-                size="md"
-                onClick={handleClear}
-                icon={<IconRotateCcw size={14} />}
-              >
-                {locale === 'pl' ? 'Wyczyść' : 'Clear'}
-              </GameButton>
-            </>
-          ) : (
-            <>
-              <GameButton
-                variant="secondary"
-                size="md"
-                onClick={() => {
-                  setConvInput('1')
-                  setSearchQuery('')
-                }}
-                icon={<IconRotateCcw size={14} />}
-              >
-                {locale === 'pl' ? 'Resetuj' : 'Reset'}
-              </GameButton>
-            </>
-          )}
-        </ControlsBar>
-      </div>
+        </div>
+      </Dialog>
     </div>
   )
 }
+export default CalcConverter

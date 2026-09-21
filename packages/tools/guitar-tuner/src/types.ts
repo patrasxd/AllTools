@@ -13,9 +13,15 @@ export interface ToolMetadata {
   tags: LocalizedTags
 }
 
-export interface GameComponentProps {
+export type NoiseGateLevel = 'low' | 'medium' | 'high'
+
+export interface ToolComponentProps {
   locale?: Locale
   isEink?: boolean
+  theme?: string
   onSave?: (data: unknown) => void
   setHeader?: (content: ReactNode) => void
 }
+
+/** Backwards-compatible alias for legacy references */
+export type GameComponentProps = ToolComponentProps

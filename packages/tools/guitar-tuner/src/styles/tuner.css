@@ -1,64 +1,105 @@
-/* ─── Guitar Tuner Root ─────────────────────────────────────── */
-/* Fills the tool-page-content area (flex: 1, full remaining height) */
-.tuner-root {
+/* ─── Guitar Tuner Container ──────────────────────────────────── */
+.tuner-container {
   width: 100%;
   height: 100%;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.25rem 0 0.5rem;
   box-sizing: border-box;
-  overflow: hidden;
-  gap: 0.5rem;
 }
 
-/* ─── Status / Note Display ─────────────────────────────────── */
+/* ─── Tuner Stage (Board stage in BoardLayout) ───────────────── */
+.tuner-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+  width: 100%;
+  max-width: 580px;
+  height: 100%;
+  margin: 0 auto;
+  padding: 0.5rem 1rem;
+  box-sizing: border-box;
+  gap: 0.5rem;
+  overflow: hidden;
+}
+
+/* ─── Permission Banner ─────────────────────────────────────── */
+.tuner-permission-banner {
+  background: var(--surface-2, rgba(239, 68, 68, 0.1));
+  border: 1px solid var(--color-danger, #ef4444);
+  border-radius: var(--radius-md, 8px);
+  padding: 0.75rem 1rem;
+  text-align: center;
+  margin-bottom: 0.5rem;
+  max-width: 440px;
+}
+
+.tuner-permission-title {
+  font-family: var(--font-sans, sans-serif);
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--color-danger, #ef4444);
+  margin: 0 0 0.25rem 0;
+}
+
+.tuner-permission-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted, #a1a1aa);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* ─── Note & Frequency Readout ──────────────────────────────── */
 .tuner-note-display {
   text-align: center;
-  min-height: 2.25rem;
+  min-height: 2.75rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.15rem;
+  gap: 0.2rem;
   flex-shrink: 0;
+  user-select: none;
 }
 
 .tuner-note-text {
-  font-family: var(--font-sans);
+  font-family: var(--font-sans, sans-serif);
   font-weight: 700;
-  font-style: normal;
-  font-size: clamp(2.25rem, 6.5vw, 3.25rem);
-  color: var(--text);
-  letter-spacing: -0.02em;
+  font-size: clamp(2.5rem, 8vw, 3.75rem);
+  color: var(--text, #f4f4f5);
+  letter-spacing: -0.03em;
   line-height: 1;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
 }
 
 .tuner-note-octave {
-  font-family: var(--font-mono);
-  font-size: 1.125rem;
-  color: var(--text-muted);
-  font-style: normal;
+  font-family: var(--font-mono, monospace);
+  font-size: clamp(1.125rem, 3.5vw, 1.375rem);
+  color: var(--text-muted, #71717a);
   vertical-align: super;
-  margin-left: 0.15rem;
+  margin-left: 0.2rem;
 }
 
 .tuner-note-sub {
-  font-size: 0.6875rem;
-  color: var(--text-muted);
-  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  color: var(--text-muted, #a1a1aa);
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   font-weight: 500;
+  font-family: var(--font-mono, monospace);
 }
 
 /* ─── Needle Gauge ──────────────────────────────────────────── */
 .tuner-gauge-wrapper {
   position: relative;
-  width: min(300px, calc(100vw - 2rem));
+  width: min(340px, 92vw);
+  max-width: 100%;
   aspect-ratio: 5 / 3;
-  max-height: calc(100dvh - 360px);
+  max-height: calc(100dvh - 330px);
+  min-height: 140px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -73,12 +114,17 @@
   overflow: visible;
 }
 
+.tuner-target-zone--active {
+  filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.45));
+}
+
 .tuner-gauge-needle {
-  transition: transform 100ms cubic-bezier(0.1, 0.9, 0.2, 1);
+  transition: transform 90ms cubic-bezier(0.1, 0.9, 0.2, 1);
+  transform-origin: 150px 150px;
 }
 
 .tuner-gauge-needle--idle {
-  transition: transform 400ms ease-out;
+  transition: transform 350ms ease-out;
 }
 
 .tuner-gauge-footer {
@@ -88,107 +134,351 @@
   width: 100%;
   padding: 0 0.5rem;
   margin-top: -0.25rem;
+  box-sizing: border-box;
 }
 
 .tuner-gauge-label {
-  font-family: var(--font-mono);
-  font-size: 0.625rem;
-  color: var(--text-dim);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.6875rem;
+  color: var(--text-dim, #71717a);
   letter-spacing: 0.06em;
+  font-weight: 500;
 }
 
 .tuner-status-badge {
-  font-family: var(--font-mono);
+  font-family: var(--font-mono, monospace);
   font-size: 0.6875rem;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  padding: 0.2rem 0.5rem;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-  transition: all 200ms ease;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-sm, 4px);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.15));
+  background: var(--surface, rgba(255, 255, 255, 0.05));
+  color: var(--text-muted, #a1a1aa);
+  transition: all 180ms ease;
 }
 
 .tuner-status-badge--in-tune {
-  border-color: var(--text);
-  background: var(--text);
-  color: var(--bg);
+  border-color: var(--color-success, #10b981);
+  background: var(--color-success, #10b981);
+  color: #000000;
   font-weight: 700;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.35);
 }
 
 /* ─── String Reference Buttons ──────────────────────────────── */
-.tuner-strings {
+.tuner-strings-container {
   display: flex;
-  gap: 0.35rem;
+  gap: 0.4rem;
   flex-shrink: 0;
   width: 100%;
-  max-width: 360px;
+  max-width: 440px;
   justify-content: center;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .tuner-string-btn {
   flex: 1 1 0;
-  min-width: 38px;
-  max-width: 52px;
+  min-width: 44px;
+  max-width: 64px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.15rem;
-  padding: 0.35rem 0.2rem;
-  min-height: 44px;
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text);
+  gap: 0.2rem;
+  padding: 0.4rem 0.25rem;
+  min-height: 48px;
+  background: var(--surface, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+  border-radius: var(--radius-md, 8px);
+  color: var(--text, #f4f4f5);
   cursor: pointer;
-  transition: border-color 200ms ease, background 200ms ease;
+  transition: border-color 150ms ease, background 150ms ease, transform 100ms ease;
   user-select: none;
 }
 
 .tuner-string-btn:hover {
-  border-color: var(--border-2);
-  background: var(--surface-2);
+  border-color: var(--border-2, rgba(255, 255, 255, 0.3));
+  background: var(--surface-2, rgba(255, 255, 255, 0.08));
+  transform: translateY(-1px);
+}
+
+.tuner-string-btn:active {
+  transform: translateY(0);
 }
 
 .tuner-string-btn--playing {
-  background: var(--surface-2);
-  border-color: var(--text-dim);
+  background: var(--surface-2, rgba(255, 255, 255, 0.12));
+  border-color: var(--text, #ffffff);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.15);
 }
 
 .tuner-string-note {
-  font-family: var(--font-sans);
+  font-family: var(--font-sans, sans-serif);
   font-weight: 600;
-  font-style: normal;
-  font-size: 0.9375rem;
+  font-size: 1rem;
   line-height: 1;
 }
 
 .tuner-string-octave {
-  font-size: 0.5625rem;
-  font-style: normal;
+  font-size: 0.625rem;
   vertical-align: super;
+  opacity: 0.8;
 }
 
 .tuner-string-freq {
-  font-family: var(--font-mono);
-  font-size: 0.5625rem;
-  color: var(--text-muted);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.625rem;
+  color: var(--text-muted, #a1a1aa);
   letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* ─── E-ink overrides ───────────────────────────────────────── */
+/* ─── Settings Modal & Calibration ──────────────────────────── */
+.tuner-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 0.25rem 0;
+  box-sizing: border-box;
+}
+
+.tuner-dialog-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tuner-dialog-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tuner-dialog-label {
+  font-family: var(--font-sans, sans-serif);
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text, #f4f4f5);
+}
+
+.tuner-dialog-badge {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  padding: 0.15rem 0.6rem;
+  border-radius: var(--radius-sm, 4px);
+  background: var(--surface-2, rgba(255, 255, 255, 0.1));
+  border: 1px solid var(--border-2, rgba(255, 255, 255, 0.2));
+  color: var(--text, #f4f4f5);
+}
+
+.tuner-dialog-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted, #a1a1aa);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.tuner-dialog-help-text {
+  font-size: 0.75rem;
+  color: var(--text-muted, #a1a1aa);
+  margin: 0.2rem 0 0;
+  line-height: 1.4;
+  font-style: italic;
+}
+
+/* Make pill group in dialog take 100% width and distribute buttons equally */
+.tuner-dialog-content .all-pill-group {
+  display: flex;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.tuner-dialog-content .all-pill-group .all-pill-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0 0.5rem;
+  text-align: center;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.tuner-slider {
+  width: 100%;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--surface-2, rgba(255, 255, 255, 0.15));
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+  margin: 0.4rem 0;
+}
+
+.tuner-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--text, #ffffff);
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  transition: transform 100ms ease;
+}
+
+.tuner-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+.tuner-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--text, #ffffff);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.tuner-slider-hints {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.tuner-cal-chip {
+  flex: 1;
+  background: var(--surface-2, rgba(255, 255, 255, 0.08));
+  border: 1px solid var(--border-2, rgba(255, 255, 255, 0.2));
+  border-radius: var(--radius-sm, 4px);
+  color: var(--text, #f4f4f5);
+  padding: 0.45rem 0.25rem;
+  font-size: 0.8125rem;
+  font-family: var(--font-mono, monospace);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 120ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tuner-cal-chip:hover {
+  background: var(--surface-2, rgba(255, 255, 255, 0.16));
+  border-color: var(--text-muted, rgba(255, 255, 255, 0.4));
+  color: #ffffff;
+}
+
+.tuner-cal-chip--active {
+  background: var(--text, #ffffff) !important;
+  color: var(--bg, #000000) !important;
+  border-color: var(--text, #ffffff) !important;
+  font-weight: 700;
+}
+
+.tuner-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+}
+
+/* ─── Mobile Landscape and Compact Heights ──────────────────── */
+@media (max-height: 520px) {
+  .tuner-stage {
+    padding: 0.25rem 0.5rem;
+    gap: 0.25rem;
+  }
+
+  .tuner-note-text {
+    font-size: 2rem;
+  }
+
+  .tuner-gauge-wrapper {
+    min-height: 110px;
+    max-height: calc(100dvh - 220px);
+  }
+
+  .tuner-string-btn {
+    min-height: 38px;
+    padding: 0.2rem 0.15rem;
+  }
+}
+
+/* ─── Reduced Motion ────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .tuner-gauge-needle,
+  .tuner-gauge-needle--idle,
+  .tuner-string-btn,
+  .tuner-status-badge {
+    transition: none !important;
+  }
+}
+
+/* ─── E-Ink Theme Overrides ─────────────────────────────────── */
+[data-theme^='e-ink'] .tuner-container,
+[data-eink='true'] .tuner-container,
+.tuner-container--eink {
+  color: var(--text, #000000);
+}
+
+[data-theme^='e-ink'] .tuner-gauge-needle,
+[data-eink='true'] .tuner-gauge-needle,
+.tuner-gauge-needle--eink {
+  transition: none !important;
+}
+
+[data-theme^='e-ink'] .tuner-target-zone--active,
+[data-eink='true'] .tuner-target-zone--active {
+  filter: none !important;
+  stroke: var(--text, #000000) !important;
+}
+
 [data-theme^='e-ink'] .tuner-status-badge--in-tune,
 [data-eink='true'] .tuner-status-badge--in-tune {
-  background: var(--text) !important;
-  color: var(--bg) !important;
-  border-color: var(--text) !important;
+  background: var(--text, #000000) !important;
+  color: var(--bg, #ffffff) !important;
+  border-color: var(--text, #000000) !important;
+  box-shadow: none !important;
+}
+
+[data-theme^='e-ink'] .tuner-string-btn,
+[data-eink='true'] .tuner-string-btn {
+  border-width: 1.5px !important;
+  transition: none !important;
 }
 
 [data-theme^='e-ink'] .tuner-string-btn--playing,
 [data-eink='true'] .tuner-string-btn--playing {
-  background: var(--text) !important;
-  color: var(--bg) !important;
+  background: var(--text, #000000) !important;
+  color: var(--bg, #ffffff) !important;
+  border-color: var(--text, #000000) !important;
+  box-shadow: none !important;
+}
+
+[data-theme^='e-ink'] .tuner-string-btn--playing .tuner-string-freq,
+[data-eink='true'] .tuner-string-btn--playing .tuner-string-freq {
+  color: var(--bg, #ffffff) !important;
+}
+
+[data-theme^='e-ink'] .tuner-cal-chip,
+[data-eink='true'] .tuner-cal-chip {
+  transition: none !important;
+}
+
+[data-theme^='e-ink'] .tuner-cal-chip--active,
+[data-eink='true'] .tuner-cal-chip--active {
+  background: var(--text, #000000) !important;
+  color: var(--bg, #ffffff) !important;
 }

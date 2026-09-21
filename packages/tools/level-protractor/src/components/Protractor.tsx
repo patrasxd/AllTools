@@ -1,8 +1,12 @@
 import React, { useRef, useCallback, useEffect } from 'react'
+import { Button, Badge } from '@all/ui'
+import { calculateAngleBetween, type ProtractorAngleResult } from '../utils/sensorUtils'
+import { levelTranslations, type Locale } from '../i18n'
 
 export interface ProtractorProps {
-  locale: 'en' | 'pl'
-  onStatsChange?: (stats: { angle: number; rad: number }) => void
+  locale?: Locale
+  isEink?: boolean
+  onStatsChange?: (stats: ProtractorAngleResult) => void
   arm1Angle: number
   arm2Angle: number
   setArm1Angle: React.Dispatch<React.SetStateAction<number>>
@@ -13,6 +17,8 @@ export interface ProtractorProps {
 }
 
 export const Protractor: React.FC<ProtractorProps> = ({
+  locale = 'en',
+  isEink = false,
   onStatsChange,
   arm1Angle,
   arm2Angle,
@@ -22,35 +28,37 @@ export const Protractor: React.FC<ProtractorProps> = ({
   setActiveArm,
   isFrozen,
 }) => {
+  const t = levelTranslations[locale] || levelTranslations.en
   const svgRef = useRef<SVGSVGElement | null>(null)
 
-  const rawDiff = Math.abs(arm2Angle - arm1Angle) % 360
-  const angleBetween = rawDiff > 180 ? 360 - rawDiff : rawDiff
-  const radians = (angleBetween * Math.PI) / 180
+  const angleResult = calculateAngleBetween(arm1Angle, arm2Angle)
 
   useEffect(() => {
     if (onStatsChange) {
-      onStatsChange({ angle: angleBetween, rad: radians })
+      onStatsChange(angleResult)
     }
-  }, [angleBetween, radians, onStatsChange])
+  }, [angleResult.angle, angleResult.rad, angleResult.supplementary, onStatsChange])
 
-  const handlePointerMove = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
-    if (!activeArm || isFrozen || !svgRef.current) return
-    const rect = svgRef.current.getBoundingClientRect()
-    const cx = rect.left + rect.width / 2
-    const cy = rect.top + rect.height / 2
-    const dx = e.clientX - cx
-    const dy = e.clientY - cy
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent<SVGSVGElement>) => {
+      if (!activeArm || isFrozen || !svgRef.current) return
+      const rect = svgRef.current.getBoundingClientRect()
+      const cx = rect.left + rect.width / 2
+      const cy = rect.top + rect.height / 2
+      const dx = e.clientX - cx
+      const dy = e.clientY - cy
 
-    let deg = (Math.atan2(dy, dx) * 180) / Math.PI
-    if (deg < 0) deg += 360
+      let deg = (Math.atan2(dy, dx) * 180) / Math.PI
+      if (deg < 0) deg += 360
 
-    if (activeArm === 1) {
-      setArm1Angle(Math.round(deg))
-    } else {
-      setArm2Angle(Math.round(deg))
-    }
-  }, [activeArm, isFrozen, setArm1Angle, setArm2Angle])
+      if (activeArm === 1) {
+        setArm1Angle(Math.round(deg))
+      } else {
+        setArm2Angle(Math.round(deg))
+      }
+    },
+    [activeArm, isFrozen, setArm1Angle, setArm2Angle]
+  )
 
   const handlePointerUp = useCallback(() => {
     setActiveArm(null)
@@ -58,7 +66,7 @@ export const Protractor: React.FC<ProtractorProps> = ({
 
   const adjustAngle = (delta: number) => {
     if (isFrozen) return
-    setArm2Angle((prev) => (prev + delta + 360) % 360)
+    setArm2Angle((prev) => ((prev + delta) % 360 + 360) % 360)
   }
 
   const cx = 130
@@ -97,10 +105,38 @@ export const Protractor: React.FC<ProtractorProps> = ({
     })
   }
 
+  const angleClassification =
+    angleResult.angle < 90
+      ? t.status.acuteAngle
+      : angleResult.angle === 90
+      ? t.status.rightAngle
+      : t.status.obtuseAngle
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.85rem', width: '100%' }}>
+    <div className={`protractor-view-wrapper ${isEink ? 'protractor-view-wrapper--eink' : ''}`}>
+      {/* Digital Readout with AllUI Badge */}
+      <div className="protractor-digital-readout">
+        <div className="protractor-angle-row">
+          <span className="protractor-angle-number">{angleResult.angle.toFixed(1)}°</span>
+          <Badge
+            variant={isFrozen ? 'warning' : 'accent'}
+            size="md"
+            className="protractor-status-badge"
+          >
+            {isFrozen ? t.status.angleLocked : angleClassification}
+          </Badge>
+        </div>
+        <span className="protractor-sub-desc">
+          RAD: {angleResult.rad.toFixed(3)} · 180°-θ: {angleResult.supplementary.toFixed(1)}°
+        </span>
+      </div>
+
       {/* SVG Protractor */}
-      <div className="protractor-dial-card">
+      <div
+        className="protractor-dial-card"
+        role="region"
+        aria-label={`Protractor: ${angleResult.angle} degrees`}
+      >
         <svg
           ref={svgRef}
           viewBox="0 0 260 260"
@@ -108,9 +144,26 @@ export const Protractor: React.FC<ProtractorProps> = ({
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerLeave={handlePointerUp}
+          aria-hidden="true"
         >
-          <circle cx="130" cy="130" r="120" fill="var(--surface)" stroke="var(--border-2)" strokeWidth="2.5" />
-          <circle cx="130" cy="130" r="35" fill="none" stroke="var(--border)" strokeWidth="1" strokeDasharray="3 3" />
+          {/* Outer dial */}
+          <circle
+            cx="130"
+            cy="130"
+            r="120"
+            fill="var(--all-surface, rgba(255,255,255,0.03))"
+            stroke="var(--all-border-2, rgba(255,255,255,0.25))"
+            strokeWidth="2.5"
+          />
+          <circle
+            cx="130"
+            cy="130"
+            r="35"
+            fill="none"
+            stroke="var(--all-border, rgba(255,255,255,0.12))"
+            strokeWidth="1"
+            strokeDasharray="3 3"
+          />
 
           {ticks.map((t) => (
             <g key={t.deg}>
@@ -119,16 +172,16 @@ export const Protractor: React.FC<ProtractorProps> = ({
                 y1={t.y1}
                 x2={t.x2}
                 y2={t.y2}
-                stroke={t.isMajor ? 'var(--text)' : 'var(--text-muted)'}
+                stroke={t.isMajor ? 'var(--all-text, #ffffff)' : 'var(--all-text-muted, #a1a1aa)'}
                 strokeWidth={t.isMajor ? 1.5 : 1}
               />
               {t.isMajor && (
                 <text
                   x={t.labelX}
                   y={t.labelY}
-                  fill="var(--text-dim)"
+                  fill="var(--all-text-dim, #71717a)"
                   fontSize="8"
-                  fontFamily="var(--font-mono)"
+                  fontFamily="var(--all-font-mono, monospace)"
                   textAnchor="middle"
                 >
                   {t.deg}°
@@ -137,23 +190,33 @@ export const Protractor: React.FC<ProtractorProps> = ({
             </g>
           ))}
 
-          {/* Sector Arc */}
+          {/* Sector Arc showing angle between arms */}
           <path
-            d={`M ${cx} ${cy} L ${arm1X} ${arm1Y} A ${armLength} ${armLength} 0 ${angleBetween > 180 ? 1 : 0} 1 ${arm2X} ${arm2Y} Z`}
-            fill="var(--text)"
-            fillOpacity="0.12"
+            d={`M ${cx} ${cy} L ${arm1X} ${arm1Y} A ${armLength} ${armLength} 0 ${
+              angleResult.angle > 180 ? 1 : 0
+            } 1 ${arm2X} ${arm2Y} Z`}
+            fill="var(--all-text, #ffffff)"
+            fillOpacity={isEink ? '0.2' : '0.12'}
           />
 
           {/* Base Arm */}
-          <line x1={cx} y1={cy} x2={arm1X} y2={arm1Y} stroke="var(--text-dim)" strokeWidth="2.5" strokeLinecap="round" />
+          <line
+            x1={cx}
+            y1={cy}
+            x2={arm1X}
+            y2={arm1Y}
+            stroke="var(--all-text-dim, #71717a)"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+          />
           <circle
             cx={arm1X}
             cy={arm1Y}
-            r="10"
-            fill="var(--surface)"
-            stroke="var(--text-dim)"
+            r="11"
+            fill="var(--all-surface, rgba(0,0,0,0.5))"
+            stroke="var(--all-text-dim, #71717a)"
             strokeWidth="2.5"
-            style={{ cursor: 'grab' }}
+            className="protractor-handle-node"
             onPointerDown={(e) => {
               e.stopPropagation()
               setActiveArm(1)
@@ -161,31 +224,79 @@ export const Protractor: React.FC<ProtractorProps> = ({
           />
 
           {/* Measuring Arm */}
-          <line x1={cx} y1={cy} x2={arm2X} y2={arm2Y} stroke="var(--text)" strokeWidth="3" strokeLinecap="round" />
+          <line
+            x1={cx}
+            y1={cy}
+            x2={arm2X}
+            y2={arm2Y}
+            stroke="var(--all-text, #ffffff)"
+            strokeWidth="3"
+            strokeLinecap="round"
+          />
           <circle
             cx={arm2X}
             cy={arm2Y}
-            r="11"
-            fill="var(--text)"
-            stroke="var(--bg)"
+            r="12"
+            fill="var(--all-text, #ffffff)"
+            stroke="var(--all-bg, #000000)"
             strokeWidth="2.5"
-            style={{ cursor: 'grab' }}
+            className="protractor-handle-node"
             onPointerDown={(e) => {
               e.stopPropagation()
               setActiveArm(2)
             }}
           />
 
-          <circle cx="130" cy="130" r="5" fill="var(--surface)" stroke="var(--text)" strokeWidth="2.5" />
+          {/* Center Pivot Point */}
+          <circle
+            cx="130"
+            cy="130"
+            r="5"
+            fill="var(--all-surface, #000000)"
+            stroke="var(--all-text, #ffffff)"
+            strokeWidth="2.5"
+          />
         </svg>
       </div>
 
-      {/* Fine-Tuning Degrees Buttons */}
-      <div className="protractor-fine-tune-row">
-        <button type="button" className="game-btn game-btn--sm" onClick={() => adjustAngle(-5)}>-5°</button>
-        <button type="button" className="game-btn game-btn--sm" onClick={() => adjustAngle(-1)}>-1°</button>
-        <button type="button" className="game-btn game-btn--sm" onClick={() => adjustAngle(1)}>+1°</button>
-        <button type="button" className="game-btn game-btn--sm" onClick={() => adjustAngle(5)}>+5°</button>
+      {/* Fine-Tuning Degrees Row */}
+      <div className="protractor-fine-tune-row" role="group" aria-label="Angle fine-tuning">
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => adjustAngle(-5)}
+          disabled={isFrozen}
+          title="-5 degrees"
+        >
+          -5°
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => adjustAngle(-1)}
+          disabled={isFrozen}
+          title="-1 degree"
+        >
+          -1°
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => adjustAngle(1)}
+          disabled={isFrozen}
+          title="+1 degree"
+        >
+          +1°
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => adjustAngle(5)}
+          disabled={isFrozen}
+          title="+5 degrees"
+        >
+          +5°
+        </Button>
       </div>
     </div>
   )

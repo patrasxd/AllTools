@@ -1,32 +1,28 @@
 import React, { useState, useEffect } from 'react'
+import { Badge } from '@all/ui'
+import {
+  normalizeHeading,
+  getCardinalDirection,
+  CARDINALS,
+} from '../utils/sensorUtils'
+import { levelTranslations, type Locale } from '../i18n'
 
 export interface CompassProps {
-  locale?: 'en' | 'pl'
+  locale?: Locale
+  isEink?: boolean
   isFrozen?: boolean
   onHeadingChange?: (heading: number, direction: string) => void
 }
 
-const CARDINALS = [
-  { deg: 0, labelEn: 'N', labelPl: 'N' },
-  { deg: 45, labelEn: 'NE', labelPl: 'NE' },
-  { deg: 90, labelEn: 'E', labelPl: 'E' },
-  { deg: 135, labelEn: 'SE', labelPl: 'SE' },
-  { deg: 180, labelEn: 'S', labelPl: 'S' },
-  { deg: 225, labelEn: 'SW', labelPl: 'SW' },
-  { deg: 270, labelEn: 'W', labelPl: 'W' },
-  { deg: 315, labelEn: 'NW', labelPl: 'NW' },
-]
-
-function getCardinalDirection(deg: number): string {
-  const normalized = (deg % 360 + 360) % 360
-  const index = Math.round(normalized / 45) % 8
-  return CARDINALS[index].labelEn
-}
-
-export function Compass({ locale = 'en', isFrozen = false, onHeadingChange }: CompassProps) {
-  const isPl = locale === 'pl'
+export function Compass({
+  locale = 'en',
+  isEink = false,
+  isFrozen = false,
+  onHeadingChange,
+}: CompassProps) {
+  const t = levelTranslations[locale] || levelTranslations.en
   const [heading, setHeading] = useState<number>(0)
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null)
+  const [hasSensor, setHasSensor] = useState<boolean | null>(null)
 
   useEffect(() => {
     if (isFrozen) return
@@ -39,55 +35,70 @@ export function Compass({ locale = 'en', isFrozen = false, onHeadingChange }: Co
       } else if (e.alpha !== null) {
         // Android / Chrome: alpha is compass heading (0 = North when absolute)
         deg = (360 - e.alpha) % 360
+      } else {
+        return
       }
 
-      const rounded = Math.round(deg)
-      setHeading(rounded)
-      const dir = getCardinalDirection(rounded)
-      if (onHeadingChange) onHeadingChange(rounded, dir)
-      setHasPermission(true)
+      const normalized = normalizeHeading(deg)
+      setHeading(normalized)
+      const dirInfo = getCardinalDirection(normalized)
+      if (onHeadingChange) onHeadingChange(normalized, dirInfo.code)
+      setHasSensor(true)
     }
 
-    if (window.DeviceOrientationEvent) {
+    if (typeof window !== 'undefined' && window.DeviceOrientationEvent) {
       window.addEventListener('deviceorientation', handleOrientation, true)
     } else {
-      setHasPermission(false)
+      setHasSensor(false)
     }
 
     return () => {
-      window.removeEventListener('deviceorientation', handleOrientation, true)
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('deviceorientation', handleOrientation, true)
+      }
     }
   }, [isFrozen, onHeadingChange])
 
-  const cardinal = getCardinalDirection(heading)
+  const cardinalInfo = getCardinalDirection(heading)
 
-  // Simulation slider for desktop testing without gyroscope
+  // Simulation slider for desktop/laptop testing without gyroscope
   const handleManualRotate = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseInt(e.target.value, 10)
     setHeading(val)
-    if (onHeadingChange) onHeadingChange(val, getCardinalDirection(val))
+    if (onHeadingChange) onHeadingChange(val, getCardinalDirection(val).code)
   }
 
+  const roseTransformStyle = isEink
+    ? { transform: `rotate(${-heading}deg)`, transition: 'none' }
+    : { transform: `rotate(${-heading}deg)` }
+
   return (
-    <div className="compass-container">
-      {/* 1. Digital Heading Display */}
-      <div className="compass-digital-display">
+    <div className={`compass-container ${isEink ? 'compass-container--eink' : ''}`}>
+      {/* 1. Digital Heading Display with AllUI Badge */}
+      <div className="compass-digital-display" aria-live="polite">
         <div className="compass-heading-number">
-          <span>{heading}°</span>
-          <span className="compass-cardinal-badge">{cardinal}</span>
+          <span className="compass-degree-val">{heading}°</span>
+          <Badge
+            variant={cardinalInfo.code === 'N' ? 'danger' : 'default'}
+            size="md"
+            className={`compass-cardinal-badge ${cardinalInfo.code === 'N' ? 'compass-cardinal-badge--north' : ''}`}
+          >
+            {cardinalInfo.code}
+          </Badge>
         </div>
         <span className="compass-sub-label">
-          {isPl ? 'Kierunek magnetyczny' : 'Magnetic Heading'}
+          {t.cardinals[cardinalInfo.code as keyof typeof t.cardinals] || cardinalInfo.en} · {t.status.magneticHeading}
         </span>
       </div>
 
       {/* 2. Analog Compass Rose Dial */}
-      <div className="compass-dial-wrap">
-        <div
-          className="compass-rose"
-          style={{ transform: `rotate(${-heading}deg)` }}
-        >
-          {/* Degree Ticks */}
+      <div
+        className="compass-dial-wrap"
+        role="img"
+        aria-label={`Compass showing ${heading} degrees ${cardinalInfo.code}`}
+      >
+        <div className="compass-rose" style={roseTransformStyle}>
+          {/* Degree Ticks (every 15 degrees) */}
           {Array.from({ length: 24 }).map((_, i) => {
             const angle = i * 15
             const isMajor = angle % 45 === 0
@@ -100,16 +111,18 @@ export function Compass({ locale = 'en', isFrozen = false, onHeadingChange }: Co
             )
           })}
 
-          {/* Cardinal Labels */}
+          {/* Cardinal Labels (N, NE, E, SE, S, SW, W, NW) */}
           {CARDINALS.map((card) => (
             <div
               key={card.deg}
-              className={`compass-cardinal-point ${card.deg === 0 ? 'compass-cardinal-point--north' : ''}`}
+              className={`compass-cardinal-point ${
+                card.deg === 0 ? 'compass-cardinal-point--north' : ''
+              }`}
               style={{
                 transform: `rotate(${card.deg}deg) translateY(-88px) rotate(-${card.deg}deg)`,
               }}
             >
-              {card.labelEn}
+              {card.code}
             </div>
           ))}
 
@@ -121,15 +134,15 @@ export function Compass({ locale = 'en', isFrozen = false, onHeadingChange }: Co
           </div>
         </div>
 
-        {/* Center Crosshair & Outer Index Pointer */}
-        <div className="compass-fixed-pointer" />
+        {/* Center Crosshair & Outer Fixed Index Pointer */}
+        <div className="compass-fixed-pointer" aria-hidden="true" />
       </div>
 
-      {/* 3. Desktop Manual Rotation Slider (For devices without gyroscope) */}
-      {hasPermission === false && (
+      {/* 3. Desktop Manual Rotation Slider (fallback when sensor not available) */}
+      {hasSensor === false && (
         <div className="compass-fallback-row">
-          <span style={{ fontSize: '0.6875rem', color: 'var(--text-dim)' }}>
-            {isPl ? 'Ręczny obrót (brak czujnika):' : 'Manual Dial:'}
+          <span className="compass-fallback-label">
+            {t.controls.manualDialNoSensor}
           </span>
           <input
             type="range"
@@ -137,7 +150,8 @@ export function Compass({ locale = 'en', isFrozen = false, onHeadingChange }: Co
             max="359"
             value={heading}
             onChange={handleManualRotate}
-            style={{ width: '140px', accentColor: 'var(--text)' }}
+            className="compass-manual-slider"
+            aria-label="Manual heading adjustment"
           />
         </div>
       )}
