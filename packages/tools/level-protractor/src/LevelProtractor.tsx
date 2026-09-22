@@ -82,9 +82,6 @@ export function LevelProtractor({
     return 'granted'
   })
 
-  const [isPermissionDialogOpen, setIsPermissionDialogOpen] = useState<boolean>(() => {
-    return typeof window !== 'undefined' && requiresOrientationPermission()
-  })
 
   const handleRequestPermission = async () => {
     const res = await requestOrientationPermission()
@@ -310,9 +307,9 @@ export function LevelProtractor({
                 id="level-reopen-permission-btn"
                 variant="secondary"
                 size="sm"
-                onClick={() => setIsPermissionDialogOpen(true)}
+                onClick={handleRequestPermission}
               >
-                {t.permission.reopen}
+                {t.permission.grantButton}
               </Button>
             )}
 
@@ -498,37 +495,6 @@ export function LevelProtractor({
         </div>
       </Dialog>
 
-      {/* iOS Motion Sensor Permission Dialog (Archetype 3) */}
-      <Dialog
-        open={isPermissionDialogOpen && permissionState === 'needed'}
-        onClose={() => setIsPermissionDialogOpen(false)}
-        title={t.permission.title}
-        maxWidth="sm"
-      >
-        <div className="level-dialog-content">
-          <p className="level-dialog-desc">{t.permission.description}</p>
-          <div className="level-dialog-footer">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setIsPermissionDialogOpen(false)}
-            >
-              {t.permission.notNow}
-            </Button>
-            <Button
-              id="level-grant-sensor-btn"
-              variant="primary"
-              size="sm"
-              onClick={async () => {
-                await handleRequestPermission()
-                setIsPermissionDialogOpen(false)
-              }}
-            >
-              {t.permission.grantButton}
-            </Button>
-          </div>
-        </div>
-      </Dialog>
     </div>
   )
 }

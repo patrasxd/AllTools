@@ -40,6 +40,9 @@ export interface ImageStudioTranslations {
   centerCrop: string
   resetZoom: string
   passportGuide: string
+  guideTopOfHead: string
+  guideEyeLevel: string
+  guideChin: string
   dragHint: string
 
   // Watermark Tab
@@ -114,6 +117,9 @@ export const imageStudioTranslations: Record<'en' | 'pl', ImageStudioTranslation
     centerCrop: 'Center',
     resetZoom: 'Reset zoom',
     passportGuide: 'Biometric Face Guide',
+    guideTopOfHead: 'TOP OF HEAD',
+    guideEyeLevel: 'EYE LEVEL',
+    guideChin: 'CHIN',
     dragHint: 'Drag directly on the image preview to adjust framing.',
 
     watermarkEnableLabel: 'Watermark Protection',
@@ -183,6 +189,9 @@ export const imageStudioTranslations: Record<'en' | 'pl', ImageStudioTranslation
     centerCrop: 'Wyśrodkuj',
     resetZoom: 'Reset zoom',
     passportGuide: 'Zarys biometryczny twarzy',
+    guideTopOfHead: 'CZUBEK GŁOWY',
+    guideEyeLevel: 'LINIA OCZU',
+    guideChin: 'BRODA',
     dragHint: 'Przeciągaj bezpośrednio po zdjęciu, aby precyzyjnie dopasować kadr.',
 
     watermarkEnableLabel: 'Znak wodny i ochrona',

@@ -551,7 +551,15 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
                         onPointerCancel={handlePointerUp}
                         onWheel={handleWheel}
                       >
-                        <div className="img-framed-container">
+                        <div
+                          className="img-framed-container"
+                          style={{
+                            aspectRatio:
+                              outputDimensions.w > 0 && outputDimensions.h > 0
+                                ? `${outputDimensions.w} / ${outputDimensions.h}`
+                                : undefined,
+                          }}
+                        >
                           <canvas
                             ref={previewCanvasRef}
                             className="img-preview-canvas"
@@ -567,13 +575,143 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
                             </div>
                           )}
 
-                          {/* Biometric Passport / ID Guide Overlay */}
+                          {/* Biometric Passport / ID Guide Overlay (7:9 standard 35×45mm format) */}
                           {!showOriginal && resize.preset === 'id-photo' && resize.crop.showPassportGuide && (
                             <div className="img-passport-overlay" title={t.passportGuide}>
-                              <svg className="img-passport-svg" viewBox="0 0 100 128" preserveAspectRatio="none">
-                                <ellipse cx="50" cy="52" rx="28" ry="36" fill="none" stroke="rgba(255, 255, 255, 0.7)" strokeWidth="1.5" strokeDasharray="3 3" />
-                                <line x1="20" y1="48" x2="80" y2="48" stroke="rgba(255, 255, 255, 0.5)" strokeWidth="1" strokeDasharray="2 2" />
-                                <line x1="30" y1="74" x2="70" y2="74" stroke="rgba(255, 255, 255, 0.5)" strokeWidth="1" strokeDasharray="2 2" />
+                              <svg
+                                className="img-passport-svg"
+                                viewBox="0 0 350 450"
+                                preserveAspectRatio="xMidYMid meet"
+                              >
+                                <defs>
+                                  <mask id="id-photo-mask">
+                                    <rect width="350" height="450" fill="white" />
+                                    <ellipse cx="175" cy="200" rx="88" ry="118" fill="black" />
+                                  </mask>
+                                </defs>
+
+                                {/* Dim outer framing slightly to highlight biometric face area */}
+                                <rect
+                                  width="350"
+                                  height="450"
+                                  fill="rgba(0, 0, 0, 0.15)"
+                                  mask="url(#id-photo-mask)"
+                                />
+
+                                {/* Central Head & Chin Biometric Oval (standard 70-80% height coverage) */}
+                                <ellipse
+                                  cx="175"
+                                  cy="200"
+                                  rx="88"
+                                  ry="118"
+                                  fill="none"
+                                  stroke="rgba(255, 255, 255, 0.85)"
+                                  strokeWidth="2"
+                                  strokeDasharray="6 4"
+                                />
+
+                                {/* Central Vertical Alignment Axis */}
+                                <line
+                                  x1="175"
+                                  y1="50"
+                                  x2="175"
+                                  y2="350"
+                                  stroke="rgba(255, 255, 255, 0.4)"
+                                  strokeWidth="1.5"
+                                  strokeDasharray="3 3"
+                                />
+
+                                {/* Crown / Top of Head Guideline */}
+                                <line
+                                  x1="105"
+                                  y1="82"
+                                  x2="245"
+                                  y2="82"
+                                  stroke="rgba(255, 255, 255, 0.65)"
+                                  strokeWidth="1.5"
+                                  strokeDasharray="4 3"
+                                />
+                                <text
+                                  x="175"
+                                  y="75"
+                                  textAnchor="middle"
+                                  fill="rgba(255, 255, 255, 0.8)"
+                                  fontSize="11"
+                                  fontFamily="system-ui, -apple-system, sans-serif"
+                                  letterSpacing="0.5"
+                                >
+                                  {t.guideTopOfHead}
+                                </text>
+
+                                {/* Eye Level Line with Target Ticks */}
+                                <line
+                                  x1="75"
+                                  y1="190"
+                                  x2="275"
+                                  y2="190"
+                                  stroke="rgba(56, 189, 248, 0.85)"
+                                  strokeWidth="1.5"
+                                  strokeDasharray="4 3"
+                                />
+                                <line
+                                  x1="125"
+                                  y1="184"
+                                  x2="125"
+                                  y2="196"
+                                  stroke="rgba(56, 189, 248, 0.95)"
+                                  strokeWidth="1.5"
+                                />
+                                <line
+                                  x1="225"
+                                  y1="184"
+                                  x2="225"
+                                  y2="196"
+                                  stroke="rgba(56, 189, 248, 0.95)"
+                                  strokeWidth="1.5"
+                                />
+                                <text
+                                  x="175"
+                                  y="184"
+                                  textAnchor="middle"
+                                  fill="rgba(56, 189, 248, 0.95)"
+                                  fontSize="11"
+                                  fontWeight="600"
+                                  fontFamily="system-ui, -apple-system, sans-serif"
+                                  letterSpacing="0.5"
+                                >
+                                  {t.guideEyeLevel}
+                                </text>
+
+                                {/* Chin Limit Guideline */}
+                                <line
+                                  x1="115"
+                                  y1="318"
+                                  x2="235"
+                                  y2="318"
+                                  stroke="rgba(255, 255, 255, 0.65)"
+                                  strokeWidth="1.5"
+                                  strokeDasharray="4 3"
+                                />
+                                <text
+                                  x="175"
+                                  y="334"
+                                  textAnchor="middle"
+                                  fill="rgba(255, 255, 255, 0.8)"
+                                  fontSize="11"
+                                  fontFamily="system-ui, -apple-system, sans-serif"
+                                  letterSpacing="0.5"
+                                >
+                                  {t.guideChin}
+                                </text>
+
+                                {/* Shoulder Arch Guidelines */}
+                                <path
+                                  d="M 50 440 C 95 395 135 375 175 375 C 215 375 255 395 300 440"
+                                  fill="none"
+                                  stroke="rgba(255, 255, 255, 0.45)"
+                                  strokeWidth="1.5"
+                                  strokeDasharray="5 4"
+                                />
                               </svg>
                             </div>
                           )}

@@ -552,7 +552,7 @@
 
 .pdf-placement-header {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: 1fr 1fr;
   gap: 0.625rem;
   width: 100%;
   align-items: flex-end;

@@ -1585,21 +1585,6 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
                   fullWidth
                 />
 
-                <Select
-                  label={t.positionLabel}
-                  value={sigPosition}
-                  onChange={(e) => handleSelectPreset(e.target.value as SignaturePosition)}
-                  options={[
-                    { value: 'bottom-right', label: t.positionBottomRight },
-                    { value: 'bottom-left', label: t.positionBottomLeft },
-                    { value: 'bottom-center', label: t.positionBottomCenter },
-                    { value: 'top-right', label: t.positionTopRight },
-                    { value: 'center', label: t.positionCenter },
-                    { value: 'custom', label: t.positionCustom },
-                  ]}
-                  fullWidth
-                />
-
                 <Input
                   label={t.scaleLabel}
                   type="number"
