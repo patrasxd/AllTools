@@ -1,85 +1,181 @@
-/* ─── Screen Ruler (Real Physical Ruler Along Bottom & Right Edges) ─── */
+/* ─── Screen Ruler (Semantic Design Tokens & Responsive Layout) ─── */
+
 .ruler-root {
+  --ruler-bg: var(--all-bg, #09090b);
+  --ruler-band-bg: var(--all-surface, #18181b);
+  --ruler-band-stroke: var(--all-border, #3f3f46);
+  --ruler-corner-bg: var(--all-surface-elevated, #27272a);
+  --ruler-tick-cm: var(--all-text, #ffffff);
+  --ruler-tick-half: var(--all-text-muted, #a1a1aa);
+  --ruler-tick-mm: var(--all-border-2, #52525b);
+  --ruler-text: var(--all-text, #ffffff);
+  --ruler-laser: var(--all-primary, #3b82f6);
+  --ruler-reticle-bg: rgba(0, 0, 0, 0.6);
+  --ruler-reticle-stroke: var(--all-primary, #3b82f6);
+
+  --ruler-card-bg: linear-gradient(135deg, rgba(24, 24, 27, 0.9) 0%, rgba(9, 9, 11, 0.94) 100%);
+  --ruler-card-border: var(--all-accent, #ffffff);
+  --ruler-card-text: var(--all-text, #ffffff);
+  --ruler-card-sub: var(--all-text-muted, #a1a1aa);
+  --ruler-card-chip-bg: linear-gradient(135deg, #d4af37 0%, #aa8c2c 50%, #f3e5ab 100%);
+  --ruler-card-chip-border: #d4af37;
+
   position: relative;
   width: 100%;
   height: 100%;
-  flex: 1;
+  flex: 1 1 0;
   min-height: 0;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
   overflow: hidden;
   user-select: none;
+  background: var(--ruler-bg);
+  color: var(--ruler-text);
+  font-family: var(--all-font-sans, system-ui, sans-serif);
 }
 
-/* ─── Calibration Screen ────────────────────────────────────── */
-.ruler-calib-container {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.25rem 0 0.5rem;
-  box-sizing: border-box;
+/* Light theme overrides */
+[data-theme='light'] .ruler-root,
+.ruler-root--light {
+  --ruler-bg: var(--all-bg, #f4f4f5);
+  --ruler-band-bg: var(--all-surface, #e4e4e7);
+  --ruler-band-stroke: var(--all-border, #d4d4d8);
+  --ruler-corner-bg: var(--all-surface-elevated, #d4d4d8);
+  --ruler-tick-cm: var(--all-text, #09090b);
+  --ruler-tick-half: var(--all-text-muted, #52525b);
+  --ruler-tick-mm: var(--all-border-2, #a1a1aa);
+  --ruler-text: var(--all-text, #09090b);
+  --ruler-laser: var(--all-primary, #2563eb);
+  --ruler-reticle-bg: rgba(255, 255, 255, 0.75);
+  --ruler-reticle-stroke: var(--all-primary, #2563eb);
+
+  --ruler-card-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.94) 0%, rgba(244, 244, 245, 0.9) 100%);
+  --ruler-card-border: var(--all-accent, #09090b);
+  --ruler-card-text: #09090b;
+  --ruler-card-sub: #52525b;
 }
 
-.ruler-calib-status {
+/* E-Ink theme overrides (high-contrast 1-bit / 2-bit, zero animations) */
+[data-eink='true'] .ruler-root,
+.ruler-root--eink {
+  --ruler-bg: #ffffff;
+  --ruler-band-bg: #ffffff;
+  --ruler-band-stroke: #000000;
+  --ruler-corner-bg: #ffffff;
+  --ruler-tick-cm: #000000;
+  --ruler-tick-half: #000000;
+  --ruler-tick-mm: #000000;
+  --ruler-text: #000000;
+  --ruler-laser: #000000;
+  --ruler-reticle-bg: #ffffff;
+  --ruler-reticle-stroke: #000000;
+
+  --ruler-card-bg: #ffffff;
+  --ruler-card-border: #000000;
+  --ruler-card-text: #000000;
+  --ruler-card-sub: #000000;
+  --ruler-card-chip-bg: #ffffff;
+  --ruler-card-chip-border: #000000;
+}
+
+[data-eink='true'][data-theme='e-ink-dark'] .ruler-root,
+[data-theme='e-ink-dark'] .ruler-root,
+.ruler-root--eink-dark {
+  --ruler-bg: #000000;
+  --ruler-band-bg: #000000;
+  --ruler-band-stroke: #ffffff;
+  --ruler-corner-bg: #000000;
+  --ruler-tick-cm: #ffffff;
+  --ruler-tick-half: #ffffff;
+  --ruler-tick-mm: #ffffff;
+  --ruler-text: #ffffff;
+  --ruler-laser: #ffffff;
+  --ruler-reticle-bg: #000000;
+  --ruler-reticle-stroke: #ffffff;
+
+  --ruler-card-bg: #000000;
+  --ruler-card-border: #ffffff;
+  --ruler-card-text: #ffffff;
+  --ruler-card-sub: #ffffff;
+  --ruler-card-chip-bg: #000000;
+  --ruler-card-chip-border: #ffffff;
+}
+
+.ruler-root--eink *,
+[data-eink='true'] .ruler-root * {
+  transition: none !important;
+  animation: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* ─── 1. Calibration Screen (FullBleed Canvas + Hovering Card) ── */
+.ruler-calib-floating-status {
   text-align: center;
-  min-height: 2.25rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.15rem;
-  flex-shrink: 0;
+  gap: 0.2rem;
+  padding: 0.1rem 0.75rem;
 }
 
 .ruler-calib-status-text {
-  font-family: var(--font-sans);
-  font-weight: 600;
-  font-size: 1.125rem;
-  color: var(--text);
+  font-family: var(--all-font-sans, system-ui, sans-serif);
+  font-weight: var(--all-font-semibold, 600);
+  font-size: var(--all-text-base, 0.875rem);
+  color: var(--all-text, #efefef);
   letter-spacing: -0.01em;
+  margin: 0;
+  white-space: nowrap;
 }
 
 .ruler-calib-status-sub {
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  color: var(--text-muted);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  font-weight: 500;
+  font-family: var(--all-font-sans, system-ui, sans-serif);
+  font-size: var(--all-text-xs, 0.75rem);
+  color: var(--all-text-dim, #888888);
+  font-weight: var(--all-font-normal, 400);
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
 }
 
-.ruler-calib-center {
-  flex: 1;
-  min-height: 0;
+.ruler-calib-canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
-  width: 100%;
-  max-width: 480px;
+  overflow: visible;
+  box-sizing: border-box;
 }
 
-/* Credit Card Realistic Preview */
+/* Credit Card Realistic Preview (Hovering freely at actual physical dimensions) */
 .ruler-card-outline {
   position: relative;
-  background: linear-gradient(135deg, #18181b 0%, #09090b 100%);
-  border: 2px solid #ffffff;
-  border-radius: 12px;
+  background: var(--ruler-card-bg);
+  border: 2px solid var(--ruler-card-border);
+  border-radius: var(--all-radius-lg, 12px);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   padding: 0.85rem;
   box-sizing: border-box;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
   flex-shrink: 0;
+  max-width: 100%;
+  z-index: 2;
+  pointer-events: none;
+  transition: width 150ms ease, height 150ms ease;
+}
+
+[data-eink='true'] .ruler-card-outline,
+.ruler-root--eink .ruler-card-outline {
+  transition: none !important;
+  box-shadow: none !important;
 }
 
 .ruler-card-top-row {
@@ -93,8 +189,8 @@
   width: 36px;
   height: 26px;
   border-radius: 4px;
-  border: 1px solid #d4af37;
-  background: linear-gradient(135deg, #d4af37 0%, #aa8c2c 50%, #f3e5ab 100%);
+  border: 1px solid var(--ruler-card-chip-border);
+  background: var(--ruler-card-chip-bg);
   position: relative;
 }
 
@@ -119,7 +215,7 @@
 }
 
 .ruler-card-contactless {
-  color: #a1a1aa;
+  color: var(--ruler-card-sub);
 }
 
 .ruler-card-issuer {
@@ -148,17 +244,18 @@
 }
 
 .ruler-card-title {
-  font-family: var(--font-sans);
+  font-family: var(--all-font-sans, system-ui, sans-serif);
   font-size: 0.875rem;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--ruler-card-text);
+  letter-spacing: 0.02em;
 }
 
 .ruler-card-dots {
-  font-family: var(--font-mono);
+  font-family: var(--all-font-mono, monospace);
   font-size: 0.75rem;
-  letter-spacing: 0.2em;
-  color: #a1a1aa;
+  letter-spacing: 0.08em;
+  color: var(--ruler-card-sub);
 }
 
 .ruler-card-bottom-row {
@@ -166,59 +263,76 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  font-family: var(--font-mono);
+  font-family: var(--all-font-mono, monospace);
   font-size: 0.625rem;
-  color: #a1a1aa;
+  color: var(--ruler-card-sub);
+}
+
+/* Calibration Floating Footer */
+.ruler-calib-footer {
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--all-space-2, 0.5rem);
+  z-index: 30;
+  pointer-events: auto;
+  background: color-mix(in srgb, var(--all-surface) 90%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: var(--all-border-width-sm, 1px) solid var(--all-border-2);
+  border-radius: var(--all-radius-lg, 12px);
+  padding: var(--all-space-3, 0.75rem) var(--all-space-4, 1rem);
+  box-shadow: var(--all-shadow-lg);
+  box-sizing: border-box;
+}
+
+[data-eink='true'] .ruler-calib-footer {
+  background: var(--all-surface) !important;
+  border: var(--all-border-width, 2px) solid var(--all-border) !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
 }
 
 .ruler-calib-slider-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--all-space-2, 0.5rem);
   width: 100%;
-  max-width: 360px;
+  box-sizing: border-box;
 }
 
-.ruler-calib-slider {
-  flex: 1;
-  accent-color: var(--text);
-  cursor: pointer;
-}
-
-.ruler-rotate-btn {
-  display: inline-flex;
+.ruler-calib-slider-wrap {
+  flex: 1 1 0;
+  display: flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.35rem 0.75rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 9999px;
-  color: var(--text-dim);
-  font-family: var(--font-sans);
-  font-size: 0.6875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 150ms ease;
 }
 
-.ruler-rotate-btn:hover {
-  color: var(--text);
-  border-color: var(--border-2);
-  background: var(--surface-2);
+/* ─── 2. FullBleed 2D Ruler Workspace ───────────────────────── */
+.ruler-fullbleed {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  flex: 1 1 0;
+  min-height: 0;
 }
 
-/* ─── Real 2D Ruler Workspace (Single Master SVG) ───────────── */
 .ruler-workspace {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  background: #09090b;
+  background: var(--ruler-bg);
   border: none;
-  border-radius: 0;
   overflow: hidden;
   touch-action: none;
   cursor: crosshair;
+  outline: none;
+}
+
+.ruler-workspace:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--all-primary, #3b82f6);
 }
 
 .ruler-master-svg {
@@ -229,27 +343,9 @@
   display: block;
 }
 
-/* Top Action Controls inside Workspace */
-.ruler-top-bar {
-  position: absolute;
-  top: 0.75rem;
-  left: 0;
-  right: 0;
+/* Top Floating Actions Bar inside FullBleedLayout */
+.ruler-top-bar-inner {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  z-index: 30;
-  pointer-events: auto;
-}
-
-/* ─── Bottom Calibration Controls Bar ──────────────────────── */
-.ruler-controls-container {
-  width: 100%;
-  max-width: 460px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  flex-shrink: 0;
-  margin-top: auto;
+  gap: var(--all-space-2, 0.5rem);
 }

@@ -60,6 +60,8 @@ export default defineConfig({
       '@alltools/quick-notes': path.resolve(__dirname, '../../packages/tools/quick-notes/src'),
       '@alltools/screen-ruler': path.resolve(__dirname, '../../packages/tools/screen-ruler/src'),
       '@alltools/sound-meter': path.resolve(__dirname, '../../packages/tools/sound-meter/src'),
+      '@all/ui/tokens.css': path.resolve(__dirname, '../../../AllUI/src/tokens/tokens.css'),
+      '@all/ui': path.resolve(__dirname, '../../../AllUI/src'),
     },
   },
   server: {
