@@ -1,32 +1,45 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import QRCode from 'qrcode'
 import jsQR from 'jsqr'
 import {
+  BoardLayout,
+  Card,
   PillGroup,
   StatsHeader,
-  GameButton,
+  Button,
   ControlsBar,
-  IconDownload,
-  IconCopy,
-  IconCheck,
-  IconCamera,
-  IconUpload,
-  IconSwitchCamera,
-} from '@alltools/ui'
-import './styles/qr-suite.css'
+  DownloadIcon,
+  CopyIcon,
+  CheckIcon,
+  CameraIcon,
+  UploadIcon,
+  SwitchCameraIcon,
+  ExternalLinkIcon,
+} from '@all/ui'
+import type {
+  ToolComponentProps,
+  Locale,
+  QrMode,
+  PayloadType,
+  CameraLabels,
+  ZoomCapabilities,
+} from './types'
+import {
+  generatePayload,
+  formatCameraName,
+  clampZoom,
+  isWebUrl,
+} from './utils/qrPayload'
 import { qrSuiteTranslations } from './i18n'
+import './styles/qr-suite.css'
 
-export interface ToolComponentProps {
-  locale: 'en' | 'pl'
-  setHeader?: (content: React.ReactNode) => void
-  onSave?: (data: unknown) => void
-}
+export function QrSuite({
+  locale = 'en',
+  setHeader,
+  isEink = false,
+}: ToolComponentProps) {
+  const t = qrSuiteTranslations[locale as Locale] || qrSuiteTranslations.en
 
-type QrMode = 'generate' | 'scan'
-type PayloadType = 'url' | 'wifi' | 'text' | 'contact'
-
-export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
-  const t = qrSuiteTranslations[locale] || qrSuiteTranslations.en
   const [activeMode, setActiveMode] = useState<QrMode>('generate')
   const [payloadType, setPayloadType] = useState<PayloadType>('url')
   const [inputValue, setInputValue] = useState<string>('https://google.com')
@@ -50,7 +63,7 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
       return null
     }
   })
-  const [zoomCapabilities, setZoomCapabilities] = useState<{ min: number; max: number; step: number } | null>(null)
+  const [zoomCapabilities, setZoomCapabilities] = useState<ZoomCapabilities | null>(null)
   const [currentZoom, setCurrentZoom] = useState<number>(1)
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
@@ -59,15 +72,30 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
   const animRef = useRef<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
-  const getPayload = (): string => {
-    if (payloadType === 'url') return inputValue
-    if (payloadType === 'text') return inputValue
-    if (payloadType === 'wifi') return `WIFI:T:WPA;S:${wifiSsid};P:${wifiPass};;`
-    if (payloadType === 'contact') return `BEGIN:VCARD\nVERSION:3.0\nFN:${contactName}\nTEL:${contactPhone}\nEND:VCARD`
-    return inputValue
-  }
+  const cameraLabels: CameraLabels = useMemo(
+    () => ({
+      frontCamera: t.frontCamera,
+      ultraWide: t.ultraWide,
+      telephoto: t.telephoto,
+      mainCamera: t.mainCamera,
+      cameraLabel: t.cameraLabel,
+      cameraIndex: t.cameraIndex,
+    }),
+    [t]
+  )
 
-  const payload = getPayload()
+  const payload = useMemo(
+    () =>
+      generatePayload(payloadType, {
+        urlValue: inputValue,
+        textValue: inputValue,
+        wifiSsid,
+        wifiPass,
+        contactName,
+        contactPhone,
+      }),
+    [payloadType, inputValue, wifiSsid, wifiPass, contactName, contactPhone]
+  )
 
   // Render QR Code to Canvas
   useEffect(() => {
@@ -81,45 +109,17 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
         color: { dark: '#000000', light: '#ffffff' },
       },
       (err) => {
-        if (err) console.error(err)
+        if (err) console.error('QRCode canvas error:', err)
       }
     )
   }, [activeMode, payload])
 
-  // Camera name formatting helper
-  const formatCameraName = (dev: MediaDeviceInfo, index: number): string => {
-    const label = (dev.label || '').toLowerCase()
-    if (label.includes('front') || label.includes('przedni') || label.includes('user') || label.includes('facing front')) {
-      return t.frontCamera
-    }
-    if (label.includes('ultra') || label.includes('0.5') || label.includes('szerok')) {
-      return t.ultraWide
-    }
-    if (label.includes('tele') || label.includes('2x') || label.includes('3x') || label.includes('zoom')) {
-      return t.telephoto
-    }
-    if (
-      label.includes('main') ||
-      label.includes('główny') ||
-      label.includes('1x') ||
-      label.includes('wide') ||
-      label.includes('camera2 0') ||
-      label.includes('back 0')
-    ) {
-      return t.mainCamera
-    }
-    if (dev.label) {
-      return dev.label.replace(/\(.*\)/, '').trim() || dev.label
-    }
-    return t.cameraIndex(index + 1)
-  }
-
   const activeDevice = videoDevices.find((d) => d.deviceId === selectedDeviceId)
   const activeDeviceLabel = activeDevice
-    ? formatCameraName(activeDevice, videoDevices.indexOf(activeDevice))
+    ? formatCameraName(activeDevice, videoDevices.indexOf(activeDevice), cameraLabels)
     : t.cameraLabel
 
-  // Sync StatsHeader to shell top title bar
+  // Sync StatsHeader to shell navbar
   useEffect(() => {
     if (!setHeader) return
     if (activeMode === 'generate') {
@@ -137,44 +137,61 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
         <StatsHeader
           label={t.qrScanner}
           items={[
-            { key: 'status', label: t.camera, value: isScanning ? (videoDevices.length > 1 ? activeDeviceLabel : 'ON') : 'OFF' },
+            {
+              key: 'status',
+              label: t.camera,
+              value: isScanning ? (videoDevices.length > 1 ? activeDeviceLabel : 'ON') : 'OFF',
+            },
             { key: 'found', label: t.scan, value: scannedResult ? 'OK' : '—' },
           ]}
         />
       )
     }
-  }, [setHeader, activeMode, payloadType, payload.length, isScanning, scannedResult, t, videoDevices.length, activeDeviceLabel])
+  }, [
+    setHeader,
+    activeMode,
+    payloadType,
+    payload.length,
+    isScanning,
+    scannedResult,
+    t,
+    videoDevices.length,
+    activeDeviceLabel,
+  ])
 
   // Decode QR from Image file / blob
-  const decodeImageBlob = useCallback((blob: Blob) => {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const src = e.target?.result as string
-      if (!src) return
-      const img = new Image()
-      img.onload = () => {
-        const offscreenCanvas = document.createElement('canvas')
-        offscreenCanvas.width = img.width
-        offscreenCanvas.height = img.height
-        const ctx = offscreenCanvas.getContext('2d')
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, img.width, img.height)
-          const imgData = ctx.getImageData(0, 0, img.width, img.height)
-          const code = jsQR(imgData.data, imgData.width, imgData.height)
-          if (code && code.data) {
-            setScannedResult(code.data)
-            setScanError(null)
-            setActiveMode('scan')
-          } else {
-            setScanError(t.noQrFound)
-            setTimeout(() => setScanError(null), 3000)
+  const decodeImageBlob = useCallback(
+    (blob: Blob) => {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const src = e.target?.result as string
+        if (!src) return
+        const img = new Image()
+        img.onload = () => {
+          const offscreenCanvas = document.createElement('canvas')
+          offscreenCanvas.width = img.width
+          offscreenCanvas.height = img.height
+          const ctx = offscreenCanvas.getContext('2d')
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, img.width, img.height)
+            const imgData = ctx.getImageData(0, 0, img.width, img.height)
+            const code = jsQR(imgData.data, imgData.width, imgData.height)
+            if (code && code.data) {
+              setScannedResult(code.data)
+              setScanError(null)
+              setActiveMode('scan')
+            } else {
+              setScanError(t.noQrFound)
+              setTimeout(() => setScanError(null), 3000)
+            }
           }
         }
+        img.src = src
       }
-      img.src = src
-    }
-    reader.readAsDataURL(blob)
-  }, [locale])
+      reader.readAsDataURL(blob)
+    },
+    [t.noQrFound]
+  )
 
   // Global paste handler (Ctrl+V)
   useEffect(() => {
@@ -197,14 +214,42 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
   }, [decodeImageBlob])
 
   // Camera scan helpers
-  const stopCamera = () => {
-    if (animRef.current) cancelAnimationFrame(animRef.current)
+  const stopCamera = useCallback(() => {
+    if (animRef.current) {
+      cancelAnimationFrame(animRef.current)
+      animRef.current = null
+    }
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop())
+      streamRef.current.getTracks().forEach((track) => track.stop())
       streamRef.current = null
     }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null
+    }
     setIsScanning(false)
-  }
+  }, [])
+
+  const scanLoop = useCallback(() => {
+    if (!videoRef.current || videoRef.current.readyState !== videoRef.current.HAVE_ENOUGH_DATA) {
+      animRef.current = requestAnimationFrame(scanLoop)
+      return
+    }
+    const canvas = document.createElement('canvas')
+    canvas.width = videoRef.current.videoWidth
+    canvas.height = videoRef.current.videoHeight
+    const ctx = canvas.getContext('2d')
+    if (ctx) {
+      ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height)
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      const code = jsQR(imgData.data, imgData.width, imgData.height)
+      if (code && code.data) {
+        setScannedResult(code.data)
+        stopCamera()
+        return
+      }
+    }
+    animRef.current = requestAnimationFrame(scanLoop)
+  }, [stopCamera])
 
   const startCamera = async (targetDeviceId?: string) => {
     try {
@@ -309,7 +354,7 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
     const track = streamRef.current.getVideoTracks()[0]
     if (!track) return
     try {
-      const clamped = Math.min(Math.max(zoomValue, zoomCapabilities.min), zoomCapabilities.max)
+      const clamped = clampZoom(zoomValue, zoomCapabilities.min, zoomCapabilities.max)
       await (track as MediaStreamTrack & { applyConstraints: (c: unknown) => Promise<void> }).applyConstraints({
         advanced: [{ zoom: clamped }],
       })
@@ -319,31 +364,12 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
     }
   }
 
-  const scanLoop = () => {
-    if (!videoRef.current || videoRef.current.readyState !== videoRef.current.HAVE_ENOUGH_DATA) {
-      animRef.current = requestAnimationFrame(scanLoop)
-      return
-    }
-    const canvas = document.createElement('canvas')
-    canvas.width = videoRef.current.videoWidth
-    canvas.height = videoRef.current.videoHeight
-    const ctx = canvas.getContext('2d')
-    if (ctx) {
-      ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height)
-      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-      const code = jsQR(imgData.data, imgData.width, imgData.height)
-      if (code && code.data) {
-        setScannedResult(code.data)
-        stopCamera()
-        return
-      }
-    }
-    animRef.current = requestAnimationFrame(scanLoop)
-  }
-
+  // Safe camera release on unmount
   useEffect(() => {
-    return () => stopCamera()
-  }, [])
+    return () => {
+      stopCamera()
+    }
+  }, [stopCamera])
 
   const downloadPng = () => {
     if (!canvasRef.current) return
@@ -386,20 +412,46 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
     }
   }
 
-  const modeOptions = [
-    { value: 'generate' as const, label: t.generator },
-    { value: 'scan' as const, label: t.scanner },
-  ]
+  const modeOptions = useMemo(
+    () => [
+      { value: 'generate' as const, label: t.generator },
+      { value: 'scan' as const, label: t.scanner },
+    ],
+    [t.generator, t.scanner]
+  )
 
-  const payloadOptions = [
-    { value: 'url' as const, label: 'URL' },
-    { value: 'wifi' as const, label: 'Wi-Fi' },
-    { value: 'text' as const, label: t.text },
-    { value: 'contact' as const, label: t.vCard },
-  ]
+  const payloadOptions = useMemo(
+    () => [
+      { value: 'url' as const, label: 'URL' },
+      { value: 'wifi' as const, label: 'Wi-Fi' },
+      { value: 'text' as const, label: t.text },
+      { value: 'contact' as const, label: t.vCard },
+    ],
+    [t.text, t.vCard]
+  )
+
+  const statusTitle =
+    activeMode === 'generate'
+      ? t.qrCodeReady
+      : isScanning
+      ? t.scanningInProgress
+      : scanError
+      ? scanError
+      : scannedResult
+      ? t.qrCodeDetected
+      : t.pasteOrCamera
+
+  const statusSubtitle =
+    activeMode === 'generate'
+      ? `${payloadType.toUpperCase()} · ${t.charsCount(payload.length)}`
+      : isScanning
+      ? videoDevices.length > 1
+        ? t.activeCamera(activeDeviceLabel)
+        : t.pointCamera
+      : t.scanHint
 
   return (
-    <div className="qr-root">
+    <div className={`qr-root ${isEink ? 'is-eink' : ''}`}>
       {/* Hidden File Input */}
       <input
         type="file"
@@ -409,260 +461,270 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
         onChange={handleFileInputChange}
       />
 
-      {/* 1. Status Block (Top) */}
-      <div className="qr-status">
-        <div className="qr-status-text">
-          {activeMode === 'generate'
-            ? t.qrCodeReady
-            : isScanning
-            ? t.scanningInProgress
-            : scanError
-            ? scanError
-            : scannedResult
-            ? t.qrCodeDetected
-            : t.pasteOrCamera}
-        </div>
-        <div className="qr-status-sub">
-          {activeMode === 'generate'
-            ? `${payloadType.toUpperCase()} · ${t.charsCount(payload.length)}`
-            : isScanning
-            ? (videoDevices.length > 1
-                ? t.activeCamera(activeDeviceLabel)
-                : t.pointCamera)
-            : t.scanHint}
-        </div>
-      </div>
+      <BoardLayout
+        variant="wide"
+        align="center"
+        allowDpadToggle={false}
+        board={
+          <div className="qr-stage">
+            {/* 1. Status Block */}
+            <div className="qr-status">
+              <h2 className="qr-status-text">{statusTitle}</h2>
+              <div className="qr-status-sub">{statusSubtitle}</div>
+            </div>
 
-      {/* 2. Main Viewport (Center) */}
-      <div className="qr-center-area">
-        {activeMode === 'generate' ? (
-          <div className="qr-generator-view">
-            {/* Payload Type Selector */}
-            <PillGroup
-              options={payloadOptions}
-              value={payloadType}
-              onChange={setPayloadType}
-            />
+            {/* 2. Main Instrument Card */}
+            <Card variant="outlined" padding="md" className="qr-card">
+              {activeMode === 'generate' ? (
+                <div className="qr-generator-view">
+                  {/* Payload Type Selector */}
+                  <PillGroup
+                    size="sm"
+                    options={payloadOptions}
+                    value={payloadType}
+                    onChange={setPayloadType}
+                  />
 
-            {/* Input fields */}
-            <div className="qr-input-group">
-              {payloadType === 'wifi' ? (
-                <div className="qr-input-row">
-                  <input
-                    type="text"
-                    className="qr-input"
-                    value={wifiSsid}
-                    onChange={(e) => setWifiSsid(e.target.value)}
-                    placeholder="Nazwa Wi-Fi (SSID)"
-                  />
-                  <input
-                    type="text"
-                    className="qr-input"
-                    value={wifiPass}
-                    onChange={(e) => setWifiPass(e.target.value)}
-                    placeholder="Hasło"
-                  />
-                </div>
-              ) : payloadType === 'contact' ? (
-                <div className="qr-input-row">
-                  <input
-                    type="text"
-                    className="qr-input"
-                    value={contactName}
-                    onChange={(e) => setContactName(e.target.value)}
-                    placeholder="Imię i nazwisko"
-                  />
-                  <input
-                    type="text"
-                    className="qr-input"
-                    value={contactPhone}
-                    onChange={(e) => setContactPhone(e.target.value)}
-                    placeholder="Telefon"
-                  />
+                  {/* Input fields */}
+                  <div className="qr-input-group">
+                    {payloadType === 'wifi' ? (
+                      <div className="qr-input-row">
+                        <input
+                          type="text"
+                          className="qr-input"
+                          value={wifiSsid}
+                          onChange={(e) => setWifiSsid(e.target.value)}
+                          placeholder={t.ssid}
+                          aria-label={t.ssid}
+                        />
+                        <input
+                          type="text"
+                          className="qr-input"
+                          value={wifiPass}
+                          onChange={(e) => setWifiPass(e.target.value)}
+                          placeholder={t.password}
+                          aria-label={t.password}
+                        />
+                      </div>
+                    ) : payloadType === 'contact' ? (
+                      <div className="qr-input-row">
+                        <input
+                          type="text"
+                          className="qr-input"
+                          value={contactName}
+                          onChange={(e) => setContactName(e.target.value)}
+                          placeholder={t.name}
+                          aria-label={t.name}
+                        />
+                        <input
+                          type="text"
+                          className="qr-input"
+                          value={contactPhone}
+                          onChange={(e) => setContactPhone(e.target.value)}
+                          placeholder={t.phone}
+                          aria-label={t.phone}
+                        />
+                      </div>
+                    ) : (
+                      <input
+                        type="text"
+                        className="qr-input"
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        placeholder={payloadType === 'url' ? t.enterUrl : t.enterText}
+                        aria-label={payloadType === 'url' ? t.enterUrl : t.enterText}
+                      />
+                    )}
+                  </div>
+
+                  {/* QR Canvas Frame */}
+                  <div className="qr-canvas-card">
+                    <canvas ref={canvasRef} className="qr-canvas-element" />
+                  </div>
                 </div>
               ) : (
-                <input
-                  type="text"
-                  className="qr-input"
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  placeholder={payloadType === 'url' ? 'https://twojadomena.pl' : 'Wpisz dowolny tekst...'}
-                />
-              )}
-            </div>
+                <div className="qr-scanner-view">
+                  {/* Camera / Dropzone Viewfinder */}
+                  <div
+                    className={`qr-viewfinder ${isScanning ? 'qr-viewfinder--active' : ''}`}
+                    onClick={() => {
+                      if (!isScanning && fileInputRef.current) {
+                        fileInputRef.current.click()
+                      }
+                    }}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={handleDrop}
+                    role="region"
+                    aria-label="QR scanner viewfinder"
+                  >
+                    <video
+                      ref={videoRef}
+                      className="qr-viewfinder-video"
+                      style={{ display: isScanning ? 'block' : 'none' }}
+                    />
 
-            {/* QR Canvas Frame */}
-            <div className="qr-canvas-card">
-              <canvas ref={canvasRef} className="qr-canvas-element" />
-            </div>
-          </div>
-        ) : (
-          <div className="qr-scanner-view">
-            {/* Camera / Dropzone Viewfinder */}
-            <div
-              className={`qr-viewfinder ${isScanning ? 'qr-viewfinder--active' : ''}`}
-              onClick={() => {
-                if (!isScanning && fileInputRef.current) {
-                  fileInputRef.current.click()
-                }
-              }}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={handleDrop}
-            >
-              <video
-                ref={videoRef}
-                className="qr-viewfinder-video"
-                style={{ display: isScanning ? 'block' : 'none' }}
-              />
-
-              {/* Viewfinder Corner Reticles */}
-              <div className="qr-reticle">
-                <div className="qr-reticle-corner qr-reticle-tl" />
-                <div className="qr-reticle-corner qr-reticle-tr" />
-                <div className="qr-reticle-corner qr-reticle-bl" />
-                <div className="qr-reticle-corner qr-reticle-br" />
-                {isScanning && <div className="qr-scan-laser" />}
-              </div>
-
-              {/* Viewfinder Overlays when scanning */}
-              {isScanning && (
-                <>
-                  {videoDevices.length > 1 && (
-                    <div className="qr-viewfinder-overlay">
-                      <button
-                        type="button"
-                        className="qr-cam-badge"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          switchCamera()
-                        }}
-                        title={t.switchCameraAria}
-                      >
-                        <IconSwitchCamera size={12} />
-                        <span>{activeDeviceLabel}</span>
-                      </button>
+                    {/* Viewfinder Corner Reticles */}
+                    <div className="qr-reticle" aria-hidden="true">
+                      <div className="qr-reticle-corner qr-reticle-tl" />
+                      <div className="qr-reticle-corner qr-reticle-tr" />
+                      <div className="qr-reticle-corner qr-reticle-bl" />
+                      <div className="qr-reticle-corner qr-reticle-br" />
+                      {isScanning && <div className="qr-scan-laser" />}
                     </div>
-                  )}
 
-                  {zoomCapabilities && zoomCapabilities.max >= 1.5 && (
-                    <div className="qr-zoom-toolbar" onClick={(e) => e.stopPropagation()}>
-                      {[1, 2, ...(zoomCapabilities.max >= 3 ? [3] : [])].map((z) => {
-                        const isActive = Math.abs(currentZoom - z) < 0.2
-                        return (
-                          <button
-                            key={z}
-                            type="button"
-                            className={`qr-zoom-btn ${isActive ? 'qr-zoom-btn--active' : ''}`}
-                            onClick={() => applyZoom(z)}
-                          >
-                            {z}x
-                          </button>
-                        )
-                      })}
-                    </div>
-                  )}
-                </>
-              )}
+                    {/* Viewfinder Overlays when scanning */}
+                    {isScanning && (
+                      <>
+                        {videoDevices.length > 1 && (
+                          <div className="qr-viewfinder-overlay">
+                            <button
+                              type="button"
+                              className="qr-cam-badge"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                switchCamera()
+                              }}
+                              title={t.switchCameraAria}
+                              aria-label={t.switchCameraAria}
+                            >
+                              <SwitchCameraIcon width={12} height={12} />
+                              <span>{activeDeviceLabel}</span>
+                            </button>
+                          </div>
+                        )}
 
-              {!isScanning && (
-                <div className="qr-dropzone-content">
-                  <IconUpload size={28} className="qr-dropzone-icon" />
-                  <div className="qr-dropzone-title">
-                    {t.selectOrDrop}
+                        {zoomCapabilities && zoomCapabilities.max >= 1.5 && (
+                          <div className="qr-zoom-toolbar" onClick={(e) => e.stopPropagation()}>
+                            {[1, 2, ...(zoomCapabilities.max >= 3 ? [3] : [])].map((z) => {
+                              const isActive = Math.abs(currentZoom - z) < 0.2
+                              return (
+                                <button
+                                  key={z}
+                                  type="button"
+                                  className={`qr-zoom-btn ${isActive ? 'qr-zoom-btn--active' : ''}`}
+                                  onClick={() => applyZoom(z)}
+                                  aria-label={`Zoom ${z}x`}
+                                >
+                                  {z}x
+                                </button>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    {!isScanning && (
+                      <div className="qr-dropzone-content">
+                        <UploadIcon width={28} height={28} className="qr-dropzone-icon" />
+                        <div className="qr-dropzone-title">{t.selectOrDrop}</div>
+                        <div className="qr-dropzone-cue">Ctrl + V</div>
+                      </div>
+                    )}
                   </div>
-                  <div className="qr-dropzone-cue">Ctrl + V</div>
+
+                  {/* Scanned Result Card */}
+                  {scannedResult && (
+                    <div className="qr-scanned-card">
+                      <div className="qr-scanned-label">{t.detectedContent}</div>
+                      <div className="qr-scanned-content">{scannedResult}</div>
+                      <div className="qr-scanned-actions">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          icon={copied ? <CheckIcon width={14} height={14} /> : <CopyIcon width={14} height={14} />}
+                          onClick={() => {
+                            navigator.clipboard.writeText(scannedResult)
+                            setCopied(true)
+                            setTimeout(() => setCopied(false), 2000)
+                          }}
+                        >
+                          {copied ? t.copied : t.copy}
+                        </Button>
+                        {isWebUrl(scannedResult) && (
+                          <a
+                            href={scannedResult}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="all-btn all-btn--primary all-btn--sm qr-open-link-btn"
+                          >
+                            <ExternalLinkIcon width={14} height={14} style={{ marginRight: '0.35rem' }} />
+                            {t.openLink}
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
-
-            {/* Scanned Result Card */}
-            {scannedResult && (
-              <div className="qr-scanned-card">
-                <div className="qr-scanned-label">{t.detectedContent}</div>
-                <div className="qr-scanned-content">{scannedResult}</div>
-                <div className="qr-scanned-actions">
-                  <GameButton
+            </Card>
+          </div>
+        }
+        controls={
+          <ControlsBar>
+            {activeMode === 'generate' ? (
+              <>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={downloadPng}
+                  icon={<DownloadIcon width={14} height={14} />}
+                >
+                  {t.downloadPng}
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={copyToClipboard}
+                  icon={copied ? <CheckIcon width={14} height={14} /> : <CopyIcon width={14} height={14} />}
+                >
+                  {copied ? t.copiedExclamation : t.copy}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  icon={<UploadIcon width={14} height={14} />}
+                >
+                  {t.uploadFile}
+                </Button>
+                {isScanning && videoDevices.length > 1 && (
+                  <Button
                     variant="secondary"
                     size="sm"
-                    onClick={() => {
-                      navigator.clipboard.writeText(scannedResult)
-                      setCopied(true)
-                      setTimeout(() => setCopied(false), 2000)
-                    }}
+                    onClick={switchCamera}
+                    icon={<SwitchCameraIcon width={14} height={14} />}
                   >
-                    {copied ? t.copied : t.copy}
-                  </GameButton>
-                  {scannedResult.startsWith('http://') || scannedResult.startsWith('https://') ? (
-                    <a
-                      href={scannedResult}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="game-btn game-btn--sm game-btn--primary"
-                    >
-                      {t.openLink}
-                    </a>
-                  ) : null}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* 3. Controls Bar (Bottom - Fixed Width Twin to Stopwatch) */}
-      <div className="qr-controls-container">
-        <ControlsBar>
-          {activeMode === 'generate' ? (
-            <>
-              <GameButton variant="primary" size="md" onClick={downloadPng} icon={<IconDownload size={14} />}>
-                {t.downloadPng}
-              </GameButton>
-              <GameButton variant="secondary" size="md" onClick={copyToClipboard} icon={copied ? <IconCheck size={14} /> : <IconCopy size={14} />}>
-                {copied ? t.copiedExclamation : t.copy}
-              </GameButton>
-            </>
-          ) : (
-            <>
-              <GameButton
-                variant="secondary"
-                size="md"
-                onClick={() => fileInputRef.current?.click()}
-                icon={<IconUpload size={14} />}
-              >
-                {t.uploadFile}
-              </GameButton>
-              {isScanning && videoDevices.length > 1 && (
-                <GameButton
-                  variant="secondary"
-                  size="md"
-                  onClick={switchCamera}
-                  icon={<IconSwitchCamera size={14} />}
+                    {t.switchCam}
+                  </Button>
+                )}
+                <Button
+                  variant={isScanning ? 'danger' : 'primary'}
+                  size="sm"
+                  onClick={isScanning ? stopCamera : () => startCamera()}
+                  icon={<CameraIcon width={14} height={14} />}
                 >
-                  {t.switchCam}
-                </GameButton>
-              )}
-              <GameButton
-                variant={isScanning ? 'danger' : 'primary'}
-                size="md"
-                onClick={isScanning ? stopCamera : () => startCamera()}
-                icon={<IconCamera size={14} />}
-              >
-                {isScanning ? t.stop : t.start}
-              </GameButton>
-            </>
-          )}
+                  {isScanning ? t.stop : t.start}
+                </Button>
+              </>
+            )}
 
-          {/* Mode Switcher Pills */}
-          <PillGroup
-            options={modeOptions}
-            value={activeMode}
-            onChange={(m) => {
-              stopCamera()
-              setActiveMode(m)
-            }}
-          />
-        </ControlsBar>
-      </div>
+            {/* Mode Switcher Pills */}
+            <PillGroup
+              size="sm"
+              options={modeOptions}
+              value={activeMode}
+              onChange={(m) => {
+                stopCamera()
+                setActiveMode(m)
+              }}
+            />
+          </ControlsBar>
+        }
+      />
     </div>
   )
 }

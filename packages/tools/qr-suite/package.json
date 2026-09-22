@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@alltools/ui": "*",
+    "@all/ui": "file:../../AllUI",
     "jsqr": "^1.4.0",
     "qrcode": "^1.5.4"
   },
