@@ -214,3 +214,19 @@ export const devVaultTranslations: Record<'en' | 'pl', DevVaultTranslations> = {
     iso8601Utc: 'ISO 8601 UTC',
   },
 }
+
+export function getStrengthLabel(strength: { labelEn: string; labelPl: string }, locale: 'en' | 'pl'): string {
+  const map: Record<'en' | 'pl', string> = {
+    en: strength.labelEn,
+    pl: strength.labelPl,
+  }
+  return map[locale] || map.en
+}
+
+export function getIpTypeLabel(subnet: { ipTypeEn: string; ipTypePl: string }, locale: 'en' | 'pl'): string {
+  const map: Record<'en' | 'pl', string> = {
+    en: subnet.ipTypeEn,
+    pl: subnet.ipTypePl,
+  }
+  return map[locale] || map.en
+}

@@ -11,8 +11,12 @@ export const REFERENCE_LEVELS: SoundReferenceLevel[] = [
 
 export function getSoundReference(db: number, locale: 'en' | 'pl' = 'en'): { label: string; severity: string } {
   const match = REFERENCE_LEVELS.find((l) => db >= l.min && db < l.max) || REFERENCE_LEVELS[REFERENCE_LEVELS.length - 1]
+  const labels: Record<'en' | 'pl', string> = {
+    en: match.labelEn,
+    pl: match.labelPl,
+  }
   return {
-    label: locale === 'pl' ? match.labelPl : match.labelEn,
+    label: labels[locale] || labels.en,
     severity: match.severity,
   }
 }

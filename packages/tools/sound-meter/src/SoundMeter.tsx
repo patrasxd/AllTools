@@ -28,7 +28,6 @@ export interface ToolComponentProps {
 }
 
 export function SoundMeter({ locale = 'en', setHeader, isEink = false, theme }: ToolComponentProps) {
-  const isPl = locale === 'pl'
   const t = soundMeterTranslations[locale] || soundMeterTranslations.en
   const calSliderId = useId()
 

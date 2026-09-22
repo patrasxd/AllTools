@@ -6,6 +6,7 @@ import {
   ControlsBar,
 } from '@alltools/ui'
 import './styles/screen-ruler.css'
+import { screenRulerTranslations } from './i18n'
 
 export interface ToolComponentProps {
   locale: 'en' | 'pl'
@@ -32,6 +33,7 @@ const getInitialPpm = () => {
 }
 
 export function ScreenRuler({ locale = 'en', setHeader }: ToolComponentProps) {
+  const t = screenRulerTranslations[locale] || screenRulerTranslations.en
   // Calibration: pixels per millimeter (default ~96 DPI = 3.78 ppm desktop, 5.5 ppm mobile)
   const [pixelsPerMm, setPixelsPerMm] = useState<number>(getInitialPpm)
 
@@ -143,11 +145,11 @@ export function ScreenRuler({ locale = 'en', setHeader }: ToolComponentProps) {
     if (!isCalibrated) {
       setHeader(
         <StatsHeader
-          label={locale === 'pl' ? 'KALIBRACJA EKRANU' : 'SCREEN CALIBRATION'}
+          label={t.screenCalibration}
           items={[
             {
               key: 'card',
-              label: locale === 'pl' ? 'WZORZEC' : 'STANDARD',
+              label: t.standard,
               value: `${targetWidthMm.toFixed(1)} MM`,
             },
             { key: 'dpi', label: 'EST. DPI', value: estimatedDpi },
@@ -157,28 +159,28 @@ export function ScreenRuler({ locale = 'en', setHeader }: ToolComponentProps) {
     } else {
       setHeader(
         <StatsHeader
-          label={locale === 'pl' ? 'LINIJKA KĄTOWA 2D' : '2D CORNER RULER'}
+          label={t.cornerRuler2d}
           items={[
             {
               key: 'x',
-              label: locale === 'pl' ? 'SZEROKOŚĆ (X)' : 'WIDTH (X)',
+              label: t.widthX,
               value: unit === 'cm' ? `${measuredCmX.toFixed(2)} CM` : `${measuredInX.toFixed(2)} IN`,
             },
             {
               key: 'y',
-              label: locale === 'pl' ? 'WYSOKOŚĆ (Y)' : 'HEIGHT (Y)',
+              label: t.heightY,
               value: unit === 'cm' ? `${measuredCmY.toFixed(2)} CM` : `${measuredInY.toFixed(2)} IN`,
             },
             {
               key: 'diag',
-              label: locale === 'pl' ? 'PRZEKĄTNA' : 'DIAGONAL',
+              label: t.diagonal,
               value: unit === 'cm' ? `${diagCm.toFixed(2)} CM` : `${diagIn.toFixed(2)} IN`,
             },
           ]}
         />
       )
     }
-  }, [setHeader, isCalibrated, unit, measuredCmX, measuredCmY, diagCm, measuredInX, measuredInY, diagIn, estimatedDpi, targetWidthMm, locale])
+  }, [setHeader, isCalibrated, unit, measuredCmX, measuredCmY, diagCm, measuredInX, measuredInY, diagIn, estimatedDpi, targetWidthMm, t])
 
   // Touch & drag pointer tracking
   const updatePointer = (clientX: number, clientY: number) => {
@@ -208,13 +210,13 @@ export function ScreenRuler({ locale = 'en', setHeader }: ToolComponentProps) {
   const cardHeightPx = Math.round(cardWidthPx * (targetHeightMm / targetWidthMm))
 
   const orientationOptions = [
-    { value: 'landscape' as const, label: locale === 'pl' ? 'Poziomo (85.6 mm)' : 'Horizontal (85.6 mm)' },
-    { value: 'portrait' as const, label: locale === 'pl' ? 'Pionowo (54.0 mm)' : 'Vertical (54.0 mm)' },
+    { value: 'landscape' as const, label: t.optHorizontal },
+    { value: 'portrait' as const, label: t.optVertical },
   ]
 
   const unitOptions = [
-    { value: 'cm' as const, label: locale === 'pl' ? 'Centymetry (cm)' : 'Centimeters (cm)' },
-    { value: 'inch' as const, label: locale === 'pl' ? 'Cale (in)' : 'Inches (in)' },
+    { value: 'cm' as const, label: t.optCm },
+    { value: 'inch' as const, label: t.optInch },
   ]
 
   const sliderMin = cardOrientation === 'landscape' ? 200 : 130
@@ -235,12 +237,10 @@ export function ScreenRuler({ locale = 'en', setHeader }: ToolComponentProps) {
         <div className="ruler-calib-container">
           <div className="ruler-calib-status">
             <div className="ruler-calib-status-text">
-              {locale === 'pl' ? 'Przyłóż kartę do ekranu' : 'Place payment card / ID on screen'}
+              {t.placeCard}
             </div>
             <div className="ruler-calib-status-sub">
-              {locale === 'pl'
-                ? `Dopasuj szerokość (${targetWidthMm.toFixed(1)} mm) do fizycznej karty`
-                : `Adjust width (${targetWidthMm.toFixed(1)} mm) to match physical card`}
+              {t.adjustWidth(targetWidthMm.toFixed(1))}
             </div>
           </div>
 
@@ -269,7 +269,7 @@ export function ScreenRuler({ locale = 'en', setHeader }: ToolComponentProps) {
 
               <div className="ruler-card-center-row">
                 <div className="ruler-card-title">
-                  {locale === 'pl' ? 'Karta płatnicza / Dowód' : 'Payment Card / ID'}
+                  {t.cardTitle}
                 </div>
                 <div className="ruler-card-dots">•••• •••• •••• ••••</div>
               </div>
@@ -317,9 +317,7 @@ export function ScreenRuler({ locale = 'en', setHeader }: ToolComponentProps) {
                 <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
               </svg>
               <span>
-                {locale === 'pl'
-                  ? (cardOrientation === 'landscape' ? 'Obróć pionowo (54.0 mm)' : 'Obróć poziomo (85.6 mm)')
-                  : (cardOrientation === 'landscape' ? 'Rotate vertical (54.0 mm)' : 'Rotate horizontal (85.6 mm)')}
+                {cardOrientation === 'landscape' ? t.rotateVertical : t.rotateHorizontal}
               </span>
             </button>
           </div>
@@ -327,7 +325,7 @@ export function ScreenRuler({ locale = 'en', setHeader }: ToolComponentProps) {
           <div className="ruler-controls-container">
             <ControlsBar>
               <GameButton variant="primary" size="md" onClick={saveCalibration}>
-                {locale === 'pl' ? 'Zatwierdź kalibrację' : 'Save Calibration'}
+                {t.saveCalibration}
               </GameButton>
               <PillGroup
                 options={orientationOptions}
@@ -354,7 +352,7 @@ export function ScreenRuler({ locale = 'en', setHeader }: ToolComponentProps) {
               className="game-btn game-btn--sm"
               onClick={startRecalibration}
             >
-              {locale === 'pl' ? 'Kalibruj ponownie' : 'Recalibrate'}
+              {t.recalibrate}
             </button>
 
             <PillGroup

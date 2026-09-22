@@ -9,6 +9,7 @@ import {
   IconVolumeMute,
   formatTimerSeconds,
 } from '@alltools/ui'
+import { stopwatchTranslations } from '../i18n'
 
 export interface IntervalTimerProps {
   locale: 'en' | 'pl'
@@ -217,22 +218,7 @@ export const IntervalTimer: React.FC<IntervalTimerProps> = ({ locale }) => {
   const progress = currentPhaseTotal > 0 ? (timeRemaining / currentPhaseTotal) : 0
   const strokeDashoffset = 565.48 * (1 - progress)
 
-  const t = {
-    start: locale === 'pl' ? 'Start' : 'Start',
-    pause: locale === 'pl' ? 'Pauza' : 'Pause',
-    reset: locale === 'pl' ? 'Zeruj' : 'Reset',
-    round: locale === 'pl' ? 'Seria' : 'Set',
-    of: locale === 'pl' ? 'z' : 'of',
-    warmup: locale === 'pl' ? 'ROZGRZEWKA' : 'WARMUP',
-    work: locale === 'pl' ? 'ĆWICZENIE' : 'WORK',
-    rest: locale === 'pl' ? 'PRZERWA' : 'REST',
-    finished: locale === 'pl' ? 'UKOŃCZONO!' : 'FINISHED!',
-    idle: locale === 'pl' ? 'GOTOWY' : 'READY',
-    workDuration: locale === 'pl' ? 'Czas pracy (s)' : 'Work time (s)',
-    restDuration: locale === 'pl' ? 'Czas odpoczynku (s)' : 'Rest time (s)',
-    roundsCount: locale === 'pl' ? 'Liczba serii' : 'Number of sets',
-    sound: locale === 'pl' ? 'Dźwięk' : 'Sound',
-  }
+  const t = stopwatchTranslations[locale] || stopwatchTranslations.en
 
   const getPhaseName = () => {
     switch (phase) {

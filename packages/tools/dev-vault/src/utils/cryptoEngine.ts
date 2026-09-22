@@ -64,9 +64,14 @@ const PASSPHRASE_WORDS_PL = [
   'zamek', 'zatoka', 'zegar', 'zrodlo', 'zorza', 'zwyciestwo', 'zywiol'
 ]
 
+const PASSPHRASE_WORDS: Record<'en' | 'pl', string[]> = {
+  en: PASSPHRASE_WORDS_EN,
+  pl: PASSPHRASE_WORDS_PL,
+}
+
 export function generateSecurePassword(config: PasswordConfig, locale: 'en' | 'pl' = 'en'): string {
   if (config.mode === 'passphrase') {
-    const wordList = locale === 'pl' ? PASSPHRASE_WORDS_PL : PASSPHRASE_WORDS_EN
+    const wordList = PASSPHRASE_WORDS[locale] || PASSPHRASE_WORDS.en
     const words: string[] = []
     for (let i = 0; i < config.passphraseWords; i++) {
       const idx = getRandomInt(wordList.length)

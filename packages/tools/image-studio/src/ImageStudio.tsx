@@ -99,7 +99,7 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
 
   const [watermark, setWatermark] = useState<WatermarkConfig>({
     enabled: false,
-    text: locale === 'pl' ? 'KOPIA DLA BANKU' : 'CONFIDENTIAL COPY',
+    text: t.defaultWatermarkText,
     opacity: 0.4,
     fontSize: 32,
     mode: 'diagonal-single',
@@ -415,7 +415,7 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
   const resetAll = () => {
     setWatermark({
       enabled: false,
-      text: locale === 'pl' ? 'KOPIA DLA BANKU' : 'CONFIDENTIAL COPY',
+      text: t.defaultWatermarkText,
       opacity: 0.4,
       fontSize: 32,
       mode: 'diagonal-single',

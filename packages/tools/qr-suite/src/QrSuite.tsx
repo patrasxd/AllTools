@@ -14,6 +14,7 @@ import {
   IconSwitchCamera,
 } from '@alltools/ui'
 import './styles/qr-suite.css'
+import { qrSuiteTranslations } from './i18n'
 
 export interface ToolComponentProps {
   locale: 'en' | 'pl'
@@ -25,6 +26,7 @@ type QrMode = 'generate' | 'scan'
 type PayloadType = 'url' | 'wifi' | 'text' | 'contact'
 
 export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
+  const t = qrSuiteTranslations[locale] || qrSuiteTranslations.en
   const [activeMode, setActiveMode] = useState<QrMode>('generate')
   const [payloadType, setPayloadType] = useState<PayloadType>('url')
   const [inputValue, setInputValue] = useState<string>('https://google.com')
@@ -88,13 +90,13 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
   const formatCameraName = (dev: MediaDeviceInfo, index: number): string => {
     const label = (dev.label || '').toLowerCase()
     if (label.includes('front') || label.includes('przedni') || label.includes('user') || label.includes('facing front')) {
-      return locale === 'pl' ? 'Przedni aparat' : 'Front Camera'
+      return t.frontCamera
     }
     if (label.includes('ultra') || label.includes('0.5') || label.includes('szerok')) {
-      return locale === 'pl' ? 'Szeroki (0.5x)' : 'Ultra-Wide (0.5x)'
+      return t.ultraWide
     }
     if (label.includes('tele') || label.includes('2x') || label.includes('3x') || label.includes('zoom')) {
-      return locale === 'pl' ? 'Teleobiektyw' : 'Telephoto'
+      return t.telephoto
     }
     if (
       label.includes('main') ||
@@ -104,18 +106,18 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
       label.includes('camera2 0') ||
       label.includes('back 0')
     ) {
-      return locale === 'pl' ? 'Główny (1x)' : 'Main (1x)'
+      return t.mainCamera
     }
     if (dev.label) {
       return dev.label.replace(/\(.*\)/, '').trim() || dev.label
     }
-    return locale === 'pl' ? `Aparat ${index + 1}` : `Camera ${index + 1}`
+    return t.cameraIndex(index + 1)
   }
 
   const activeDevice = videoDevices.find((d) => d.deviceId === selectedDeviceId)
   const activeDeviceLabel = activeDevice
     ? formatCameraName(activeDevice, videoDevices.indexOf(activeDevice))
-    : (locale === 'pl' ? 'Aparat' : 'Camera')
+    : t.cameraLabel
 
   // Sync StatsHeader to shell top title bar
   useEffect(() => {
@@ -123,25 +125,25 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
     if (activeMode === 'generate') {
       setHeader(
         <StatsHeader
-          label={locale === 'pl' ? 'GENERATOR QR' : 'QR GENERATOR'}
+          label={t.qrGenerator}
           items={[
-            { key: 'type', label: locale === 'pl' ? 'TYP' : 'TYPE', value: payloadType.toUpperCase() },
-            { key: 'len', label: locale === 'pl' ? 'ZNAKI' : 'CHARS', value: payload.length },
+            { key: 'type', label: t.type, value: payloadType.toUpperCase() },
+            { key: 'len', label: t.chars, value: payload.length },
           ]}
         />
       )
     } else {
       setHeader(
         <StatsHeader
-          label={locale === 'pl' ? 'SKANER QR' : 'QR SCANNER'}
+          label={t.qrScanner}
           items={[
-            { key: 'status', label: locale === 'pl' ? 'KAMERA' : 'CAMERA', value: isScanning ? (videoDevices.length > 1 ? activeDeviceLabel : 'ON') : 'OFF' },
-            { key: 'found', label: locale === 'pl' ? 'ODCZYT' : 'SCAN', value: scannedResult ? 'OK' : '—' },
+            { key: 'status', label: t.camera, value: isScanning ? (videoDevices.length > 1 ? activeDeviceLabel : 'ON') : 'OFF' },
+            { key: 'found', label: t.scan, value: scannedResult ? 'OK' : '—' },
           ]}
         />
       )
     }
-  }, [setHeader, activeMode, payloadType, payload.length, isScanning, scannedResult, locale, videoDevices.length, activeDeviceLabel])
+  }, [setHeader, activeMode, payloadType, payload.length, isScanning, scannedResult, t, videoDevices.length, activeDeviceLabel])
 
   // Decode QR from Image file / blob
   const decodeImageBlob = useCallback((blob: Blob) => {
@@ -164,7 +166,7 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
             setScanError(null)
             setActiveMode('scan')
           } else {
-            setScanError(locale === 'pl' ? 'Nie znaleziono kodu QR w tym obrazie' : 'No QR code found in image')
+            setScanError(t.noQrFound)
             setTimeout(() => setScanError(null), 3000)
           }
         }
@@ -287,11 +289,7 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
     } catch (err) {
       console.error('Camera startup error:', err)
       setIsScanning(false)
-      setScanError(
-        locale === 'pl'
-          ? 'Brak dostępu do kamery. Sprawdź uprawnienia w przeglądarce.'
-          : 'Camera access denied. Please allow camera permissions.'
-      )
+      setScanError(t.cameraAccessDenied)
     }
   }
 
@@ -389,15 +387,15 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
   }
 
   const modeOptions = [
-    { value: 'generate' as const, label: locale === 'pl' ? 'Generator' : 'Generator' },
-    { value: 'scan' as const, label: locale === 'pl' ? 'Skaner' : 'Scanner' },
+    { value: 'generate' as const, label: t.generator },
+    { value: 'scan' as const, label: t.scanner },
   ]
 
   const payloadOptions = [
     { value: 'url' as const, label: 'URL' },
     { value: 'wifi' as const, label: 'Wi-Fi' },
-    { value: 'text' as const, label: locale === 'pl' ? 'Tekst' : 'Text' },
-    { value: 'contact' as const, label: locale === 'pl' ? 'vCard' : 'vCard' },
+    { value: 'text' as const, label: t.text },
+    { value: 'contact' as const, label: t.vCard },
   ]
 
   return (
@@ -415,23 +413,23 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
       <div className="qr-status">
         <div className="qr-status-text">
           {activeMode === 'generate'
-            ? (locale === 'pl' ? 'Kod QR gotowy' : 'QR Code ready')
+            ? t.qrCodeReady
             : isScanning
-            ? (locale === 'pl' ? 'Skanowanie w toku...' : 'Scanning in progress...')
+            ? t.scanningInProgress
             : scanError
             ? scanError
             : scannedResult
-            ? (locale === 'pl' ? 'Odczytano kod QR' : 'QR Code detected')
-            : (locale === 'pl' ? 'Wklej plik lub włącz aparat' : 'Paste file or start camera')}
+            ? t.qrCodeDetected
+            : t.pasteOrCamera}
         </div>
         <div className="qr-status-sub">
           {activeMode === 'generate'
-            ? `${payloadType.toUpperCase()} · ${payload.length} ${locale === 'pl' ? 'znaków' : 'chars'}`
+            ? `${payloadType.toUpperCase()} · ${t.charsCount(payload.length)}`
             : isScanning
             ? (videoDevices.length > 1
-                ? `${locale === 'pl' ? 'Aktywny:' : 'Active:'} ${activeDeviceLabel}`
-                : (locale === 'pl' ? 'Skieruj aparat na kod' : 'Point camera at code'))
-            : (locale === 'pl' ? 'Obsługuje Ctrl+V, upuszczenie pliku i aparat' : 'Supports Ctrl+V, drag & drop, and camera')}
+                ? t.activeCamera(activeDeviceLabel)
+                : t.pointCamera)
+            : t.scanHint}
         </div>
       </div>
 
@@ -538,7 +536,7 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
                           e.stopPropagation()
                           switchCamera()
                         }}
-                        title={locale === 'pl' ? 'Przełącz aparat / obiektyw' : 'Switch camera / lens'}
+                        title={t.switchCameraAria}
                       >
                         <IconSwitchCamera size={12} />
                         <span>{activeDeviceLabel}</span>
@@ -570,7 +568,7 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
                 <div className="qr-dropzone-content">
                   <IconUpload size={28} className="qr-dropzone-icon" />
                   <div className="qr-dropzone-title">
-                    {locale === 'pl' ? 'Wybierz plik lub upuść tutaj' : 'Select file or drop here'}
+                    {t.selectOrDrop}
                   </div>
                   <div className="qr-dropzone-cue">Ctrl + V</div>
                 </div>
@@ -580,7 +578,7 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
             {/* Scanned Result Card */}
             {scannedResult && (
               <div className="qr-scanned-card">
-                <div className="qr-scanned-label">{locale === 'pl' ? 'Odczytana zawartość' : 'Detected Content'}</div>
+                <div className="qr-scanned-label">{t.detectedContent}</div>
                 <div className="qr-scanned-content">{scannedResult}</div>
                 <div className="qr-scanned-actions">
                   <GameButton
@@ -592,7 +590,7 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
                       setTimeout(() => setCopied(false), 2000)
                     }}
                   >
-                    {copied ? (locale === 'pl' ? 'Skopiowano' : 'Copied') : (locale === 'pl' ? 'Kopiuj' : 'Copy')}
+                    {copied ? t.copied : t.copy}
                   </GameButton>
                   {scannedResult.startsWith('http://') || scannedResult.startsWith('https://') ? (
                     <a
@@ -601,7 +599,7 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
                       rel="noopener noreferrer"
                       className="game-btn game-btn--sm game-btn--primary"
                     >
-                      {locale === 'pl' ? 'Otwórz link ↗' : 'Open Link ↗'}
+                      {t.openLink}
                     </a>
                   ) : null}
                 </div>
@@ -617,10 +615,10 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
           {activeMode === 'generate' ? (
             <>
               <GameButton variant="primary" size="md" onClick={downloadPng} icon={<IconDownload size={14} />}>
-                {locale === 'pl' ? 'Pobierz PNG' : 'Download PNG'}
+                {t.downloadPng}
               </GameButton>
               <GameButton variant="secondary" size="md" onClick={copyToClipboard} icon={copied ? <IconCheck size={14} /> : <IconCopy size={14} />}>
-                {copied ? (locale === 'pl' ? 'Skopiowano!' : 'Copied!') : (locale === 'pl' ? 'Kopiuj' : 'Copy')}
+                {copied ? t.copiedExclamation : t.copy}
               </GameButton>
             </>
           ) : (
@@ -631,7 +629,7 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
                 onClick={() => fileInputRef.current?.click()}
                 icon={<IconUpload size={14} />}
               >
-                {locale === 'pl' ? 'Wybierz plik' : 'Upload File'}
+                {t.uploadFile}
               </GameButton>
               {isScanning && videoDevices.length > 1 && (
                 <GameButton
@@ -640,7 +638,7 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
                   onClick={switchCamera}
                   icon={<IconSwitchCamera size={14} />}
                 >
-                  {locale === 'pl' ? 'Zmień aparat' : 'Switch Cam'}
+                  {t.switchCam}
                 </GameButton>
               )}
               <GameButton
@@ -649,7 +647,7 @@ export function QrSuite({ locale = 'en', setHeader }: ToolComponentProps) {
                 onClick={isScanning ? stopCamera : () => startCamera()}
                 icon={<IconCamera size={14} />}
               >
-                {isScanning ? (locale === 'pl' ? 'Zatrzymaj' : 'Stop') : (locale === 'pl' ? 'Aparat' : 'Camera')}
+                {isScanning ? t.stop : t.start}
               </GameButton>
             </>
           )}

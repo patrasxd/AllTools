@@ -7,6 +7,7 @@ import {
   IconCopy,
   IconCheck,
 } from '@alltools/ui'
+import { qrSuiteTranslations } from '../i18n'
 
 export interface QrGeneratorProps {
   locale: 'en' | 'pl'
@@ -116,29 +117,7 @@ export const QrGenerator: React.FC<QrGeneratorProps> = ({ locale }) => {
     }
   }
 
-  const t = {
-    typeUrl: 'URL',
-    typeText: locale === 'pl' ? 'Tekst' : 'Plain Text',
-    typeWifi: 'Wi-Fi',
-    typeVcard: 'vCard (Kontakt)',
-    typeEmail: 'E-mail',
-    typeSms: 'SMS',
-    enterUrl: locale === 'pl' ? 'Wpisz adres strony WWW' : 'Enter website URL',
-    enterText: locale === 'pl' ? 'Wpisz dowolny tekst lub notatkę' : 'Enter any text content',
-    downloadPng: locale === 'pl' ? 'Pobierz PNG' : 'Download PNG',
-    copyQr: locale === 'pl' ? 'Kopiuj obraz' : 'Copy Image',
-    copied: locale === 'pl' ? 'Skopiowano!' : 'Copied!',
-    ssid: locale === 'pl' ? 'Nazwa sieci (SSID)' : 'Network Name (SSID)',
-    password: locale === 'pl' ? 'Hasło' : 'Password',
-    encryption: locale === 'pl' ? 'Zabezpieczenia' : 'Encryption',
-    hidden: locale === 'pl' ? 'Sieć ukryta' : 'Hidden network',
-    name: locale === 'pl' ? 'Imię i nazwisko' : 'Full Name',
-    phone: locale === 'pl' ? 'Telefon' : 'Phone Number',
-    email: locale === 'pl' ? 'Adres e-mail' : 'Email Address',
-    company: locale === 'pl' ? 'Firma / Organizacja' : 'Company / Organization',
-    subject: locale === 'pl' ? 'Temat' : 'Subject',
-    message: locale === 'pl' ? 'Treść wiadomości' : 'Message Body',
-  }
+  const t = qrSuiteTranslations[locale] || qrSuiteTranslations.en
 
   const typeOptions = [
     { value: 'url' as const, label: t.typeUrl },

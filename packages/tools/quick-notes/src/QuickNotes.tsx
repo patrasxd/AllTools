@@ -10,6 +10,7 @@ import {
   IconCopy,
 } from '@alltools/ui'
 import './styles/quick-notes.css'
+import { quickNotesTranslations } from './i18n'
 
 export interface ToolComponentProps {
   locale: 'en' | 'pl'
@@ -52,6 +53,7 @@ const DEFAULT_LISTS: NoteList[] = [
 ]
 
 export function QuickNotes({ locale = 'en', setHeader }: ToolComponentProps) {
+  const t = quickNotesTranslations[locale] || quickNotesTranslations.en
   const [lists, setLists] = useState<NoteList[]>(() => {
     try {
       const saved = localStorage.getItem('alltools:quick-notes:v2:lists')
@@ -85,23 +87,23 @@ export function QuickNotes({ locale = 'en', setHeader }: ToolComponentProps) {
     if (!setHeader) return
     setHeader(
       <StatsHeader
-        label={locale === 'pl' ? 'LISTA ZADAŃ' : 'TASK LIST'}
+        label={t.taskList}
         items={[
           {
             key: 'progress',
-            label: locale === 'pl' ? 'POSTĘP' : 'PROGRESS',
+            label: t.progress,
             value: `${completedCount}/${totalCount}`,
             className: completedCount === totalCount && totalCount > 0 ? 'text-text font-bold' : 'text-text-muted',
           },
           {
             key: 'cat',
-            label: locale === 'pl' ? 'KAT.' : 'CAT.',
+            label: t.cat,
             value: activeList ? activeList.category.toUpperCase() : '—',
           },
         ]}
       />
     )
-  }, [setHeader, completedCount, totalCount, activeList, locale])
+  }, [setHeader, completedCount, totalCount, activeList, t])
 
   const toggleItem = (itemId: string) => {
     setLists((prev) =>
@@ -158,17 +160,17 @@ export function QuickNotes({ locale = 'en', setHeader }: ToolComponentProps) {
   }
 
   const categoryOptions = [
-    { value: 'shopping', label: locale === 'pl' ? 'Zakupy' : 'Shopping' },
-    { value: 'todos', label: locale === 'pl' ? 'Zadania' : 'To-Dos' },
-    { value: 'ideas', label: locale === 'pl' ? 'Pomysły' : 'Ideas' },
+    { value: 'shopping', label: t.shopping },
+    { value: 'todos', label: t.todos },
+    { value: 'ideas', label: t.ideas },
   ]
 
   const categoryTitle =
     activeCategoryId === 'shopping'
-      ? (locale === 'pl' ? 'Lista zakupów' : 'Shopping List')
+      ? t.shoppingList
       : activeCategoryId === 'todos'
-      ? (locale === 'pl' ? 'Zadania do zrobienia' : 'To-Do Checklist')
-      : (locale === 'pl' ? 'Szybkie pomysły' : 'Quick Ideas')
+      ? t.todoChecklist
+      : t.quickIdeas
 
   return (
     <div className="notes-root">
@@ -177,10 +179,10 @@ export function QuickNotes({ locale = 'en', setHeader }: ToolComponentProps) {
         <div className="notes-status-text">{categoryTitle}</div>
         <div className="notes-status-sub">
           {totalCount === 0
-            ? (locale === 'pl' ? 'Brak pozycji na liście' : 'No items yet')
+            ? t.noItemsYet
             : completedCount === totalCount
-            ? (locale === 'pl' ? 'Wszystko zrobione!' : 'All done!')
-            : `${completedCount} z ${totalCount} ukończone`}
+            ? t.allDone
+            : t.completedOf(completedCount, totalCount)}
         </div>
       </div>
 
@@ -198,7 +200,7 @@ export function QuickNotes({ locale = 'en', setHeader }: ToolComponentProps) {
             type="text"
             value={newItemText}
             onChange={(e) => setNewItemText(e.target.value)}
-            placeholder={locale === 'pl' ? '+ Wpisz nową pozycję...' : '+ Add new item...'}
+            placeholder={t.addPlaceholder}
             className="notes-add-input"
           />
           <button type="submit" className="game-btn game-btn--primary">
@@ -230,7 +232,7 @@ export function QuickNotes({ locale = 'en', setHeader }: ToolComponentProps) {
                   type="button"
                   onClick={() => deleteItem(item.id)}
                   className="notes-item-del-btn"
-                  title={locale === 'pl' ? 'Usuń' : 'Delete'}
+                  title={t.deleteAria}
                 >
                   <IconTrash size={12} />
                 </button>
@@ -238,7 +240,7 @@ export function QuickNotes({ locale = 'en', setHeader }: ToolComponentProps) {
             ))
           ) : (
             <div className="notes-empty-state">
-              {locale === 'pl' ? 'Brak pozycji na liście. Wpisz tekst powyżej.' : 'No items yet. Type above to add.'}
+              {t.emptyState}
             </div>
           )}
         </div>
@@ -249,7 +251,7 @@ export function QuickNotes({ locale = 'en', setHeader }: ToolComponentProps) {
         <ControlsBar>
           {completedCount > 0 && (
             <GameButton variant="secondary" size="md" onClick={clearCompleted}>
-              {locale === 'pl' ? 'Wyczyść zrobione' : 'Clear done'}
+              {t.clearDone}
             </GameButton>
           )}
           <GameButton
@@ -258,7 +260,7 @@ export function QuickNotes({ locale = 'en', setHeader }: ToolComponentProps) {
             onClick={copyList}
             icon={copied ? <IconCheck size={14} /> : <IconCopy size={14} />}
           >
-            {copied ? (locale === 'pl' ? 'Skopiowano!' : 'Copied!') : (locale === 'pl' ? 'Kopiuj' : 'Copy')}
+            {copied ? t.copied : t.copy}
           </GameButton>
 
           {/* Mode Switcher Pills (matching Stopwatch STOPER | INTERWAŁY) */}

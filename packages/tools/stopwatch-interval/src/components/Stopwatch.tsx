@@ -8,6 +8,7 @@ import {
   IconCheck,
   formatStopwatchTime,
 } from '@alltools/ui'
+import { stopwatchTranslations } from '../i18n'
 
 export interface StopwatchProps {
   locale: 'en' | 'pl'
@@ -113,19 +114,7 @@ export const Stopwatch: React.FC<StopwatchProps> = ({ locale }) => {
     })
   }
 
-  const t = {
-    start: locale === 'pl' ? 'Start' : 'Start',
-    pause: locale === 'pl' ? 'Pauza' : 'Pause',
-    reset: locale === 'pl' ? 'Zeruj' : 'Reset',
-    lap: locale === 'pl' ? 'Okrążenie' : 'Lap',
-    copyLaps: locale === 'pl' ? 'Kopiuj listę okrążeń' : 'Copy Laps',
-    copied: locale === 'pl' ? 'Skopiowano!' : 'Copied!',
-    lapHeader: locale === 'pl' ? 'Okrążenie' : 'Lap #',
-    lapTime: locale === 'pl' ? 'Czas okrążenia' : 'Lap Time',
-    totalTime: locale === 'pl' ? 'Łączny czas' : 'Overall',
-    fastest: locale === 'pl' ? 'Najszybsze' : 'Fastest',
-    slowest: locale === 'pl' ? 'Najwolniejsze' : 'Slowest',
-  }
+  const t = stopwatchTranslations[locale] || stopwatchTranslations.en
 
   return (
     <div className="flex flex-col items-center gap-6 w-full max-w-md mx-auto select-none">
@@ -183,7 +172,7 @@ export const Stopwatch: React.FC<StopwatchProps> = ({ locale }) => {
         <div className="w-full flex flex-col gap-2 mt-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-mono text-text-dim uppercase tracking-wider">
-              {locale === 'pl' ? 'Historia okrążeń' : 'Lap History'} ({laps.length})
+              {t.lapHistory} ({laps.length})
             </span>
             <button
               onClick={copyLaps}

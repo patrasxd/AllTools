@@ -15,7 +15,7 @@ import type {
   EncoderFormat,
   HashAlgorithm,
 } from './types'
-import { devVaultTranslations } from './i18n'
+import { devVaultTranslations, getStrengthLabel, getIpTypeLabel } from './i18n'
 import {
   generateSecurePassword,
   calculatePasswordStrength,
@@ -282,7 +282,7 @@ export function DevVault({ locale = 'en', setHeader, isEink = false }: ToolCompo
                                 }
                           }
                         >
-                          {locale === 'pl' ? strength.labelPl : strength.labelEn}
+                          {getStrengthLabel(strength, locale)}
                         </span>{' '}
                         ({strength.entropy} {t.labelBits})
                       </span>
@@ -412,7 +412,7 @@ export function DevVault({ locale = 'en', setHeader, isEink = false }: ToolCompo
                       <div className="vault-grid-cell" style={{ gridColumn: 'span 2' }}>
                         <span className="vault-cell-title">{t.classification}</span>
                         <span className="vault-cell-value">
-                          {locale === 'pl' ? subnetInfo.ipTypePl : subnetInfo.ipTypeEn}
+                          {getIpTypeLabel(subnetInfo, locale)}
                         </span>
                       </div>
                     </div>

@@ -47,6 +47,7 @@ export interface ImageStudioTranslations {
   watermarkEnableDesc: string
   watermarkTextLabel: string
   watermarkPlaceholder: string
+  defaultWatermarkText: string
   layoutPattern: string
   patternDiagonal: string
   patternRepeat: string
@@ -119,6 +120,7 @@ export const imageStudioTranslations: Record<'en' | 'pl', ImageStudioTranslation
     watermarkEnableDesc: 'Add copy notice or ownership stamp',
     watermarkTextLabel: 'Watermark text',
     watermarkPlaceholder: 'e.g. CONFIDENTIAL COPY',
+    defaultWatermarkText: 'CONFIDENTIAL COPY',
     layoutPattern: 'Layout pattern',
     patternDiagonal: 'Diagonal 1×',
     patternRepeat: 'Repeat Grid',
@@ -187,6 +189,7 @@ export const imageStudioTranslations: Record<'en' | 'pl', ImageStudioTranslation
     watermarkEnableDesc: 'Oznacz dokument klauzulą lub znakiem',
     watermarkTextLabel: 'Treść znaku',
     watermarkPlaceholder: 'np. KOPIA DLA BANKU',
+    defaultWatermarkText: 'KOPIA DLA BANKU',
     layoutPattern: 'Układ znaku',
     patternDiagonal: 'Przekątna 1×',
     patternRepeat: 'Siatka',

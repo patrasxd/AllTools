@@ -8,6 +8,7 @@ import {
   formatStopwatchTime,
   formatTimerSeconds,
 } from '@alltools/ui'
+import { stopwatchTranslations } from './i18n'
 import './styles/stopwatch-interval.css'
 
 export interface ToolComponentProps {
@@ -90,7 +91,7 @@ export function StopwatchInterval({ locale = 'en', isEink = false, setHeader }: 
   const audioCtxRef = useRef<AudioContext | null>(null)
   const intTimerRef = useRef<number | null>(null)
 
-  const isPl = locale === 'pl'
+  const t = stopwatchTranslations[locale] || stopwatchTranslations.en
 
   // Stopwatch loop
   const updateSw = useCallback(() => {
@@ -208,29 +209,28 @@ export function StopwatchInterval({ locale = 'en', isEink = false, setHeader }: 
     if (p === 'pomodoro') { setWorkSec(1500); setRestSec(300); setSetsTotal(4); setTimeRemaining(1500) }
   }
 
-  // Header stats injection
   const renderHeader = useCallback(() => {
     if (!setHeader) return
     if (activeMode === 'stopwatch') {
       const bestLap = laps.length > 1 ? [...laps].sort((a, b) => a.lapTime - b.lapTime)[0] : null
       setHeader(
         <StatsHeader
-          label={isPl ? 'Stoper' : 'Stopwatch'}
+          label={t.stopwatch}
           items={[
-            { key: 'laps', label: isPl ? 'Okrążenia' : 'Laps', value: laps.length },
-            { key: 'best', label: isPl ? 'Najlepsze' : 'Best', value: bestLap ? formatStopwatchTime(bestLap.lapTime) : '—' },
+            { key: 'laps', label: t.laps, value: laps.length },
+            { key: 'best', label: t.best, value: bestLap ? formatStopwatchTime(bestLap.lapTime) : '—' },
           ]}
           onReset={laps.length > 0 ? resetSw : undefined}
-          resetAriaLabel={isPl ? 'Resetuj stoper' : 'Reset stopwatch'}
+          resetAriaLabel={t.resetStopwatchAria}
         />
       )
     } else {
       setHeader(
         <StatsHeader
-          label={isPl ? 'Interwały' : 'Intervals'}
+          label={t.intervals}
           items={[
-            { key: 'set', label: isPl ? 'Seria' : 'Set', value: `${currentSet}/${setsTotal}` },
-            { key: 'phase', label: phase === 'work' ? (isPl ? 'Praca' : 'Work') : phase === 'rest' ? (isPl ? 'Przerwa' : 'Rest') : (isPl ? 'Gotowy' : 'Ready'), value: phase === 'finished' ? '—' : formatTimerSeconds(timeRemaining) },
+            { key: 'set', label: t.set, value: `${currentSet}/${setsTotal}` },
+            { key: 'phase', label: phase === 'work' ? t.phaseWork : phase === 'rest' ? t.phaseRest : t.phaseReady, value: phase === 'finished' ? '—' : formatTimerSeconds(timeRemaining) },
           ]}
           onReset={() => {
             setIntRunning(false)
@@ -238,11 +238,11 @@ export function StopwatchInterval({ locale = 'en', isEink = false, setHeader }: 
             setCurrentSet(1)
             setTimeRemaining(workSec)
           }}
-          resetAriaLabel={isPl ? 'Resetuj interwały' : 'Reset intervals'}
+          resetAriaLabel={t.resetIntervalsAria}
         />
       )
     }
-  }, [setHeader, activeMode, laps, isPl, currentSet, setsTotal, phase, timeRemaining, workSec])
+  }, [setHeader, activeMode, laps, t, currentSet, setsTotal, phase, timeRemaining, workSec])
 
   useEffect(() => {
     renderHeader()
@@ -253,8 +253,8 @@ export function StopwatchInterval({ locale = 'en', isEink = false, setHeader }: 
   }, [setHeader])
 
   const modeOptions = [
-    { value: 'stopwatch' as const, label: isPl ? 'Stoper' : 'Stopwatch' },
-    { value: 'interval' as const, label: isPl ? 'Interwały' : 'Intervals' },
+    { value: 'stopwatch' as const, label: t.stopwatch },
+    { value: 'interval' as const, label: t.intervals },
   ]
 
   const presetOptions = [
@@ -279,7 +279,7 @@ export function StopwatchInterval({ locale = 'en', isEink = false, setHeader }: 
       <AnimatePresence mode="wait">
         <motion.div
           className="stopwatch-status"
-          key={`${activeMode}-${phase}-${currentSet}-${isPl}`}
+          key={`${activeMode}-${phase}-${currentSet}-${locale}`}
           initial={!isEink ? { opacity: 0, y: 6 } : false}
           animate={{ opacity: 1, y: 0 }}
           exit={!isEink ? { opacity: 0, y: -6 } : undefined}
@@ -288,21 +288,21 @@ export function StopwatchInterval({ locale = 'en', isEink = false, setHeader }: 
           {activeMode === 'stopwatch' ? (
             <>
               <div className="stopwatch-status-text">
-                {swRunning ? (isPl ? 'Pomiar czasu w toku' : 'Timing in progress') : (elapsedMs > 0 ? (isPl ? 'Zatrzymany' : 'Paused') : (isPl ? 'Gotowy do startu' : 'Ready to start'))}
+                {swRunning ? t.timingInProgress : (elapsedMs > 0 ? t.paused : t.readyToStart)}
               </div>
               {laps.length > 0 && (
                 <div className="stopwatch-status-sub">
-                  {isPl ? `${laps.length} zarejestrowanych okrążeń` : `${laps.length} recorded laps`}
+                  {t.recordedLaps(laps.length)}
                 </div>
               )}
             </>
           ) : (
             <>
               <div className="stopwatch-status-text">
-                {phase === 'work' ? (isPl ? 'Faza ćwiczenia' : 'Work phase') : phase === 'rest' ? (isPl ? 'Faza odpoczynku' : 'Rest phase') : phase === 'finished' ? (isPl ? 'Trening zakończony' : 'Workout completed') : (isPl ? 'Trening interwałowy' : 'Interval training')}
+                {phase === 'work' ? t.workPhase : phase === 'rest' ? t.restPhase : phase === 'finished' ? t.workoutCompleted : t.intervalTraining}
               </div>
               <div className="stopwatch-status-sub">
-                {preset.toUpperCase()} · {isPl ? `Seria ${currentSet} z ${setsTotal}` : `Set ${currentSet} of ${setsTotal}`}
+                {preset.toUpperCase()} · {t.setOf(currentSet, setsTotal)}
               </div>
             </>
           )}
@@ -321,8 +321,8 @@ export function StopwatchInterval({ locale = 'en', isEink = false, setHeader }: 
               <div className="stopwatch-laps-container" ref={lapsContainerRef}>
                 <div className="stopwatch-laps-header">
                   <span>#</span>
-                  <span>{isPl ? 'Czas okrążenia' : 'Lap time'}</span>
-                  <span>{isPl ? 'Łączny czas' : 'Total time'}</span>
+                  <span>{t.lapTime}</span>
+                  <span>{t.totalTime}</span>
                 </div>
                 {laps.length > 0 ? (
                   laps.map((lap) => {
@@ -347,7 +347,7 @@ export function StopwatchInterval({ locale = 'en', isEink = false, setHeader }: 
                   })
                 ) : (
                   <div className="stopwatch-lap-empty">
-                    {isPl ? 'Kliknij „Okrążenie” podczas pomiaru' : 'Press "Lap" during timing'}
+                    {t.lapHint}
                   </div>
                 )}
               </div>
@@ -373,13 +373,13 @@ export function StopwatchInterval({ locale = 'en', isEink = false, setHeader }: 
 
             <div className="interval-ring-center">
               <span className="interval-phase-label">
-                {phase === 'work' ? (isPl ? 'PRACA' : 'WORK') : phase === 'rest' ? (isPl ? 'PRZERWA' : 'REST') : (isPl ? 'GOTOWY' : 'READY')}
+                {phase === 'work' ? t.work : phase === 'rest' ? t.rest : t.ready}
               </span>
               <span className="interval-time-digits">
                 {formatTimerSeconds(timeRemaining)}
               </span>
               <span className="interval-set-badge">
-                {isPl ? 'SERIA' : 'SET'} {currentSet}/{setsTotal}
+                {t.setLabel} {currentSet}/{setsTotal}
               </span>
             </div>
           </div>
@@ -392,18 +392,18 @@ export function StopwatchInterval({ locale = 'en', isEink = false, setHeader }: 
           <>
             {!swRunning ? (
               <GameButton variant="primary" onClick={startSw}>
-                {isPl ? 'Start' : 'Start'}
+                {t.start}
               </GameButton>
             ) : (
               <GameButton variant="secondary" onClick={pauseSw}>
-                {isPl ? 'Pauza' : 'Pause'}
+                {t.pause}
               </GameButton>
             )}
             <GameButton variant="secondary" onClick={recordLap} disabled={!swRunning}>
-              {isPl ? 'Okrążenie' : 'Lap'}
+              {t.lap}
             </GameButton>
             <GameButton variant="ghost" onClick={resetSw} disabled={elapsedMs === 0}>
-              {isPl ? 'Reset' : 'Reset'}
+              {t.reset}
             </GameButton>
             <PillGroup
               options={modeOptions}
@@ -426,11 +426,11 @@ export function StopwatchInterval({ locale = 'en', isEink = false, setHeader }: 
                   playBeep(660, 0.1)
                 }}
               >
-                {isPl ? 'Start' : 'Start'}
+                {t.start}
               </GameButton>
             ) : (
               <GameButton variant="secondary" onClick={() => setIntRunning(false)}>
-                {isPl ? 'Pauza' : 'Pause'}
+                {t.pause}
               </GameButton>
             )}
             <GameButton
@@ -442,7 +442,7 @@ export function StopwatchInterval({ locale = 'en', isEink = false, setHeader }: 
                 setTimeRemaining(workSec)
               }}
             >
-              {isPl ? 'Reset' : 'Reset'}
+              {t.reset}
             </GameButton>
             <PillGroup
               options={presetOptions}

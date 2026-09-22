@@ -7,6 +7,7 @@ import {
   IconCheck,
   IconTrash,
 } from '@alltools/ui'
+import { qrSuiteTranslations } from '../i18n'
 
 export interface QrScannerProps {
   locale: 'en' | 'pl'
@@ -75,11 +76,7 @@ export const QrScanner: React.FC<QrScannerProps> = ({ locale }) => {
     } catch (err) {
       console.error('Camera error:', err)
       setIsScanning(false)
-      setErrorMsg(
-        locale === 'pl'
-          ? 'Brak dostępu do kamery. Sprawdź uprawnienia w przeglądarce.'
-          : 'Camera access denied. Please allow camera permissions.'
-      )
+      setErrorMsg(t.cameraAccessDenied)
     }
   }
 
@@ -134,11 +131,7 @@ export const QrScanner: React.FC<QrScannerProps> = ({ locale }) => {
             saveHistory(code.data)
             setErrorMsg(null)
           } else {
-            setErrorMsg(
-              locale === 'pl'
-                ? 'Nie znaleziono kodu QR na wybranym obrazie.'
-                : 'No QR code found in the selected image.'
-            )
+            setErrorMsg(t.noQrFoundInSelected)
           }
         }
       }
@@ -167,16 +160,10 @@ export const QrScanner: React.FC<QrScannerProps> = ({ locale }) => {
   }, [stopCamera])
 
   const t = {
-    startScan: locale === 'pl' ? 'Uruchom skaner kamerą' : 'Start Camera Scanner',
-    stopScan: locale === 'pl' ? 'Zatrzymaj kamerę' : 'Stop Camera',
-    uploadImage: locale === 'pl' ? 'Wczytaj plik z kodem QR' : 'Upload QR Code Image',
-    scanResult: locale === 'pl' ? 'Odczytana zawartość:' : 'Scanned Result:',
-    openLink: locale === 'pl' ? 'Otwórz link' : 'Open Link',
-    copy: locale === 'pl' ? 'Kopiuj' : 'Copy Text',
-    copied: locale === 'pl' ? 'Skopiowano!' : 'Copied!',
-    history: locale === 'pl' ? 'Historia skanowania' : 'Scan History',
-    clearHistory: locale === 'pl' ? 'Wyczyść historię' : 'Clear History',
-    noHistory: locale === 'pl' ? 'Brak zapisanych skanów' : 'No previous scans',
+    ...qrSuiteTranslations[locale] || qrSuiteTranslations.en,
+    openLink: (qrSuiteTranslations[locale] || qrSuiteTranslations.en).openLinkShort,
+    copy: (qrSuiteTranslations[locale] || qrSuiteTranslations.en).copyText,
+    copied: (qrSuiteTranslations[locale] || qrSuiteTranslations.en).copiedExclamation,
   }
 
   return (
