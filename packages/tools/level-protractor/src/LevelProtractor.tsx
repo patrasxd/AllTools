@@ -149,7 +149,6 @@ export function LevelProtractor({
     if (activeTab === 'level') {
       return (
         <StatsHeader
-          label={t.headers.levelTitle}
           items={[
             {
               key: 'roll',
@@ -172,7 +171,6 @@ export function LevelProtractor({
     } else if (activeTab === 'protractor') {
       return (
         <StatsHeader
-          label={t.headers.protractorTitle}
           items={[
             {
               key: 'angle',
@@ -195,7 +193,6 @@ export function LevelProtractor({
     } else {
       return (
         <StatsHeader
-          label={t.headers.compassTitle}
           items={[
             {
               key: 'heading',

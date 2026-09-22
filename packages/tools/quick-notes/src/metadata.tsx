@@ -1,5 +1,5 @@
 import React from 'react'
-import { IconNotes } from '@alltools/ui'
+import { NotesIcon } from '@all/ui'
 
 export const metadata = {
   slug: 'quick-notes',
@@ -11,7 +11,7 @@ export const metadata = {
     en: 'Minimalist notes and shopping checklist with tagging, pinning, search, and local offline persistence.',
     pl: 'Minimalistyczne notatki i listy zakupów z tagowaniem, przypinaniem i zapisem offline.',
   },
-  icon: <IconNotes size={24} strokeWidth={1.5} />,
+  icon: <NotesIcon width="24" height="24" strokeWidth="1.5" />,
   category: 'productivity' as const,
   tags: {
     en: ['Productivity'],

@@ -180,7 +180,6 @@ export function ScreenRuler({
     if (!isCalibrated) {
       setHeader(
         <StatsHeader
-          label={t.screenCalibration}
           items={[
             {
               key: 'card',
@@ -198,7 +197,6 @@ export function ScreenRuler({
     } else {
       setHeader(
         <StatsHeader
-          label={t.cornerRuler2d}
           items={[
             {
               key: 'x',

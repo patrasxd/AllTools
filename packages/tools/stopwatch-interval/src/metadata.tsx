@@ -1,5 +1,5 @@
 import React from 'react'
-import { IconStopwatch } from '@alltools/ui'
+import { StopwatchIcon } from '@all/ui'
 
 export const metadata = {
   slug: 'stopwatch-interval',
@@ -11,7 +11,7 @@ export const metadata = {
     en: 'Precision stopwatch with laps and interval timer for HIIT, Tabata, and Pomodoro with audio cues.',
     pl: 'Precyzyjny stoper z okrążeniami oraz minutnik interwałowy do HIIT, Tabaty i Pomodoro z dźwiękami.',
   },
-  icon: <IconStopwatch size={24} strokeWidth={1.5} />,
+  icon: <StopwatchIcon width="24" height="24" strokeWidth="1.5" />,
   category: 'productivity' as const,
   tags: {
     en: ['Timer', 'Productivity'],

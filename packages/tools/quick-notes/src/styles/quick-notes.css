@@ -1,4 +1,4 @@
-/* ─── Quick Notes Root (Twin Architecture to Stopwatch) ──── */
+/* ─── Quick Notes Root ──────────────────────────────────────── */
 .notes-root {
   position: relative;
   width: 100%;
@@ -6,57 +6,53 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 0 1.25rem;
   box-sizing: border-box;
-  overflow: hidden;
 }
 
-/* ─── Status Block (Top) ────────────────────────────────────── */
+/* ─── Status Block (HUD) ────────────────────────────────────── */
 .notes-status {
   text-align: center;
-  min-height: 2.75rem;
+  min-height: 2.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.25rem;
-  flex-shrink: 0;
+  gap: 0.2rem;
+  margin-bottom: 0.5rem;
 }
 
 .notes-status-text {
-  font-family: var(--font-sans);
+  font-family: var(--all-font-sans, inherit);
   font-weight: 600;
-  font-style: normal;
-  font-size: 1.125rem;
-  color: var(--text);
+  font-size: 1.05rem;
+  color: var(--all-text, currentColor);
   letter-spacing: -0.01em;
   line-height: 1.2;
 }
 
 .notes-status-sub {
-  font-family: var(--font-mono);
+  font-family: var(--all-font-mono, monospace);
   font-size: 0.6875rem;
-  color: var(--text-muted);
+  color: var(--all-text-muted, #6b7280);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   font-weight: 500;
 }
 
-/* ─── Center Viewport Area (Checklist Table & Add Form) ──────── */
-.notes-center-area {
-  flex: 1;
-  min-height: 0;
+/* ─── Card Container (Board) ────────────────────────────────── */
+.notes-card {
   width: 100%;
-  max-width: 460px;
+  max-width: 480px;
+  height: clamp(280px, 48vh, 440px);
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   justify-content: flex-start;
+  padding: 1rem !important;
   gap: 0.75rem;
+  box-sizing: border-box;
   overflow: hidden;
-  padding: 0.25rem 0;
 }
 
 /* Add Item Form */
@@ -69,24 +65,24 @@
 
 .notes-add-input {
   flex: 1;
-  padding: 0.5rem 0.75rem;
-  font-family: var(--font-sans);
+  padding: 0.45rem 0.75rem;
+  font-family: var(--all-font-sans, inherit);
   font-size: 0.8125rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text);
-  transition: border-color 150ms ease, background 150ms ease;
+  background: var(--all-surface, #ffffff);
+  border: 1px solid var(--all-border, #e5e7eb);
+  border-radius: var(--all-radius-sm, 6px);
+  color: var(--all-text, currentColor);
   outline: none;
+  transition: border-color 150ms ease, background-color 150ms ease;
+  box-sizing: border-box;
 }
 
 .notes-add-input:focus {
-  border-color: var(--border-2);
-  background: var(--surface-2);
+  border-color: var(--all-accent, #3b82f6);
 }
 
 .notes-add-input::placeholder {
-  color: var(--text-muted);
+  color: var(--all-text-muted, #9ca3af);
 }
 
 /* Checklist Items Scroll Container */
@@ -97,26 +93,25 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
-  padding-right: 0.25rem;
+  gap: 0.35rem;
+  padding-right: 0.2rem;
 }
 
 .notes-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 0.75rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  padding: 0.45rem 0.75rem;
+  background: var(--all-surface, #ffffff);
+  border: 1px solid var(--all-border, #e5e7eb);
+  border-radius: var(--all-radius-sm, 6px);
   font-size: 0.8125rem;
   user-select: none;
-  transition: border-color 150ms ease, background 150ms ease;
+  transition: border-color 150ms ease, background-color 150ms ease;
 }
 
 .notes-item:hover {
-  border-color: var(--border-2);
-  background: var(--surface-2);
+  background: var(--all-surface-elevated, #f9fafb);
 }
 
 .notes-item-label {
@@ -127,65 +122,82 @@
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-family: var(--font-sans);
+  font-family: var(--all-font-sans, inherit);
 }
 
 .notes-item-checkbox {
-  accent-color: var(--text);
+  accent-color: var(--all-accent, currentColor);
   width: 15px;
   height: 15px;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .notes-item-text {
   transition: color 150ms ease, opacity 150ms ease, text-decoration 150ms ease;
   line-height: 1.3;
+  color: var(--all-text, currentColor);
+  word-break: break-word;
 }
 
 .notes-item-text--completed {
   text-decoration: line-through;
-  color: var(--text-muted);
-  opacity: 0.6;
+  color: var(--all-text-muted, #9ca3af);
+  opacity: 0.65;
 }
 
 .notes-item-del-btn {
   background: transparent;
   border: none;
-  color: var(--text-muted);
+  color: var(--all-text-muted, #9ca3af);
   cursor: pointer;
   padding: 0.25rem;
-  border-radius: 2px;
+  border-radius: var(--all-radius-sm, 4px);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: color 150ms ease, background 150ms ease;
+  transition: color 150ms ease, background-color 150ms ease;
+  flex-shrink: 0;
 }
 
 .notes-item-del-btn:hover {
-  color: var(--text);
-  background: var(--surface-2);
+  color: var(--all-danger, #ef4444);
+  background: var(--all-surface-elevated, #f3f4f6);
 }
 
 .notes-empty-state {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2.5rem 1rem;
-  color: var(--text-muted);
+  padding: 2rem 1rem;
+  color: var(--all-text-muted, #9ca3af);
   font-size: 0.75rem;
   text-align: center;
-  font-family: var(--font-sans);
+  font-family: var(--all-font-sans, inherit);
 }
 
-/* ─── Bottom Controls Bar (Fixed Width Twin to Stopwatch) ──── */
-.notes-controls-container {
+/* ─── Bottom Controls Bar ───────────────────────────────────── */
+.notes-controls {
   width: 100%;
-  max-width: 460px;
+  max-width: 480px;
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  justify-content: center;
   align-items: center;
   gap: 0.5rem;
-  flex-shrink: 0;
-  margin-top: auto;
+}
+
+/* ─── E-Ink High Contrast Mode ──────────────────────────────── */
+.notes-root--eink * {
+  transition: none !important;
+}
+
+.notes-root--eink .notes-item {
+  border-width: 1.5px;
+}
+
+.notes-root--eink .notes-add-input {
+  border-width: 1.5px;
 }

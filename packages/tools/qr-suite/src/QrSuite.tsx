@@ -125,7 +125,6 @@ export function QrSuite({
     if (activeMode === 'generate') {
       setHeader(
         <StatsHeader
-          label={t.qrGenerator}
           items={[
             { key: 'type', label: t.type, value: payloadType.toUpperCase() },
             { key: 'len', label: t.chars, value: payload.length },
@@ -135,7 +134,6 @@ export function QrSuite({
     } else {
       setHeader(
         <StatsHeader
-          label={t.qrScanner}
           items={[
             {
               key: 'status',
