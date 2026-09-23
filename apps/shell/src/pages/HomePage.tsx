@@ -205,6 +205,28 @@ export function HomePage() {
           legalLabel={t.legalNotice}
           onLegalClick={() => navigate('/legal')}
           copyright="AllTools © 2026. Free & Open Source."
+          links={[
+            {
+              label: 'AllGames',
+              href: 'https://patrasxd.github.io/AllGames/',
+              external: true,
+            },
+            {
+              label: 'AllLinks',
+              href: 'https://patrasxd.github.io/AllLinks/',
+              external: true,
+            },
+            {
+              label: 'GitHub',
+              href: 'https://github.com/patrasxd',
+              external: true,
+            },
+            {
+              label: 'LinkedIn',
+              href: 'https://www.linkedin.com/in/patryk-popio%C5%82ek-615048201/',
+              external: true,
+            },
+          ]}
         />
       </div>
     </div>
