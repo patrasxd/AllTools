@@ -22,6 +22,8 @@ import {
   type PhoneOrientation,
   detectPhoneOrientation,
   calculateSlopePercent,
+  requiresOrientationPermission,
+  requestOrientationPermission,
 } from './utils/sensorUtils'
 import { levelTranslations } from './i18n'
 import type {
@@ -65,6 +67,7 @@ export function LevelProtractor({
   })
 
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false)
+  const [sensorPermissionGranted, setSensorPermissionGranted] = useState<boolean>(false)
 
   useEffect(() => {
     try {
@@ -82,37 +85,14 @@ export function LevelProtractor({
   const [levelViewMode, setLevelViewMode] = useState<LevelViewMode>(() => {
     try {
       const saved = localStorage.getItem('alltools:level:viewMode') as LevelViewMode
-      if (saved && (saved === 'auto' || saved === 'surface' || saved === 'edge')) {
+      if (saved && (saved === 'surface' || saved === 'edge')) {
         return saved
       }
     } catch {}
-    return 'auto'
+    return 'surface'
   })
 
-  const [targetAngle, setTargetAngle] = useState<number>(() => {
-    try {
-      const saved = localStorage.getItem('alltools:level:targetAngle')
-      if (saved) {
-        const val = parseFloat(saved)
-        if (Number.isFinite(val)) return val
-      }
-    } catch {}
-    return 0
-  })
 
-  const [forcedEdge, setForcedEdge] = useState<PhoneOrientation>('flat')
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('alltools:level:viewMode', levelViewMode)
-    } catch {}
-  }, [levelViewMode])
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('alltools:level:targetAngle', String(targetAngle))
-    } catch {}
-  }, [targetAngle])
 
   const [pitch, setPitch] = useState<number>(0)
   const [roll, setRoll] = useState<number>(0)
@@ -142,6 +122,12 @@ export function LevelProtractor({
     } catch {}
   }, [calibratedPitch, calibratedRoll])
 
+  useEffect(() => {
+    try {
+      localStorage.setItem('alltools:level:viewMode', levelViewMode)
+    } catch {}
+  }, [levelViewMode])
+
   const [levelStats, setLevelStats] = useState<LevelStats>({
     pitch: 0,
     roll: 0,
@@ -149,17 +135,9 @@ export function LevelProtractor({
     viewMode: 'auto',
     edgeAngle: 0,
     slopePercent: 0,
-    targetAngle: 0,
-    isTargetMatch: false,
   })
 
-  // Detect edge vs surface
-  const detectedOrientation = detectPhoneOrientation(
-    pitch - calibratedPitch,
-    roll - calibratedRoll
-  )
-  const isAutoEdge = levelViewMode === 'auto' && detectedOrientation !== 'flat'
-  const isEdgeView = levelViewMode === 'edge' || isAutoEdge
+  const isEdgeView = levelViewMode === 'edge'
 
   const handleEdgeStatsChange = useCallback(
     (stats: EdgeLevelResult) => {
@@ -170,12 +148,10 @@ export function LevelProtractor({
         viewMode: levelViewMode,
         edgeAngle: stats.absAngle,
         slopePercent: stats.slopePercent,
-        targetAngle: targetAngle,
-        isTargetMatch: stats.isTargetMatch,
         orientation: stats.orientation,
       })
     },
-    [pitch, roll, calibratedPitch, calibratedRoll, levelViewMode, targetAngle]
+    [pitch, roll, calibratedPitch, calibratedRoll, levelViewMode]
   )
 
   const handleSurfaceStatsChange = useCallback(
@@ -232,11 +208,7 @@ export function LevelProtractor({
               {
                 key: 'status',
                 label: t.headers.status,
-                value: levelStats.isTargetMatch
-                  ? (levelStats.targetAngle === 0 ? t.headers.levelStatus : `${t.edge.targetAngle} ${levelStats.targetAngle}°`)
-                  : levelStats.isLevel
-                  ? t.headers.levelStatus
-                  : t.headers.tiltStatus,
+                value: levelStats.isLevel ? t.headers.levelStatus : t.headers.tiltStatus,
               },
             ]}
           />
@@ -328,7 +300,6 @@ export function LevelProtractor({
 
   const viewModeOptions = useMemo(
     () => [
-      { value: 'auto' as const, label: t.edge.auto, id: 'vmode-auto' },
       { value: 'surface' as const, label: t.edge.surface2d, id: 'vmode-surface' },
       { value: 'edge' as const, label: t.edge.edgeRuler, id: 'vmode-edge' },
     ],
@@ -385,10 +356,6 @@ export function LevelProtractor({
                     setPitch={setPitch}
                     setRoll={setRoll}
                     tolerance={tolerance}
-                    targetAngle={targetAngle}
-                    setTargetAngle={setTargetAngle}
-                    forcedEdge={forcedEdge}
-                    setForcedEdge={setForcedEdge}
                     onEdgeStatsChange={handleEdgeStatsChange}
                   />
                 ) : (
@@ -423,6 +390,7 @@ export function LevelProtractor({
                   locale={locale}
                   isEink={isEink}
                   isFrozen={isFrozen}
+                  sensorPermissionGranted={sensorPermissionGranted}
                   onHeadingChange={(heading, direction) =>
                     setCompassStats({ heading, direction })
                   }
@@ -439,7 +407,7 @@ export function LevelProtractor({
                 <>
                   <Button
                     id="level-calibrate-btn"
-                    variant="primary"
+                    variant="secondary"
                     size="sm"
                     onClick={calibrateLevel}
                   >
@@ -596,6 +564,33 @@ export function LevelProtractor({
             <p className="level-dialog-help-text">
               {t.settings.offsetLabel}: Pitch {calibratedPitch.toFixed(1)}° · Roll {calibratedRoll.toFixed(1)}°
             </p>
+          )}
+
+          {/* Device Sensors & Permissions (for iOS Safari) */}
+          {requiresOrientationPermission() && (
+            <>
+              <SettingsGroup label={t.permission.title}>
+                <div style={{ display: 'flex', width: '100%' }}>
+                  <Button
+                    variant={sensorPermissionGranted ? 'secondary' : 'primary'}
+                    size="sm"
+                    fullWidth
+                    disabled={sensorPermissionGranted}
+                    onClick={async () => {
+                      const res = await requestOrientationPermission()
+                      if (res === 'granted') {
+                        setSensorPermissionGranted(true)
+                      }
+                    }}
+                  >
+                    {sensorPermissionGranted
+                      ? '✓ ' + t.permission.grantButton
+                      : t.permission.grantButton}
+                  </Button>
+                </div>
+              </SettingsGroup>
+              <p className="level-dialog-hint">{t.permission.description}</p>
+            </>
           )}
 
           <div className="level-dialog-footer">

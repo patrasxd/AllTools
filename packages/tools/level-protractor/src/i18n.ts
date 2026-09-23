@@ -53,6 +53,7 @@ export interface LevelProtractorTranslations {
     manualDial: string
     manualDialNoSensor: string
     settings: string
+    enableSensors: string
   }
   edge: {
     auto: string
@@ -150,6 +151,7 @@ export const levelTranslations: Record<Locale, LevelProtractorTranslations> = {
       manualDial: 'Manual Dial (Sensor unavailable):',
       manualDialNoSensor: 'Manual Dial (No sensor):',
       settings: 'Settings',
+      enableSensors: 'Enable Compass Sensors',
     },
     edge: {
       auto: 'Auto Detect',
@@ -245,6 +247,7 @@ export const levelTranslations: Record<Locale, LevelProtractorTranslations> = {
       manualDial: 'Ręczny obrót (brak czujnika):',
       manualDialNoSensor: 'Ręczny obrót (brak czujnika):',
       settings: 'Ustawienia',
+      enableSensors: 'Włącz czujnik kompasu',
     },
     edge: {
       auto: 'Wykrywanie auto',

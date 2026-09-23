@@ -230,6 +230,7 @@
   user-select: none;
 }
 
+
 .compass-dial-wrap {
   position: relative;
   width: min(230px, calc(100dvh - 350px));
@@ -551,6 +552,13 @@
   width: 100%;
 }
 
+.level-edge-selector-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
 .level-slope-pill {
   display: inline-flex;
   align-items: center;
@@ -598,53 +606,11 @@
   letter-spacing: 0.04em;
 }
 
-/* ─── Target Presets Bar ─────────────────────────────────────── */
-.level-target-presets-bar {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  justify-content: center;
-  width: 100%;
-}
-
-.level-target-label {
-  font-family: var(--all-font-mono, monospace);
-  font-size: 0.75rem;
-  font-weight: 700;
+.level-sub-desc {
+  font-size: 0.8rem;
+  font-weight: 500;
   color: var(--all-text-muted, #a1a1aa);
-  text-transform: uppercase;
-}
-
-.level-target-buttons {
-  display: flex;
-  gap: 0.35rem;
-  align-items: center;
-}
-
-.level-target-preset-btn {
-  background: var(--all-surface, rgba(255, 255, 255, 0.04));
-  border: 1px solid var(--all-border, rgba(255, 255, 255, 0.14));
-  border-radius: var(--all-radius-sm, 4px);
-  color: var(--all-text-muted, #d4d4d8);
   font-family: var(--all-font-mono, monospace);
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 0.2rem 0.5rem;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.level-target-preset-btn:hover {
-  background: var(--all-surface-2, rgba(255, 255, 255, 0.1));
-  color: var(--all-text, #ffffff);
-}
-
-.level-target-preset-btn--active {
-  background: var(--all-accent, #0284c7) !important;
-  color: #ffffff !important;
-  border-color: var(--all-accent, #38bdf8) !important;
-  font-weight: 700;
 }
 
 /* ─── Ruler Instrument Body ─────────────────────────────────── */
@@ -724,9 +690,63 @@
   height: 68px;
 }
 
+.level-ruler-instrument-body--vertical {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  width: auto;
+  min-width: 170px;
+  max-width: 220px;
+  height: 320px;
+  padding: 1rem 1.25rem;
+}
+
+.level-ruler-scale--vertical {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 260px;
+  width: 28px;
+  padding: 4px 0;
+  box-sizing: border-box;
+  border-right: 1px solid var(--all-border, rgba(255, 255, 255, 0.2));
+}
+
+.level-ruler-tick-v {
+  height: 1px;
+  width: 6px;
+  background: var(--all-border-2, rgba(255, 255, 255, 0.35));
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.level-ruler-tick-v--medium {
+  width: 10px;
+  background: var(--all-border-2, rgba(255, 255, 255, 0.6));
+}
+
+.level-ruler-tick-v--major {
+  width: 14px;
+  height: 1.5px;
+  background: var(--all-text, #ffffff);
+}
+
+.level-ruler-num-v {
+  position: absolute;
+  right: 18px;
+  font-family: var(--all-font-mono, monospace);
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: var(--all-text-muted, #a1a1aa);
+  line-height: 1;
+}
+
 .level-vial-wrapper--vertical {
-  width: 68px;
-  height: 240px;
+  width: 48px;
+  height: 260px;
 }
 
 .level-vial-svg {
@@ -739,49 +759,7 @@
   filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.8));
 }
 
-.level-ruler-edge-tag {
-  font-family: var(--all-font-mono, monospace);
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: var(--all-text-muted, #71717a);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
 
-/* ─── Edge Selector Pills ────────────────────────────────────── */
-.level-edge-selector-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
-  flex-wrap: wrap;
-  width: 100%;
-}
-
-.level-edge-btn {
-  background: var(--all-surface, rgba(255, 255, 255, 0.03));
-  border: 1px solid var(--all-border, rgba(255, 255, 255, 0.12));
-  border-radius: var(--all-radius-sm, 4px);
-  color: var(--all-text-muted, #a1a1aa);
-  font-family: var(--all-font-mono, monospace);
-  font-size: 0.7rem;
-  font-weight: 600;
-  padding: 0.2rem 0.45rem;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.level-edge-btn:hover {
-  color: var(--all-text, #ffffff);
-  background: var(--all-surface-2, rgba(255, 255, 255, 0.08));
-}
-
-.level-edge-btn--active {
-  background: var(--all-surface-elevated, rgba(255, 255, 255, 0.15)) !important;
-  color: var(--all-text, #ffffff) !important;
-  border-color: var(--all-border-2, rgba(255, 255, 255, 0.3)) !important;
-  font-weight: 700;
-}
 
 /* ─── Tubular Sliders & Quick Angles ─────────────────────────── */
 .level-tubular-sliders {
