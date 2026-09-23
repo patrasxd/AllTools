@@ -16,6 +16,11 @@ export const PRESET_CONFIGS: Record<Preset, PresetConfig> = {
     restSec: 300,
     setsTotal: 4,
   },
+  custom: {
+    workSec: 30,
+    restSec: 15,
+    setsTotal: 5,
+  },
 }
 
 export function getPresetConfig(preset: Preset): PresetConfig {
@@ -85,3 +90,136 @@ export function calculateIntervalTick(
     isExpired,
   }
 }
+
+import type { IntervalStep } from '../types'
+
+export function calculateTotalSets(steps: IntervalStep[]): number {
+  return steps.reduce(
+    (acc, step) => acc + Math.max(1, step.cycles || 1) * Math.max(1, step.sets || 1),
+    0
+  )
+}
+
+export function computeCumulativeSetNumber(
+  stepIndex: number,
+  cycle: number,
+  set: number,
+  steps: IntervalStep[]
+): number {
+  let count = 0
+  for (let i = 0; i < stepIndex; i++) {
+    const s = steps[i]
+    count += Math.max(1, s.cycles || 1) * Math.max(1, s.sets || 1)
+  }
+  const curStep = steps[stepIndex]
+  if (curStep) {
+    count += (cycle - 1) * Math.max(1, curStep.sets || 1) + set
+  }
+  return count
+}
+
+export interface IntervalTransitionResult {
+  stepIndex: number
+  cycle: number
+  set: number
+  phase: 'work' | 'rest' | 'finished'
+  durationSec: number
+  isFinished: boolean
+}
+
+export function transitionIntervalPhase(
+  stepIndex: number,
+  cycle: number,
+  set: number,
+  phase: 'work' | 'rest',
+  steps: IntervalStep[]
+): IntervalTransitionResult {
+  if (steps.length === 0) {
+    return { stepIndex: 0, cycle: 1, set: 1, phase: 'finished', durationSec: 0, isFinished: true }
+  }
+
+  const currentStep = steps[stepIndex] || steps[0]
+  const stepCycles = Math.max(1, currentStep.cycles || 1)
+  const stepSets = Math.max(1, currentStep.sets || 1)
+
+  if (phase === 'work') {
+    if (set < stepSets) {
+      return {
+        stepIndex,
+        cycle,
+        set,
+        phase: 'rest',
+        durationSec: currentStep.restSec,
+        isFinished: false,
+      }
+    } else if (cycle < stepCycles) {
+      return {
+        stepIndex,
+        cycle,
+        set,
+        phase: 'rest',
+        durationSec: currentStep.restSec,
+        isFinished: false,
+      }
+    } else if (stepIndex < steps.length - 1) {
+      return {
+        stepIndex,
+        cycle,
+        set,
+        phase: 'rest',
+        durationSec: currentStep.restSec > 0 ? currentStep.restSec : steps[stepIndex + 1].restSec,
+        isFinished: false,
+      }
+    } else {
+      return {
+        stepIndex,
+        cycle,
+        set,
+        phase: 'finished',
+        durationSec: 0,
+        isFinished: true,
+      }
+    }
+  } else {
+    // Current phase was 'rest', transition to next 'work'
+    if (set < stepSets) {
+      return {
+        stepIndex,
+        cycle,
+        set: set + 1,
+        phase: 'work',
+        durationSec: currentStep.workSec,
+        isFinished: false,
+      }
+    } else if (cycle < stepCycles) {
+      return {
+        stepIndex,
+        cycle: cycle + 1,
+        set: 1,
+        phase: 'work',
+        durationSec: currentStep.workSec,
+        isFinished: false,
+      }
+    } else if (stepIndex < steps.length - 1) {
+      const nextStep = steps[stepIndex + 1]
+      return {
+        stepIndex: stepIndex + 1,
+        cycle: 1,
+        set: 1,
+        phase: 'work',
+        durationSec: nextStep.workSec,
+        isFinished: false,
+      }
+    } else {
+      return {
+        stepIndex,
+        cycle,
+        set,
+        phase: 'finished',
+        durationSec: 0,
+        isFinished: true,
+      }
+    }
+  }
+}
+

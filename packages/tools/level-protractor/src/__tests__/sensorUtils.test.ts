@@ -5,6 +5,9 @@ import {
   normalizeHeading,
   getCardinalDirection,
   requiresOrientationPermission,
+  detectPhoneOrientation,
+  calculateSlopePercent,
+  calculateEdgeLevel,
 } from '../utils/sensorUtils'
 
 describe('Sensor and Math Utilities (level-protractor)', () => {
@@ -122,9 +125,81 @@ describe('Sensor and Math Utilities (level-protractor)', () => {
     })
   })
 
-  describe('requiresOrientationPermission', () => {
-    it('returns boolean safely in test environment', () => {
-      expect(typeof requiresOrientationPermission()).toBe('boolean')
+  describe('detectPhoneOrientation', () => {
+    it('detects flat orientation when pitch and roll are near zero', () => {
+      expect(detectPhoneOrientation(5, -4)).toBe('flat')
+      expect(detectPhoneOrientation(20, 15)).toBe('flat')
+    })
+
+    it('detects portrait upright when pitch is steep and roll is small', () => {
+      expect(detectPhoneOrientation(85, 2)).toBe('portrait')
+    })
+
+    it('detects landscape right and left based on roll', () => {
+      expect(detectPhoneOrientation(10, 75)).toBe('landscape-right')
+      expect(detectPhoneOrientation(-5, -60)).toBe('landscape-left')
+    })
+
+    it('detects portrait inverted when pitch is negative steep', () => {
+      expect(detectPhoneOrientation(-80, 0)).toBe('portrait-inverted')
+    })
+  })
+
+  describe('calculateSlopePercent', () => {
+    it('calculates 0% slope for 0 deg level', () => {
+      expect(calculateSlopePercent(0)).toBe(0)
+    })
+
+    it('calculates 57.7% slope for 30 deg', () => {
+      expect(calculateSlopePercent(30)).toBe(57.7)
+    })
+
+    it('calculates 100% slope for 45 deg', () => {
+      expect(calculateSlopePercent(45)).toBe(100)
+    })
+  })
+
+  describe('calculateEdgeLevel', () => {
+    it('evaluates level status and slope on edge', () => {
+      // Upright portrait with 0 deg roll -> level
+      const res1 = calculateEdgeLevel(85, 0, 0, 0, 0.5, 0)
+      expect(res1.isLevel).toBe(true)
+      expect(res1.angle).toBe(0)
+      expect(res1.slopePercent).toBe(0)
+
+      // Upright portrait with 30 deg roll -> 30 deg slope and matches 30 deg target
+      const res2 = calculateEdgeLevel(85, 30, 0, 0, 0.5, 30)
+      expect(res2.isLevel).toBe(false)
+      expect(res2.angle).toBe(30)
+      expect(res2.slopePercent).toBe(57.7)
+      expect(res2.isTargetMatch).toBe(true) // Matches 30 deg target
+    })
+
+    it('evaluates landscape right and left edges with slope and target match', () => {
+      // Landscape right resting: pitch is the measuring angle
+      const resRight = calculateEdgeLevel(45, 80, 0, 0, 0.5, 45)
+      expect(resRight.orientation).toBe('landscape-right')
+      expect(resRight.angle).toBe(45)
+      expect(resRight.slopePercent).toBe(100)
+      expect(resRight.isTargetMatch).toBe(true)
+
+      // Landscape left resting: -pitch is the measuring angle
+      const resLeft = calculateEdgeLevel(-30, -80, 0, 0, 0.5, 30)
+      expect(resLeft.orientation).toBe('landscape-left')
+      expect(resLeft.angle).toBe(30)
+      expect(resLeft.slopePercent).toBe(57.7)
+      expect(resLeft.isTargetMatch).toBe(true)
+    })
+
+    it('respects forcedOrientation override', () => {
+      const resForced = calculateEdgeLevel(0, 0, 0, 0, 0.5, 0, 'landscape-right')
+      expect(resForced.orientation).toBe('landscape-right')
+    })
+
+    it('caps slope percent at 999.9 for vertical or steep angles', () => {
+      expect(calculateSlopePercent(89.95)).toBe(999.9)
+      expect(calculateSlopePercent(90)).toBe(999.9)
     })
   })
 })
+

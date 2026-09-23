@@ -362,3 +362,30 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* ─── Controls Bar (Functional actions above, Nav pills at bottom) ─── */
+.vault-controls {
+  width: 100%;
+  max-width: 680px;
+  display: flex;
+  flex-direction: column !important;
+  align-items: center;
+  justify-content: center;
+  gap: var(--all-space-2, 0.5rem);
+}
+
+.vault-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--all-space-2, 0.5rem);
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.vault-controls-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}

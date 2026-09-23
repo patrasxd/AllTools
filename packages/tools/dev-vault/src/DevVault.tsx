@@ -559,50 +559,58 @@ export function DevVault({ locale = 'en', setHeader, isEink = false }: ToolCompo
           </div>
         }
         controls={
-          <ControlsBar>
-            <PillGroup<DevVaultMode>
-              size="sm"
-              options={modeOptions}
-              value={activeMode}
-              onChange={(m) => setActiveMode(m)}
-            />
+          <ControlsBar className="vault-controls">
+            {/* Functional buttons row above navigation */}
+            {(activeMode === 'password' || activeMode === 'uuid') && (
+              <div className="vault-controls-row">
+                {activeMode === 'password' && (
+                  <>
+                    <Button
+                      id="vault-ctrl-copy-pwd"
+                      variant="primary"
+                      size="sm"
+                      onClick={() => copyToClipboard(generatedPassword)}
+                      icon={copied ? <CheckIcon /> : <CopyIcon />}
+                    >
+                      {copied ? t.copied : t.copy}
+                    </Button>
+                    <Button
+                      id="vault-ctrl-regen-pwd"
+                      variant="secondary"
+                      size="sm"
+                      onClick={regeneratePassword}
+                      icon={<RestartIcon />}
+                      title={t.regenerate}
+                    >
+                      {t.regenerate}
+                    </Button>
+                  </>
+                )}
 
-            {activeMode === 'password' && (
-              <>
-                <Button
-                  id="vault-ctrl-copy-pwd"
-                  variant="primary"
-                  size="sm"
-                  onClick={() => copyToClipboard(generatedPassword)}
-                  icon={copied ? <CheckIcon /> : <CopyIcon />}
-                >
-                  {copied ? t.copied : t.copy}
-                </Button>
-                <Button
-                  id="vault-ctrl-regen-pwd"
-                  variant="secondary"
-                  size="sm"
-                  onClick={regeneratePassword}
-                  icon={<RestartIcon />}
-                  title={t.regenerate}
-                >
-                  {t.regenerate}
-                </Button>
-              </>
+                {activeMode === 'uuid' && (
+                  <Button
+                    id="vault-ctrl-regen-uuid"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setUuid(generateUuid())}
+                    icon={<RestartIcon />}
+                    title={t.newUuid}
+                  >
+                    {t.newUuid}
+                  </Button>
+                )}
+              </div>
             )}
 
-            {activeMode === 'uuid' && (
-              <Button
-                id="vault-ctrl-regen-uuid"
-                variant="secondary"
+            {/* Navigation pills at the bottom */}
+            <div className="vault-controls-nav">
+              <PillGroup<DevVaultMode>
                 size="sm"
-                onClick={() => setUuid(generateUuid())}
-                icon={<RestartIcon />}
-                title={t.newUuid}
-              >
-                {t.newUuid}
-              </Button>
-            )}
+                options={modeOptions}
+                value={activeMode}
+                onChange={(m) => setActiveMode(m)}
+              />
+            </div>
           </ControlsBar>
         }
       />

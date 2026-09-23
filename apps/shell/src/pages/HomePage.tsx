@@ -1,7 +1,7 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { AppFooter, useCardScrollRestoration } from '@all/ui'
+import { AppFooter, useCardScrollRestoration, isReturningFromCard } from '@all/ui'
 import { TOOLS_METADATA } from '../tools/registry'
 import { ToolCard } from '../components/ToolCard'
 import { useI18n } from '../i18n'
@@ -9,18 +9,26 @@ import { getLocalizedTags } from '../types/tool'
 
 const heroVariants = {
   hidden: {},
-  visible: {
-    transition: { staggerChildren: 0.07, delayChildren: 0.1 },
-  },
+  visible: (isReturning?: boolean) => ({
+    transition: isReturning
+      ? { staggerChildren: 0.02, delayChildren: 0 }
+      : { staggerChildren: 0.07, delayChildren: 0.1 },
+  }),
 }
 
 const lineVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
+  hidden: (isReturning?: boolean) => ({
+    opacity: 0,
+    y: isReturning ? 8 : 20,
+  }),
+  visible: (isReturning?: boolean) => ({
     opacity: 1,
     y: 0,
-    transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] },
-  },
+    transition: {
+      duration: isReturning ? 0.2 : 0.6,
+      ease: [0.16, 1, 0.3, 1],
+    },
+  }),
 }
 
 export function HomePage() {
@@ -54,6 +62,9 @@ export function HomePage() {
     })
   }, [selectedTag, locale])
 
+  // Capture whether we are returning from a tool via Back button on mount
+  const isReturning = useRef(isReturningFromCard()).current
+
   // Restore scroll position to the last active tool card when returning from a tool
   useCardScrollRestoration({ dependencies: [filteredTools.length] })
 
@@ -66,15 +77,16 @@ export function HomePage() {
           variants={heroVariants}
           initial="hidden"
           animate="visible"
+          custom={isReturning}
           aria-labelledby="home-title"
         >
-          <motion.p className="home-eyebrow" variants={lineVariants}>
+          <motion.p className="home-eyebrow" variants={lineVariants} custom={isReturning}>
             {t.heroEyebrow}
           </motion.p>
-          <motion.h1 className="home-title" id="home-title" variants={lineVariants}>
+          <motion.h1 className="home-title" id="home-title" variants={lineVariants} custom={isReturning}>
             All<br />Tools
           </motion.h1>
-          <motion.p className="home-description" variants={lineVariants}>
+          <motion.p className="home-description" variants={lineVariants} custom={isReturning}>
             {t.heroDescription}
           </motion.p>
         </motion.section>
@@ -158,12 +170,12 @@ export function HomePage() {
                     key={tool.slug}
                     role="listitem"
                     layout
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
+                    initial={isReturning ? { opacity: 0, y: 8 } : { opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                    transition={{ duration: isReturning ? 0.2 : 0.35, ease: [0.16, 1, 0.3, 1] }}
                   >
-                    <ToolCard metadata={tool} index={i} />
+                    <ToolCard metadata={tool} index={i} isReturning={isReturning} />
                   </motion.div>
                 ))
               ) : (

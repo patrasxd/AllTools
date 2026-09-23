@@ -505,3 +505,347 @@
   border-bottom-color: var(--all-text, #000000) !important;
   filter: none !important;
 }
+
+/* ─── Controls Bar (Functional actions above, Nav pills at bottom) ─── */
+.level-controls {
+  width: 100%;
+  max-width: 580px;
+  display: flex;
+  flex-direction: column !important;
+  align-items: center;
+  justify-content: center;
+  gap: var(--all-space-2, 0.5rem);
+}
+
+.level-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--all-space-2, 0.5rem);
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.level-controls-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+/* ─── View Mode Selector (Auto / Surface 2D / Edge Ruler) ────── */
+.level-view-mode-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 0.25rem;
+}
+
+/* ─── Tubular Spirit Level & Ruler View ─────────────────────── */
+.level-tubular-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.level-slope-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  background: var(--all-surface-2, rgba(255, 255, 255, 0.08));
+  border: 1px solid var(--all-border, rgba(255, 255, 255, 0.15));
+  border-radius: var(--all-radius-full, 9999px);
+  font-family: var(--all-font-mono, monospace);
+  line-height: 1;
+}
+
+.level-slope-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--all-text-muted, #a1a1aa);
+  letter-spacing: 0.04em;
+}
+
+.level-slope-val {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--all-accent, #38bdf8);
+}
+
+.level-sub-desc-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.level-edge-tag {
+  font-family: var(--all-font-mono, monospace);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  background: var(--all-surface-elevated, rgba(255, 255, 255, 0.06));
+  border: 1px solid var(--all-border, rgba(255, 255, 255, 0.12));
+  border-radius: var(--all-radius-sm, 4px);
+  color: var(--all-text, #f4f4f5);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ─── Target Presets Bar ─────────────────────────────────────── */
+.level-target-presets-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+}
+
+.level-target-label {
+  font-family: var(--all-font-mono, monospace);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--all-text-muted, #a1a1aa);
+  text-transform: uppercase;
+}
+
+.level-target-buttons {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.level-target-preset-btn {
+  background: var(--all-surface, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--all-border, rgba(255, 255, 255, 0.14));
+  border-radius: var(--all-radius-sm, 4px);
+  color: var(--all-text-muted, #d4d4d8);
+  font-family: var(--all-font-mono, monospace);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.level-target-preset-btn:hover {
+  background: var(--all-surface-2, rgba(255, 255, 255, 0.1));
+  color: var(--all-text, #ffffff);
+}
+
+.level-target-preset-btn--active {
+  background: var(--all-accent, #0284c7) !important;
+  color: #ffffff !important;
+  border-color: var(--all-accent, #38bdf8) !important;
+  font-weight: 700;
+}
+
+/* ─── Ruler Instrument Body ─────────────────────────────────── */
+.level-ruler-instrument-body {
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  background: linear-gradient(180deg, var(--all-surface, #18181b) 0%, var(--all-surface-2, #09090b) 100%);
+  border: 2px solid var(--all-border-2, rgba(255, 255, 255, 0.2));
+  border-radius: var(--all-radius-md, 8px);
+  padding: 1rem 0.75rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), 0 4px 16px rgba(0, 0, 0, 0.35);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.level-ruler-instrument-body--matched {
+  border-color: var(--color-success, #10b981) !important;
+  box-shadow: inset 0 0 12px rgba(16, 185, 129, 0.15), 0 0 20px rgba(16, 185, 129, 0.25) !important;
+}
+
+/* ─── Ruler Scale Ticks ──────────────────────────────────────── */
+.level-ruler-scale {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 4px;
+  box-sizing: border-box;
+  height: 24px;
+  border-bottom: 1px solid var(--all-border, rgba(255, 255, 255, 0.2));
+}
+
+.level-ruler-tick {
+  width: 1px;
+  height: 6px;
+  background: var(--all-border-2, rgba(255, 255, 255, 0.35));
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.level-ruler-tick--medium {
+  height: 10px;
+  background: var(--all-border-2, rgba(255, 255, 255, 0.6));
+}
+
+.level-ruler-tick--major {
+  height: 14px;
+  width: 1.5px;
+  background: var(--all-text, #ffffff);
+}
+
+.level-ruler-num {
+  position: absolute;
+  top: 15px;
+  font-family: var(--all-font-mono, monospace);
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: var(--all-text-muted, #a1a1aa);
+  line-height: 1;
+}
+
+/* ─── Tubular Glass Vial ─────────────────────────────────────── */
+.level-vial-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 320px;
+  height: 68px;
+}
+
+.level-vial-wrapper--vertical {
+  width: 68px;
+  height: 240px;
+}
+
+.level-vial-svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.4));
+}
+
+.level-tubular-bubble--matched {
+  filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.8));
+}
+
+.level-ruler-edge-tag {
+  font-family: var(--all-font-mono, monospace);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--all-text-muted, #71717a);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* ─── Edge Selector Pills ────────────────────────────────────── */
+.level-edge-selector-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.level-edge-btn {
+  background: var(--all-surface, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--all-border, rgba(255, 255, 255, 0.12));
+  border-radius: var(--all-radius-sm, 4px);
+  color: var(--all-text-muted, #a1a1aa);
+  font-family: var(--all-font-mono, monospace);
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.2rem 0.45rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.level-edge-btn:hover {
+  color: var(--all-text, #ffffff);
+  background: var(--all-surface-2, rgba(255, 255, 255, 0.08));
+}
+
+.level-edge-btn--active {
+  background: var(--all-surface-elevated, rgba(255, 255, 255, 0.15)) !important;
+  color: var(--all-text, #ffffff) !important;
+  border-color: var(--all-border-2, rgba(255, 255, 255, 0.3)) !important;
+  font-weight: 700;
+}
+
+/* ─── Tubular Sliders & Quick Angles ─────────────────────────── */
+.level-tubular-sliders {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 320px;
+  align-items: center;
+  padding-top: 0.25rem;
+}
+
+.level-slider-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.level-slider-val {
+  font-family: var(--all-font-mono, monospace);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--all-accent, #38bdf8);
+}
+
+.level-quick-angles {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+/* ─── E-Ink Tubular Overrides ────────────────────────────────── */
+[data-theme^='e-ink'] .level-ruler-instrument-body,
+[data-eink='true'] .level-ruler-instrument-body,
+.level-tubular-view--eink .level-ruler-instrument-body {
+  background: var(--all-surface, #ffffff) !important;
+  border-color: var(--all-text, #000000) !important;
+  box-shadow: none !important;
+}
+
+[data-theme^='e-ink'] .level-ruler-instrument-body--matched,
+[data-eink='true'] .level-ruler-instrument-body--matched,
+.level-tubular-view--eink .level-ruler-instrument-body--matched {
+  border-width: 3px !important;
+  box-shadow: none !important;
+}
+
+[data-theme^='e-ink'] .level-vial-svg,
+[data-eink='true'] .level-vial-svg {
+  filter: none !important;
+}
+
+[data-theme^='e-ink'] .level-slope-pill,
+[data-eink='true'] .level-slope-pill {
+  border-color: var(--all-text, #000000) !important;
+  background: transparent !important;
+}
+
+[data-theme^='e-ink'] .level-slope-val,
+[data-eink='true'] .level-slope-val {
+  color: var(--all-text, #000000) !important;
+}
+

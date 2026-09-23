@@ -9,22 +9,51 @@ import { setLastActiveCardId } from '@all/ui'
 interface ToolCardProps {
   metadata: ToolMetadata
   index: number
+  isReturning?: boolean
+}
+
+interface CardCustom {
+  i: number
+  isReturning?: boolean
 }
 
 const cardVariants = {
-  hidden: { opacity: 0, y: 24 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: {
-      delay: i * 0.08,
-      duration: 0.5,
-      ease: [0.16, 1, 0.3, 1],
-    },
-  }),
+  hidden: (custom: CardCustom | number) => {
+    const isReturning = typeof custom === 'object' && custom.isReturning
+    return {
+      opacity: 0,
+      y: isReturning ? 8 : 24,
+    }
+  },
+  visible: (custom: CardCustom | number) => {
+    const i = typeof custom === 'object' ? custom.i : custom
+    const isReturning = typeof custom === 'object' && custom.isReturning
+
+    if (isReturning) {
+      return {
+        opacity: 1,
+        y: 0,
+        transition: {
+          delay: Math.min(i * 0.012, 0.06),
+          duration: 0.2,
+          ease: [0.16, 1, 0.3, 1],
+        },
+      }
+    }
+
+    return {
+      opacity: 1,
+      y: 0,
+      transition: {
+        delay: i * 0.08,
+        duration: 0.5,
+        ease: [0.16, 1, 0.3, 1],
+      },
+    }
+  },
 }
 
-export function ToolCard({ metadata, index }: ToolCardProps) {
+export function ToolCard({ metadata, index, isReturning }: ToolCardProps) {
   const navigate = useNavigate()
   const { locale, t } = useI18n()
 
@@ -51,7 +80,7 @@ export function ToolCard({ metadata, index }: ToolCardProps) {
       variants={cardVariants}
       initial="hidden"
       animate="visible"
-      custom={index}
+      custom={{ i: index, isReturning }}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       role="button"

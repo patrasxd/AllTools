@@ -31,5 +31,6 @@
       "@alltools/*/metadata": ["../../packages/tools/*/src/metadata.tsx"]
     }
   },
-  "include": ["src", "../../packages/*/src", "../../packages/tools/*/src"]
+  "include": ["src", "../../packages/*/src", "../../packages/tools/*/src"],
+  "exclude": ["**/__tests__/**", "../../packages/tools/**/__tests__/**", "**/*.test.ts", "**/*.test.tsx"]
 }

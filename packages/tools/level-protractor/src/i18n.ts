@@ -54,6 +54,23 @@ export interface LevelProtractorTranslations {
     manualDialNoSensor: string
     settings: string
   }
+  edge: {
+    auto: string
+    surface2d: string
+    edgeRuler: string
+    slope: string
+    grade: string
+    targetAngle: string
+    angleMatch: string
+    levelMatch: string
+    bottomEdge: string
+    rightEdge: string
+    leftEdge: string
+    topEdge: string
+    flatSurface: string
+    tiltSlider: string
+    targetPresets: string
+  }
   permission: {
     title: string
     description: string
@@ -134,6 +151,23 @@ export const levelTranslations: Record<Locale, LevelProtractorTranslations> = {
       manualDialNoSensor: 'Manual Dial (No sensor):',
       settings: 'Settings',
     },
+    edge: {
+      auto: 'Auto Detect',
+      surface2d: 'Surface 2D',
+      edgeRuler: 'Edge Ruler',
+      slope: 'Slope',
+      grade: 'Grade',
+      targetAngle: 'Target',
+      angleMatch: 'Target reached',
+      levelMatch: 'Level (0.0°)',
+      bottomEdge: 'Bottom Edge',
+      rightEdge: 'Right Edge',
+      leftEdge: 'Left Edge',
+      topEdge: 'Top Edge',
+      flatSurface: 'Flat Surface',
+      tiltSlider: 'Tilt Simulation:',
+      targetPresets: 'Target Presets',
+    },
     permission: {
       title: 'Motion Sensors Permission',
       description: 'Device orientation permissions are required on iOS Safari for live gyroscope and compass tracking.',
@@ -211,6 +245,23 @@ export const levelTranslations: Record<Locale, LevelProtractorTranslations> = {
       manualDial: 'Ręczny obrót (brak czujnika):',
       manualDialNoSensor: 'Ręczny obrót (brak czujnika):',
       settings: 'Ustawienia',
+    },
+    edge: {
+      auto: 'Wykrywanie auto',
+      surface2d: 'Płaska 2D',
+      edgeRuler: 'Linijka krawędziowa',
+      slope: 'Nachylenie',
+      grade: 'Spadek',
+      targetAngle: 'Kąt docelowy',
+      angleMatch: 'Kąt osiągnięty',
+      levelMatch: 'Poziom (0.0°)',
+      bottomEdge: 'Dolna krawędź',
+      rightEdge: 'Prawa krawędź',
+      leftEdge: 'Lewa krawędź',
+      topEdge: 'Górna krawędź',
+      flatSurface: 'Płaska powierzchnia',
+      tiltSlider: 'Symulacja przechyłu:',
+      targetPresets: 'Wybór kąta',
     },
     permission: {
       title: 'Dostęp do czujników ruchu',

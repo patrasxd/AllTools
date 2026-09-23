@@ -100,3 +100,107 @@ export function getCardinalDirection(deg: number): { code: string; en: string; p
     pl: match.pl,
   }
 }
+
+export type PhoneOrientation = 'flat' | 'portrait' | 'landscape-right' | 'landscape-left' | 'portrait-inverted'
+
+export interface EdgeLevelResult {
+  orientation: PhoneOrientation
+  angle: number
+  absAngle: number
+  slopePercent: number
+  isLevel: boolean
+  isTargetMatch: boolean
+}
+
+/** Detects if the phone is lying flat on a table or standing on one of its 4 edges */
+export function detectPhoneOrientation(pitch: number, roll: number): PhoneOrientation {
+  const absPitch = Math.abs(pitch)
+  const absRoll = Math.abs(roll)
+
+  // Flat on surface (face up or face down)
+  if (absPitch < 35 && absRoll < 35) {
+    return 'flat'
+  }
+
+  // Right edge resting down (landscape)
+  if (roll >= 45) {
+    return 'landscape-right'
+  }
+
+  // Left edge resting down (landscape)
+  if (roll <= -45) {
+    return 'landscape-left'
+  }
+
+  // Top edge resting down (portrait inverted)
+  if (pitch <= -55) {
+    return 'portrait-inverted'
+  }
+
+  // Bottom edge resting down (portrait upright)
+  return 'portrait'
+}
+
+/** Calculates grade/slope percentage: tan(angle) * 100 */
+export function calculateSlopePercent(angleDeg: number): number {
+  const absAngle = Math.abs(angleDeg)
+  if (absAngle >= 89.9) return 999.9
+  const rad = (absAngle * Math.PI) / 180
+  const slope = Math.tan(rad) * 100
+  return Math.round(slope * 10) / 10
+}
+
+/** Computes ruler / tubular spirit level angles and slope for edge-resting orientation */
+export function calculateEdgeLevel(
+  pitch: number,
+  roll: number,
+  calibratedPitch: number = 0,
+  calibratedRoll: number = 0,
+  tolerance: number = 0.5,
+  targetAngle: number = 0,
+  forcedOrientation?: PhoneOrientation
+): EdgeLevelResult {
+  const effectivePitch = pitch - calibratedPitch
+  const effectiveRoll = roll - calibratedRoll
+
+  const orientation =
+    forcedOrientation && forcedOrientation !== 'flat'
+      ? forcedOrientation
+      : detectPhoneOrientation(effectivePitch, effectiveRoll)
+
+  let rawAngle = 0
+  switch (orientation) {
+    case 'landscape-right':
+      rawAngle = effectivePitch
+      break
+    case 'landscape-left':
+      rawAngle = -effectivePitch
+      break
+    case 'portrait-inverted':
+      rawAngle = -effectiveRoll
+      break
+    case 'portrait':
+    default:
+      rawAngle = effectiveRoll
+      break
+  }
+
+  // Normalise angle to -90 to +90
+  const angle = Math.round(Math.max(-90, Math.min(90, rawAngle)) * 10) / 10
+  const absAngle = Math.abs(angle)
+  const slopePercent = calculateSlopePercent(absAngle)
+
+  const isLevel = absAngle <= tolerance
+  const diffFromTarget = Math.abs(absAngle - targetAngle)
+  const isTargetMatch = diffFromTarget <= tolerance
+
+  return {
+    orientation,
+    angle,
+    absAngle,
+    slopePercent,
+    isLevel,
+    isTargetMatch,
+  }
+}
+

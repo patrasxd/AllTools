@@ -4,6 +4,9 @@ import {
   computeLapsStats,
   recordNewLap,
   calculateIntervalTick,
+  calculateTotalSets,
+  computeCumulativeSetNumber,
+  transitionIntervalPhase,
   CIRCLE_CIRCUMFERENCE,
 } from '../utils/timerMath'
 import type { Lap } from '../types'
@@ -106,4 +109,66 @@ describe('timerMath', () => {
       expect(tick.isExpired).toBe(true)
     })
   })
+
+  describe('multi-step and loop interval math', () => {
+    const steps = [
+      { id: '1', cycles: 2, sets: 8, workSec: 30, restSec: 15 }, // 2 x 8 = 16 sets
+      { id: '2', cycles: 1, sets: 5, workSec: 20, restSec: 10 }, // 1 x 5 = 5 sets
+    ]
+
+    it('calculates total sets across all steps and loops (2x8 + 1x5 = 21 sets)', () => {
+      const total = calculateTotalSets(steps)
+      expect(total).toBe(21)
+    })
+
+    it('calculates cumulative set number accurately', () => {
+      // Step 1, cycle 1, set 1 -> 1
+      expect(computeCumulativeSetNumber(0, 1, 1, steps)).toBe(1)
+      // Step 1, cycle 1, set 8 -> 8
+      expect(computeCumulativeSetNumber(0, 1, 8, steps)).toBe(8)
+      // Step 1, cycle 2, set 1 -> 9
+      expect(computeCumulativeSetNumber(0, 2, 1, steps)).toBe(9)
+      // Step 1, cycle 2, set 8 -> 16
+      expect(computeCumulativeSetNumber(0, 2, 8, steps)).toBe(16)
+      // Step 2, cycle 1, set 1 -> 17
+      expect(computeCumulativeSetNumber(1, 1, 1, steps)).toBe(17)
+      // Step 2, cycle 1, set 5 -> 21
+      expect(computeCumulativeSetNumber(1, 1, 5, steps)).toBe(21)
+    })
+
+    it('transitions correctly between sets, cycles, and steps', () => {
+      // Set 1 Work expires -> goes to rest
+      const t1 = transitionIntervalPhase(0, 1, 1, 'work', steps)
+      expect(t1.phase).toBe('rest')
+      expect(t1.set).toBe(1)
+      expect(t1.durationSec).toBe(15)
+
+      // Set 1 Rest expires -> goes to Set 2 Work
+      const t2 = transitionIntervalPhase(0, 1, 1, 'rest', steps)
+      expect(t2.phase).toBe('work')
+      expect(t2.set).toBe(2)
+      expect(t2.durationSec).toBe(30)
+
+      // Cycle 1 Set 8 Rest expires -> transitions to Cycle 2 Set 1 Work
+      const tCycle = transitionIntervalPhase(0, 1, 8, 'rest', steps)
+      expect(tCycle.stepIndex).toBe(0)
+      expect(tCycle.cycle).toBe(2)
+      expect(tCycle.set).toBe(1)
+      expect(tCycle.phase).toBe('work')
+
+      // Cycle 2 Set 8 Rest expires -> transitions to Step 2 Cycle 1 Set 1 Work
+      const tStep = transitionIntervalPhase(0, 2, 8, 'rest', steps)
+      expect(tStep.stepIndex).toBe(1)
+      expect(tStep.cycle).toBe(1)
+      expect(tStep.set).toBe(1)
+      expect(tStep.phase).toBe('work')
+      expect(tStep.durationSec).toBe(20)
+
+      // Final step Set 5 Rest expires -> finished
+      const tDone = transitionIntervalPhase(1, 1, 5, 'work', steps)
+      expect(tDone.phase).toBe('finished')
+      expect(tDone.isFinished).toBe(true)
+    })
+  })
 })
+

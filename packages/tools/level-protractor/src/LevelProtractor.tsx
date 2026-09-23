@@ -12,18 +12,22 @@ import {
   RestartIcon,
 } from '@all/ui'
 import { BubbleLevel } from './components/BubbleLevel'
+import { TubularLevel } from './components/TubularLevel'
 import { Protractor } from './components/Protractor'
 import { Compass } from './components/Compass'
 import {
-  requiresOrientationPermission,
-  requestOrientationPermission,
   type TiltResult,
   type ProtractorAngleResult,
+  type EdgeLevelResult,
+  type PhoneOrientation,
+  detectPhoneOrientation,
+  calculateSlopePercent,
 } from './utils/sensorUtils'
 import { levelTranslations } from './i18n'
 import type {
   ToolComponentProps,
   LevelProtractorTab,
+  LevelViewMode,
   LevelStats,
   ProtractorStats,
   CompassStats,
@@ -74,25 +78,42 @@ export function LevelProtractor({
     } catch {}
   }, [tolerance])
 
-  // Permission state for iOS Safari 13+ (Archetype 3)
-  const [permissionState, setPermissionState] = useState<'granted' | 'needed' | 'denied'>(() => {
-    if (typeof window !== 'undefined' && requiresOrientationPermission()) {
-      return 'needed'
-    }
-    return 'granted'
+  // ─── Level State ───
+  const [levelViewMode, setLevelViewMode] = useState<LevelViewMode>(() => {
+    try {
+      const saved = localStorage.getItem('alltools:level:viewMode') as LevelViewMode
+      if (saved && (saved === 'auto' || saved === 'surface' || saved === 'edge')) {
+        return saved
+      }
+    } catch {}
+    return 'auto'
   })
 
+  const [targetAngle, setTargetAngle] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('alltools:level:targetAngle')
+      if (saved) {
+        const val = parseFloat(saved)
+        if (Number.isFinite(val)) return val
+      }
+    } catch {}
+    return 0
+  })
 
-  const handleRequestPermission = async () => {
-    const res = await requestOrientationPermission()
-    if (res === 'granted') {
-      setPermissionState('granted')
-    } else {
-      setPermissionState('denied')
-    }
-  }
+  const [forcedEdge, setForcedEdge] = useState<PhoneOrientation>('flat')
 
-  // ─── Level State ───
+  useEffect(() => {
+    try {
+      localStorage.setItem('alltools:level:viewMode', levelViewMode)
+    } catch {}
+  }, [levelViewMode])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('alltools:level:targetAngle', String(targetAngle))
+    } catch {}
+  }, [targetAngle])
+
   const [pitch, setPitch] = useState<number>(0)
   const [roll, setRoll] = useState<number>(0)
   const [calibratedPitch, setCalibratedPitch] = useState<number>(() => {
@@ -125,7 +146,54 @@ export function LevelProtractor({
     pitch: 0,
     roll: 0,
     isLevel: false,
+    viewMode: 'auto',
+    edgeAngle: 0,
+    slopePercent: 0,
+    targetAngle: 0,
+    isTargetMatch: false,
   })
+
+  // Detect edge vs surface
+  const detectedOrientation = detectPhoneOrientation(
+    pitch - calibratedPitch,
+    roll - calibratedRoll
+  )
+  const isAutoEdge = levelViewMode === 'auto' && detectedOrientation !== 'flat'
+  const isEdgeView = levelViewMode === 'edge' || isAutoEdge
+
+  const handleEdgeStatsChange = useCallback(
+    (stats: EdgeLevelResult) => {
+      setLevelStats({
+        pitch: Math.round((pitch - calibratedPitch) * 10) / 10,
+        roll: Math.round((roll - calibratedRoll) * 10) / 10,
+        isLevel: stats.isLevel,
+        viewMode: levelViewMode,
+        edgeAngle: stats.absAngle,
+        slopePercent: stats.slopePercent,
+        targetAngle: targetAngle,
+        isTargetMatch: stats.isTargetMatch,
+        orientation: stats.orientation,
+      })
+    },
+    [pitch, roll, calibratedPitch, calibratedRoll, levelViewMode, targetAngle]
+  )
+
+  const handleSurfaceStatsChange = useCallback(
+    (stats: TiltResult) => {
+      const absRoll = Math.abs(stats.roll)
+      setLevelStats({
+        pitch: stats.pitch,
+        roll: stats.roll,
+        isLevel: stats.isLevel,
+        viewMode: levelViewMode,
+        edgeAngle: absRoll,
+        slopePercent: calculateSlopePercent(absRoll),
+        targetAngle: 0,
+        isTargetMatch: stats.isLevel,
+      })
+    },
+    [levelViewMode]
+  )
 
   // ─── Protractor State ───
   const [arm1Angle, setArm1Angle] = useState<number>(0)
@@ -147,6 +215,34 @@ export function LevelProtractor({
   // ─── StatsHeader Items Construction ───
   const statsHeaderElement = useMemo(() => {
     if (activeTab === 'level') {
+      if (isEdgeView) {
+        return (
+          <StatsHeader
+            items={[
+              {
+                key: 'angle',
+                label: t.headers.angle,
+                value: `${(levelStats.edgeAngle ?? 0).toFixed(1)}°`,
+              },
+              {
+                key: 'slope',
+                label: t.edge.slope,
+                value: `${(levelStats.slopePercent ?? 0) >= 999 ? '∞' : `${(levelStats.slopePercent ?? 0).toFixed(1)}%`}`,
+              },
+              {
+                key: 'status',
+                label: t.headers.status,
+                value: levelStats.isTargetMatch
+                  ? (levelStats.targetAngle === 0 ? t.headers.levelStatus : `${t.edge.targetAngle} ${levelStats.targetAngle}°`)
+                  : levelStats.isLevel
+                  ? t.headers.levelStatus
+                  : t.headers.tiltStatus,
+              },
+            ]}
+          />
+        )
+      }
+
       return (
         <StatsHeader
           items={[
@@ -213,7 +309,7 @@ export function LevelProtractor({
         />
       )
     }
-  }, [activeTab, levelStats, protractorStats, compassStats, t.headers])
+  }, [activeTab, isEdgeView, levelStats, protractorStats, compassStats, t.headers, t.edge])
 
   // Sync to shell navbar if present
   useEffect(() => {
@@ -228,6 +324,15 @@ export function LevelProtractor({
       { value: 'compass' as const, label: t.tabs.compass, id: 'tab-compass' },
     ],
     [t.tabs]
+  )
+
+  const viewModeOptions = useMemo(
+    () => [
+      { value: 'auto' as const, label: t.edge.auto, id: 'vmode-auto' },
+      { value: 'surface' as const, label: t.edge.surface2d, id: 'vmode-surface' },
+      { value: 'edge' as const, label: t.edge.edgeRuler, id: 'vmode-edge' },
+    ],
+    [t.edge]
   )
 
   const toleranceOptions = useMemo(
@@ -257,20 +362,49 @@ export function LevelProtractor({
         allowDpadToggle={false}
         board={
           <div className="level-stage">
+            {activeTab === 'level' && (
+              <div className="level-view-mode-bar">
+                <PillGroup
+                  size="sm"
+                  options={viewModeOptions}
+                  value={levelViewMode}
+                  onChange={(val) => setLevelViewMode(val as LevelViewMode)}
+                />
+              </div>
+            )}
             <Card variant="outlined" padding="md" className="level-instrument-card">
               {activeTab === 'level' ? (
-                <BubbleLevel
-                  locale={locale}
-                  isEink={isEink}
-                  onStatsChange={(stats: TiltResult) => setLevelStats(stats)}
-                  calibratedPitch={calibratedPitch}
-                  calibratedRoll={calibratedRoll}
-                  pitch={pitch}
-                  roll={roll}
-                  setPitch={setPitch}
-                  setRoll={setRoll}
-                  tolerance={tolerance}
-                />
+                isEdgeView ? (
+                  <TubularLevel
+                    locale={locale}
+                    isEink={isEink}
+                    calibratedPitch={calibratedPitch}
+                    calibratedRoll={calibratedRoll}
+                    pitch={pitch}
+                    roll={roll}
+                    setPitch={setPitch}
+                    setRoll={setRoll}
+                    tolerance={tolerance}
+                    targetAngle={targetAngle}
+                    setTargetAngle={setTargetAngle}
+                    forcedEdge={forcedEdge}
+                    setForcedEdge={setForcedEdge}
+                    onEdgeStatsChange={handleEdgeStatsChange}
+                  />
+                ) : (
+                  <BubbleLevel
+                    locale={locale}
+                    isEink={isEink}
+                    onStatsChange={handleSurfaceStatsChange}
+                    calibratedPitch={calibratedPitch}
+                    calibratedRoll={calibratedRoll}
+                    pitch={pitch}
+                    roll={roll}
+                    setPitch={setPitch}
+                    setRoll={setRoll}
+                    tolerance={tolerance}
+                  />
+                )
               ) : activeTab === 'protractor' ? (
                 <Protractor
                   locale={locale}
@@ -298,98 +432,92 @@ export function LevelProtractor({
           </div>
         }
         controls={
-          <ControlsBar>
-            {permissionState === 'needed' && (
-              <Button
-                id="level-reopen-permission-btn"
-                variant="secondary"
-                size="sm"
-                onClick={handleRequestPermission}
-              >
-                {t.permission.grantButton}
-              </Button>
-            )}
-
-            {activeTab === 'level' ? (
-              <>
-                <Button
-                  id="level-calibrate-btn"
-                  variant="primary"
-                  size="sm"
-                  onClick={calibrateLevel}
-                >
-                  {t.controls.calibrate}
-                </Button>
-                {(calibratedPitch !== 0 || calibratedRoll !== 0) && (
+          <ControlsBar className="level-controls">
+            {/* Functional buttons row above navigation */}
+            <div className="level-controls-row">
+              {activeTab === 'level' ? (
+                <>
                   <Button
-                    id="level-reset-zero-btn"
+                    id="level-calibrate-btn"
+                    variant="primary"
+                    size="sm"
+                    onClick={calibrateLevel}
+                  >
+                    {t.controls.calibrate}
+                  </Button>
+                  {(calibratedPitch !== 0 || calibratedRoll !== 0) && (
+                    <Button
+                      id="level-reset-zero-btn"
+                      variant="secondary"
+                      size="sm"
+                      icon={<RestartIcon />}
+                      onClick={resetLevelCalibration}
+                      title={t.controls.resetZero}
+                    >
+                      {t.controls.resetZero}
+                    </Button>
+                  )}
+                </>
+              ) : activeTab === 'protractor' ? (
+                <>
+                  <Button
+                    id="protractor-freeze-btn"
+                    variant={isFrozen ? 'primary' : 'secondary'}
+                    size="sm"
+                    onClick={() => setIsFrozen(!isFrozen)}
+                  >
+                    {isFrozen ? t.controls.unlock : t.controls.lock}
+                  </Button>
+                  <Button
+                    id="protractor-reset-btn"
                     variant="secondary"
                     size="sm"
-                    icon={<RestartIcon />}
-                    onClick={resetLevelCalibration}
-                    title={t.controls.resetZero}
+                    onClick={() => {
+                      setArm1Angle(0)
+                      setArm2Angle(45)
+                      setIsFrozen(false)
+                    }}
                   >
-                    {t.controls.resetZero}
+                    {t.controls.reset45}
                   </Button>
-                )}
-              </>
-            ) : activeTab === 'protractor' ? (
-              <>
+                </>
+              ) : (
                 <Button
-                  id="protractor-freeze-btn"
+                  id="compass-freeze-btn"
                   variant={isFrozen ? 'primary' : 'secondary'}
                   size="sm"
                   onClick={() => setIsFrozen(!isFrozen)}
                 >
                   {isFrozen ? t.controls.unlock : t.controls.lock}
                 </Button>
-                <Button
-                  id="protractor-reset-btn"
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => {
-                    setArm1Angle(0)
-                    setArm2Angle(45)
-                    setIsFrozen(false)
-                  }}
-                >
-                  {t.controls.reset45}
-                </Button>
-              </>
-            ) : (
+              )}
+
+              {/* Tool & Sensor Settings Button */}
               <Button
-                id="compass-freeze-btn"
-                variant={isFrozen ? 'primary' : 'secondary'}
+                id="level-settings-btn"
+                variant="secondary"
                 size="sm"
-                onClick={() => setIsFrozen(!isFrozen)}
+                icon={<SettingsIcon />}
+                onClick={() => setIsSettingsOpen(true)}
+                title={t.controls.settings}
+                aria-label={t.controls.settings}
               >
-                {isFrozen ? t.controls.unlock : t.controls.lock}
+                {t.controls.settings}
               </Button>
-            )}
+            </div>
 
-            {/* Mode Switcher Pills */}
-            <PillGroup
-              size="sm"
-              options={tabOptions}
-              value={activeTab}
-              onChange={(newTab) => {
-                setActiveTab(newTab)
-                setIsFrozen(false)
-              }}
-            />
-
-            {/* Tool & Sensor Settings Button */}
-            <Button
-              id="level-settings-btn"
-              variant="secondary"
-              size="sm"
-              icon={<SettingsIcon />}
-              onClick={() => setIsSettingsOpen(true)}
-              title={t.controls.settings}
-              aria-label={t.controls.settings}
-            >
-              {t.controls.settings}
-            </Button>
+            {/* Mode Switcher Navigation Pills at the bottom */}
+            <div className="level-controls-nav">
+              <PillGroup
+                size="sm"
+                options={tabOptions}
+                value={activeTab}
+                onChange={(newTab) => {
+                  setActiveTab(newTab)
+                  setIsFrozen(false)
+                }}
+              />
+            </div>
           </ControlsBar>
         }
       />

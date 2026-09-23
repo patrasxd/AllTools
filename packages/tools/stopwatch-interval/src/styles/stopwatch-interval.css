@@ -7,24 +7,26 @@
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-/* ─── Status Block (Header) ─────────────────────────────────── */
+/* ─── Status Block (Top HUD) ────────────────────────────────── */
 .stopwatch-status {
   text-align: center;
-  min-height: 2.5rem;
+  min-height: 2rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.2rem;
-  margin-bottom: 0.5rem;
+  gap: 0.15rem;
 }
 
 .stopwatch-status-text {
   font-family: var(--all-font-sans, inherit);
   font-weight: 600;
-  font-size: 1.05rem;
+  font-size: 1rem;
   color: var(--all-text, currentColor);
   letter-spacing: -0.01em;
   line-height: 1.2;
@@ -32,38 +34,46 @@
 
 .stopwatch-status-sub {
   font-family: var(--all-font-mono, monospace);
-  font-size: 0.6875rem;
-  color: var(--all-text-muted, #6b7280);
-  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  color: var(--all-text-muted, #737373);
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  font-weight: 500;
 }
 
-/* ─── Card Container (Board) ────────────────────────────────── */
-.stopwatch-card {
+/* ─── Main Board Container ──────────────────────────────────── */
+.stopwatch-root .all-board-layout__board-stage {
+  height: 100%;
+  min-height: 0;
   width: 100%;
-  max-width: 480px;
+}
+
+.stopwatch-board {
+  width: 100%;
+  height: 100%;
+  max-width: 520px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 1.25rem 1rem !important;
   box-sizing: border-box;
+  overflow: hidden;
+  gap: var(--all-space-2, 0.5rem);
 }
 
-.stopwatch-display-content {
+/* ─── Digits Display ────────────────────────────────────────── */
+.stopwatch-display {
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
+  padding: var(--all-space-2, 0.5rem) 0;
+  flex-shrink: 0;
 }
 
 .stopwatch-digits {
   font-family: var(--all-font-mono, monospace);
-  font-size: clamp(2.75rem, 7vw, 4.5rem);
+  font-size: clamp(3.25rem, 13vw, 5rem);
   font-weight: 700;
   line-height: 1;
   letter-spacing: -0.03em;
@@ -73,49 +83,70 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ─── Scrollable Laps Container ─────────────────────────────── */
-.stopwatch-laps-container {
+/* ─── Scrollable Laps Container (Always Present) ────────────── */
+.stopwatch-laps-wrapper {
   width: 100%;
-  max-width: 440px;
-  height: 130px;
-  overflow-y: auto;
-  border: 1px solid var(--all-border, #e5e7eb);
-  border-radius: var(--all-radius-sm, 6px);
-  background: var(--all-surface, #ffffff);
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+  flex: 1 1 auto;
+  min-height: 120px;
+  max-height: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--all-border, #262626);
+  border-radius: var(--all-radius-md, 8px);
+  background: var(--all-surface, #141414);
+  box-shadow: var(--all-shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.3));
 }
 
 .stopwatch-laps-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.35rem 0.75rem;
+  padding: 0.5rem 1rem;
   font-family: var(--all-font-sans, inherit);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--all-text-muted, #6b7280);
-  border-bottom: 1px solid var(--all-border, #e5e7eb);
-  background: var(--all-surface-elevated, var(--all-surface, #f9fafb));
+  color: var(--all-text-muted, #737373);
+  border-bottom: 1px solid var(--all-border, #262626);
+  background: var(--all-surface-2, #1c1c1c);
   position: sticky;
   top: 0;
   z-index: 2;
+  flex-shrink: 0;
+}
+
+.stopwatch-laps-list {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.stopwatch-laps-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  font-size: 0.875rem;
+  color: var(--all-text-muted, #737373);
+  font-style: italic;
+  text-align: center;
 }
 
 .stopwatch-lap-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.35rem 0.75rem;
+  padding: 0.6rem 1rem;
   font-family: var(--all-font-mono, monospace);
-  font-size: 0.8125rem;
-  border-bottom: 1px solid var(--all-border, #e5e7eb);
+  font-size: 0.9375rem;
+  border-bottom: 1px solid var(--all-border, #262626);
   color: var(--all-text, currentColor);
-  transition: background 150ms ease;
   font-variant-numeric: tabular-nums;
+  transition: background 120ms ease;
 }
 
 .stopwatch-lap-row:last-child {
@@ -123,52 +154,62 @@
 }
 
 .stopwatch-lap-row:hover {
-  background: var(--all-surface-elevated, #f3f4f6);
+  background: var(--all-surface-2, #1c1c1c);
 }
 
 .stopwatch-lap-row--best {
-  color: var(--all-accent, #3b82f6);
+  color: var(--all-success, #34d399);
   font-weight: 700;
 }
 
 .stopwatch-lap-row--worst {
-  color: var(--all-text-muted, #6b7280);
+  color: var(--all-danger, #f87171);
 }
 
-.stopwatch-lap-id {
-  color: var(--all-text-muted, #6b7280);
-  font-size: 0.75rem;
-  min-width: 45px;
+.stopwatch-lap-col-id {
+  color: var(--all-text-muted, #737373);
+  font-size: 0.8125rem;
+  min-width: 50px;
 }
 
-.stopwatch-lap-time {
+.stopwatch-lap-col-time {
   font-weight: 600;
   text-align: center;
 }
 
-.stopwatch-lap-total {
-  color: var(--all-text-muted, #6b7280);
-  font-size: 0.6875rem;
+.stopwatch-lap-col-total {
+  color: var(--all-text-muted, #737373);
+  font-size: 0.8125rem;
   text-align: right;
-  min-width: 65px;
+  min-width: 75px;
 }
 
-.stopwatch-lap-empty {
-  flex: 1;
+/* ─── Primary Big Action Buttons (Directly above bottom bar) ── */
+.stopwatch-primary-actions {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem 1rem;
-  font-size: 0.75rem;
-  color: var(--all-text-muted, #6b7280);
-  font-style: italic;
-  text-align: center;
+  gap: clamp(2rem, 8vw, 3.5rem);
+  padding: var(--all-space-2, 0.5rem) 0;
+  flex-shrink: 0;
+  width: 100%;
+  margin-top: auto;
 }
 
 /* ─── Interval Countdown Ring ───────────────────────────────── */
+.interval-display {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--all-space-2, 0.5rem) 0;
+  flex-shrink: 0;
+}
+
 .interval-ring-wrap {
   position: relative;
-  width: min(210px, min(100%, calc(100vh - 360px)));
+  width: min(200px, min(100%, calc(100vh - 420px)));
   aspect-ratio: 1;
   display: flex;
   align-items: center;
@@ -195,16 +236,16 @@
 
 .interval-phase-label {
   font-family: var(--all-font-sans, inherit);
-  font-size: 0.65rem;
-  font-weight: 600;
+  font-size: 0.75rem;
+  font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--all-text-muted, #6b7280);
+  color: var(--all-text-muted, #737373);
 }
 
 .interval-time-digits {
   font-family: var(--all-font-mono, monospace);
-  font-size: clamp(2.25rem, 5vw, 3.25rem);
+  font-size: clamp(2.5rem, 7vw, 3.25rem);
   font-weight: 700;
   line-height: 1;
   color: var(--all-text, currentColor);
@@ -213,17 +254,262 @@
 
 .interval-set-badge {
   font-family: var(--all-font-mono, monospace);
-  font-size: 0.7rem;
-  color: var(--all-text-muted, #6b7280);
+  font-size: 0.8125rem;
+  color: var(--all-text-muted, #737373);
 }
 
-/* ─── Bottom Controls Bar ───────────────────────────────────── */
+.interval-summary-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--all-space-2, 0.5rem);
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--all-radius-sm, 6px);
+  background: var(--all-surface-2, #1c1c1c);
+  border: 1px solid var(--all-border, #262626);
+  font-family: var(--all-font-mono, monospace);
+  color: var(--all-text, currentColor);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.interval-edit-btn {
+  font-family: var(--all-font-sans, inherit) !important;
+  font-size: 0.75rem !important;
+  margin-left: 0.5rem;
+  padding: 0 0.5rem !important;
+  height: 24px !important;
+}
+
+/* ─── Bottom Controls Bar (Standard row at bottom) ──────────── */
 .stopwatch-controls {
   width: 100%;
-  max-width: 480px;
+  max-width: 520px;
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  flex-direction: column !important;
   align-items: center;
+  justify-content: center;
+  gap: var(--all-space-2, 0.5rem);
+}
+
+.stopwatch-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--all-space-2, 0.5rem);
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.stopwatch-controls-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+/* ─── Custom Interval Form in Dialog ────────────────────────── */
+.custom-interval-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--all-space-4, 1rem);
+  padding: var(--all-space-2, 0.5rem) 0;
+  max-height: min(75vh, 520px);
+  overflow-y: auto;
+}
+
+.custom-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.custom-step-card {
+  background: var(--all-surface-2, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--all-border, rgba(255, 255, 255, 0.12));
+  border-radius: var(--all-radius-md, 8px);
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  box-sizing: border-box;
+}
+
+.custom-step-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.custom-step-title {
+  font-family: var(--all-font-mono, monospace);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--all-text, #ffffff);
+}
+
+.custom-step-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 0.5rem;
+  width: 100%;
+}
+
+.custom-step-summary-pill {
+  font-family: var(--all-font-mono, monospace);
+  font-size: 0.75rem;
+  color: var(--all-accent, #38bdf8);
+  background: var(--all-surface, rgba(255, 255, 255, 0.05));
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--all-radius-sm, 4px);
+  align-self: flex-start;
+}
+
+.custom-interval-routine-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--all-surface-elevated, rgba(255, 255, 255, 0.07));
+  border: 1px solid var(--all-border-2, rgba(255, 255, 255, 0.18));
+  border-radius: var(--all-radius-md, 8px);
+  padding: 0.65rem 0.85rem;
+  font-family: var(--all-font-mono, monospace);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--all-text, #ffffff);
+}
+
+/* ─── Stepper Controls ─────────────────────────────────────── */
+.interval-stepper-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.interval-stepper-label {
+  font-size: var(--all-font-size-xs, 0.75rem);
+  font-weight: 500;
+  color: var(--all-text, #ffffff);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.interval-stepper-control {
+  display: flex;
+  align-items: stretch;
+  background: var(--all-surface, #18181b);
+  border: 1px solid var(--all-border, rgba(255, 255, 255, 0.15));
+  border-radius: var(--all-radius-md, 8px);
+  overflow: hidden;
+  height: 38px;
+  box-sizing: border-box;
+  transition: border-color var(--all-duration-fast, 150ms) ease, box-shadow var(--all-duration-fast, 150ms) ease;
+}
+
+.interval-stepper-control:focus-within {
+  border-color: var(--all-accent, #38bdf8);
+  box-shadow: 0 0 0 2px var(--all-focus-ring, rgba(56, 189, 248, 0.25));
+}
+
+.interval-stepper-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  background: var(--all-surface-elevated, rgba(255, 255, 255, 0.06));
+  border: none;
+  color: var(--all-text, #ffffff);
+  font-size: 1.15rem;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: background-color var(--all-duration-fast, 150ms) ease, color var(--all-duration-fast, 150ms) ease;
+}
+
+.interval-stepper-btn:hover:not(:disabled) {
+  background: var(--all-surface-hover, rgba(255, 255, 255, 0.14));
+  color: var(--all-accent, #38bdf8);
+}
+
+.interval-stepper-btn:active:not(:disabled) {
+  background: var(--all-surface-active, rgba(255, 255, 255, 0.2));
+}
+
+.interval-stepper-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.interval-stepper-input-wrapper {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  padding: 0 0.25rem;
+}
+
+.interval-stepper-input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--all-text, #ffffff);
+  font-family: var(--all-font-mono, monospace);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: center;
+  outline: none;
+  padding: 0;
+  margin: 0;
+  -moz-appearance: textfield;
+}
+
+.interval-stepper-input::-webkit-inner-spin-button,
+.interval-stepper-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.interval-stepper-unit {
+  font-size: 0.75rem;
+  color: var(--all-text-dim, rgba(255, 255, 255, 0.5));
+  font-family: var(--all-font-mono, monospace);
+  margin-left: 2px;
+}
+
+/* ─── E-Ink Overrides ───────────────────────────────────────── */
+[data-eink='true'] .stopwatch-laps-wrapper,
+[data-eink='true'] .interval-summary-card {
+  border: var(--all-border-width, 2px) solid var(--all-border) !important;
+  box-shadow: none !important;
+}
+
+[data-eink='true'] .stopwatch-laps-header {
+  border-bottom: var(--all-border-width, 2px) solid var(--all-border) !important;
+}
+
+[data-eink='true'] .stopwatch-lap-row {
+  border-bottom: 1px solid var(--all-border) !important;
+}
+
+[data-eink='true'] .stopwatch-lap-row--best {
+  text-decoration: underline;
+  font-weight: 900;
+}
+
+[data-eink='true'] .interval-stepper-control {
+  border: var(--all-border-width, 2px) solid var(--all-border) !important;
+}
+
+[data-eink='true'] .interval-stepper-btn {
+  border-right: 1px solid var(--all-border) !important;
+}
+
+[data-eink='true'] .interval-stepper-btn--inc {
+  border-right: none !important;
+  border-left: 1px solid var(--all-border) !important;
 }

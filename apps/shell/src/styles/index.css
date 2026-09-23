@@ -40,19 +40,20 @@
   --space-16: 4rem;
   --space-20: 5rem;
   --space-24: 6rem;
+  --all-header-height: 64px;
 }
 
 [data-theme='light'] {
-  --bg:         #f2f1ec;
+  --bg:         #f8fafc;
   --surface:    #ffffff;
-  --surface-2:  #ebebeb;
-  --border:     #dcdcdc;
-  --border-2:   #c0c0c0;
-  --text:       #111111;
-  --text-muted: #aaaaaa;
-  --text-dim:   #777777;
-  --accent:     #000000;
-  --accent-dim: #333333;
+  --surface-2:  #f1f5f9;
+  --border:     #e2e8f0;
+  --border-2:   #cbd5e1;
+  --text:       #0f172a;
+  --text-muted: #64748b;
+  --text-dim:   #475569;
+  --accent:     #0f172a;
+  --accent-dim: #334155;
 }
 
 /* ─── E-reader (E-ink) Mode ───────────────────────────────── */
@@ -203,6 +204,7 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  -webkit-tap-highlight-color: transparent;
 }
 
 html {
@@ -215,6 +217,7 @@ html {
   overflow: hidden;
   background-color: var(--bg);
   color: var(--text);
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -227,6 +230,21 @@ body {
   overflow: hidden;
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Allow text selection where users legitimately need it */
+input, textarea, [contenteditable='true'], pre, code, .selectable-text {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* Prevent blue focus outline on mouse/touch clicks while preserving keyboard focus-visible accessibility */
+:focus:not(:focus-visible) {
+  outline: none;
 }
 
 /* Noise grain overlay */
