@@ -54,11 +54,8 @@ export default tseslint.config(
       '@typescript-eslint/no-empty-object-type': 'warn',
 
       // React hooks rules
+      'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
-      'react-hooks/set-state-in-effect': 'warn',
-      'react-hooks/refs': 'warn',
-      'react-hooks/purity': 'warn',
-      'react-hooks/immutability': 'warn',
 
       // JSX A11y rules
       'jsx-a11y/click-events-have-key-events': 'warn',
