@@ -27,7 +27,7 @@ describe('rulerMath utilities', () => {
 
   describe('Standard Dimensions & PPM Initialization', () => {
     it('defines ISO 7810 ID-1 card dimensions accurately', () => {
-      expect(CARD_LONG_MM).toBe(85.60)
+      expect(CARD_LONG_MM).toBe(85.6)
       expect(CARD_SHORT_MM).toBe(53.98)
     })
 
@@ -70,14 +70,14 @@ describe('rulerMath utilities', () => {
     it('calculates proportional card height based on aspect ratio', () => {
       // Card in landscape: width 342px, long side 85.6mm, short side 53.98mm
       const height = calculateCardHeightPx(342, CARD_LONG_MM, CARD_SHORT_MM)
-      const expected = Math.round(342 * (53.98 / 85.60))
+      const expected = Math.round(342 * (53.98 / 85.6))
       expect(height).toBe(expected)
     })
 
     it('calculates proportional card height in portrait orientation', () => {
       // Card in portrait: width 216px, short side 53.98mm, long side 85.60mm
       const height = calculateCardHeightPx(216, CARD_SHORT_MM, CARD_LONG_MM)
-      const expected = Math.round(216 * (85.60 / 53.98))
+      const expected = Math.round(216 * (85.6 / 53.98))
       expect(height).toBe(expected)
     })
 

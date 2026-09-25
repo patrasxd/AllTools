@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import {
-  generatePayload,
-  formatCameraName,
-  clampZoom,
-  isWebUrl,
-} from '../utils/qrPayload'
+import { generatePayload, formatCameraName, clampZoom, isWebUrl } from '../utils/qrPayload'
 import type { CameraLabels } from '../types'
 
 const mockCameraLabels: CameraLabels = {
@@ -19,9 +14,7 @@ const mockCameraLabels: CameraLabels = {
 describe('qrPayload pure utilities', () => {
   describe('generatePayload', () => {
     it('generates trimmed url payload', () => {
-      expect(generatePayload('url', { urlValue: '  https://antigravity.dev  ' })).toBe(
-        'https://antigravity.dev'
-      )
+      expect(generatePayload('url', { urlValue: '  https://antigravity.dev  ' })).toBe('https://antigravity.dev')
     })
 
     it('generates plain text payload', () => {
@@ -50,9 +43,7 @@ describe('qrPayload pure utilities', () => {
         contactName: 'Jane Doe',
         contactPhone: '+1 555 123 4567',
       })
-      expect(payload).toBe(
-        'BEGIN:VCARD\nVERSION:3.0\nFN:Jane Doe\nTEL:+1 555 123 4567\nEND:VCARD'
-      )
+      expect(payload).toBe('BEGIN:VCARD\nVERSION:3.0\nFN:Jane Doe\nTEL:+1 555 123 4567\nEND:VCARD')
     })
 
     it('generates vCard payload with email when provided', () => {
@@ -62,40 +53,30 @@ describe('qrPayload pure utilities', () => {
         contactEmail: 'jane@example.com',
       })
       expect(payload).toBe(
-        'BEGIN:VCARD\nVERSION:3.0\nFN:Jane Doe\nTEL:+1 555 123 4567\nEMAIL:jane@example.com\nEND:VCARD'
+        'BEGIN:VCARD\nVERSION:3.0\nFN:Jane Doe\nTEL:+1 555 123 4567\nEMAIL:jane@example.com\nEND:VCARD',
       )
     })
   })
 
   describe('formatCameraName', () => {
     it('detects front camera from label', () => {
-      expect(formatCameraName({ label: 'Front Facing Camera 0' }, 0, mockCameraLabels)).toBe(
-        'Front Camera'
-      )
+      expect(formatCameraName({ label: 'Front Facing Camera 0' }, 0, mockCameraLabels)).toBe('Front Camera')
     })
 
     it('detects ultrawide camera from label', () => {
-      expect(formatCameraName({ label: '0.5x Ultra Wide Camera' }, 1, mockCameraLabels)).toBe(
-        'Ultra Wide'
-      )
+      expect(formatCameraName({ label: '0.5x Ultra Wide Camera' }, 1, mockCameraLabels)).toBe('Ultra Wide')
     })
 
     it('detects telephoto camera from label', () => {
-      expect(formatCameraName({ label: '3x Telephoto Optical' }, 2, mockCameraLabels)).toBe(
-        'Telephoto'
-      )
+      expect(formatCameraName({ label: '3x Telephoto Optical' }, 2, mockCameraLabels)).toBe('Telephoto')
     })
 
     it('detects main camera from label', () => {
-      expect(formatCameraName({ label: 'Back 0 Main Camera (1x)' }, 0, mockCameraLabels)).toBe(
-        'Main Camera'
-      )
+      expect(formatCameraName({ label: 'Back 0 Main Camera (1x)' }, 0, mockCameraLabels)).toBe('Main Camera')
     })
 
     it('cleans parenthetical details from generic device labels', () => {
-      expect(formatCameraName({ label: 'Logitech C920 (046d:082d)' }, 0, mockCameraLabels)).toBe(
-        'Logitech C920'
-      )
+      expect(formatCameraName({ label: 'Logitech C920 (046d:082d)' }, 0, mockCameraLabels)).toBe('Logitech C920')
     })
 
     it('falls back to indexed name when label is empty', () => {

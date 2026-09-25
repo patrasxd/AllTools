@@ -4,18 +4,13 @@ import type { PdfPageItem, SignaturePosition, SignatureCoordinates } from '../ty
 
 // Set worker source for offline PDF.js rendering using standard URL resolution
 try {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-    'pdfjs-dist/build/pdf.worker.min.mjs',
-    import.meta.url
-  ).toString()
+  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString()
 } catch {}
 
 /**
  * Renders small JPEG thumbnails for each page of a PDF document using PDF.js.
  */
-export async function renderPdfThumbnails(
-  file: File
-): Promise<{ url: string; aspectRatio: number }[]> {
+export async function renderPdfThumbnails(file: File): Promise<{ url: string; aspectRatio: number }[]> {
   try {
     const arrayBuffer = await file.arrayBuffer()
     const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) })
@@ -55,9 +50,7 @@ export async function renderPdfThumbnails(
 /**
  * Reads basic PDF structure and returns page count and page descriptor list with thumbnails.
  */
-export async function loadPdfInfo(
-  file: File
-): Promise<{ pageCount: number; pages: PdfPageItem[] }> {
+export async function loadPdfInfo(file: File): Promise<{ pageCount: number; pages: PdfPageItem[] }> {
   const arrayBuffer = await file.arrayBuffer()
   const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true })
   const pageCount = pdfDoc.getPageCount()
@@ -114,7 +107,7 @@ export async function mergePdfs(files: File[]): Promise<Blob> {
  */
 export async function extractAndRotatePages(
   file: File,
-  pagesToExport: { pageIndex: number; rotation: number }[]
+  pagesToExport: { pageIndex: number; rotation: number }[],
 ): Promise<Blob> {
   const arrayBuffer = await file.arrayBuffer()
   const sourcePdf = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true })
@@ -175,7 +168,7 @@ export async function signPdf(
   targetPageIndex: number = 0,
   position: SignaturePosition = 'bottom-right',
   customCoordinates?: SignatureCoordinates,
-  scale: number = 1
+  scale: number = 1,
 ): Promise<Blob> {
   const arrayBuffer = await file.arrayBuffer()
   const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true })
@@ -220,8 +213,8 @@ export async function signPdf(
     // Convert 0..100 percentage from top-left (screen) to PDF coordinates (origin at bottom-left)
     const centerX = (customCoordinates.xPercent / 100) * pageWidth
     const centerY = (customCoordinates.yPercent / 100) * pageHeight
-    x = centerX - (sigWidth / 2)
-    y = pageHeight - centerY - (sigHeight / 2)
+    x = centerX - sigWidth / 2
+    y = pageHeight - centerY - sigHeight / 2
   } else if (position === 'bottom-left') {
     x = 45
     y = 45

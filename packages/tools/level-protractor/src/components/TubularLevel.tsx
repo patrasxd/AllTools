@@ -1,9 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import { Badge, Button, PillGroup } from '@all/ui'
-import {
-  calculateEdgeLevel,
-  type EdgeLevelResult,
-} from '../utils/sensorUtils'
+import { calculateEdgeLevel, type EdgeLevelResult } from '../utils/sensorUtils'
 import { levelTranslations, type Locale } from '../i18n'
 
 export interface TubularLevelProps {
@@ -56,7 +53,7 @@ export const TubularLevel: React.FC<TubularLevelProps> = ({
       { value: 'bottom', label: t.edge.bottomEdge, id: 'edge-bottom' },
       { value: 'left', label: t.edge.leftEdge, id: 'edge-left' },
     ],
-    [t.edge]
+    [t.edge],
   )
 
   const isVertical = selectedEdge === 'left'
@@ -92,7 +89,7 @@ export const TubularLevel: React.FC<TubularLevelProps> = ({
     calibratedRoll,
     tolerance,
     0,
-    isVertical ? 'landscape-left' : 'portrait'
+    isVertical ? 'landscape-left' : 'portrait',
   )
 
   useEffect(() => {
@@ -126,7 +123,7 @@ export const TubularLevel: React.FC<TubularLevelProps> = ({
     : vialCenter + normalizedDisplacement * maxTravel
 
   const isMatched = edgeResult.isLevel
-  const shouldShowSliders = showSimulationSliders ?? (hasOrientationSensor === false)
+  const shouldShowSliders = showSimulationSliders ?? hasOrientationSensor === false
 
   // Handle manual tilt adjustment for desktop testing
   const handleManualAngle = (targetDeg: number) => {
@@ -152,7 +149,7 @@ export const TubularLevel: React.FC<TubularLevelProps> = ({
           className={`level-ruler-tick ${isCm ? 'level-ruler-tick--major' : isHalfCm ? 'level-ruler-tick--medium' : ''}`}
         >
           {isCm && <span className="level-ruler-num">{i / 5}</span>}
-        </div>
+        </div>,
       )
     }
     return ticks
@@ -171,7 +168,7 @@ export const TubularLevel: React.FC<TubularLevelProps> = ({
           className={`level-ruler-tick-v ${isCm ? 'level-ruler-tick-v--major' : isHalfCm ? 'level-ruler-tick-v--medium' : ''}`}
         >
           {isCm && <span className="level-ruler-num-v">{i / 5}</span>}
-        </div>
+        </div>,
       )
     }
     return ticks
@@ -197,12 +194,7 @@ export const TubularLevel: React.FC<TubularLevelProps> = ({
           <span className="level-degree-num">{edgeResult.absAngle.toFixed(1)}°</span>
 
           {/* Level Badge */}
-          <Badge
-            variant={isMatched ? 'success' : 'warning'}
-            dot
-            size="md"
-            className="level-status-pill-badge"
-          >
+          <Badge variant={isMatched ? 'success' : 'warning'} dot size="md" className="level-status-pill-badge">
             {isMatched ? t.headers.levelStatus : t.headers.tiltStatus}
           </Badge>
         </div>
@@ -288,14 +280,60 @@ export const TubularLevel: React.FC<TubularLevelProps> = ({
                 />
 
                 {/* Graduation Marks */}
-                <line x1="8" y1={vialCenter - 54} x2="40" y2={vialCenter - 54} stroke="rgba(0,0,0,0.35)" strokeWidth="1.5" strokeDasharray="3 3" />
-                <line x1="8" y1={vialCenter - 27} x2="40" y2={vialCenter - 27} stroke="rgba(0,0,0,0.35)" strokeWidth="1.5" strokeDasharray="3 3" />
-                <line x1="8" y1={vialCenter + 27} x2="40" y2={vialCenter + 27} stroke="rgba(0,0,0,0.35)" strokeWidth="1.5" strokeDasharray="3 3" />
-                <line x1="8" y1={vialCenter + 54} x2="40" y2={vialCenter + 54} stroke="rgba(0,0,0,0.35)" strokeWidth="1.5" strokeDasharray="3 3" />
+                <line
+                  x1="8"
+                  y1={vialCenter - 54}
+                  x2="40"
+                  y2={vialCenter - 54}
+                  stroke="rgba(0,0,0,0.35)"
+                  strokeWidth="1.5"
+                  strokeDasharray="3 3"
+                />
+                <line
+                  x1="8"
+                  y1={vialCenter - 27}
+                  x2="40"
+                  y2={vialCenter - 27}
+                  stroke="rgba(0,0,0,0.35)"
+                  strokeWidth="1.5"
+                  strokeDasharray="3 3"
+                />
+                <line
+                  x1="8"
+                  y1={vialCenter + 27}
+                  x2="40"
+                  y2={vialCenter + 27}
+                  stroke="rgba(0,0,0,0.35)"
+                  strokeWidth="1.5"
+                  strokeDasharray="3 3"
+                />
+                <line
+                  x1="8"
+                  y1={vialCenter + 54}
+                  x2="40"
+                  y2={vialCenter + 54}
+                  stroke="rgba(0,0,0,0.35)"
+                  strokeWidth="1.5"
+                  strokeDasharray="3 3"
+                />
 
                 {/* Target Center Level Pair of Lines */}
-                <line x1="6" y1={vialCenter - 14} x2="42" y2={vialCenter - 14} stroke={isMatched ? '#ffffff' : '#000000'} strokeWidth="2.5" />
-                <line x1="6" y1={vialCenter + 14} x2="42" y2={vialCenter + 14} stroke={isMatched ? '#ffffff' : '#000000'} strokeWidth="2.5" />
+                <line
+                  x1="6"
+                  y1={vialCenter - 14}
+                  x2="42"
+                  y2={vialCenter - 14}
+                  stroke={isMatched ? '#ffffff' : '#000000'}
+                  strokeWidth="2.5"
+                />
+                <line
+                  x1="6"
+                  y1={vialCenter + 14}
+                  x2="42"
+                  y2={vialCenter + 14}
+                  stroke={isMatched ? '#ffffff' : '#000000'}
+                  strokeWidth="2.5"
+                />
 
                 {/* Floating Tubular Liquid Bubble (moves vertically) */}
                 <rect
@@ -389,14 +427,60 @@ export const TubularLevel: React.FC<TubularLevelProps> = ({
                 />
 
                 {/* Reference Marks */}
-                <line x1={vialCenter - 54} y1="8" x2={vialCenter - 54} y2="40" stroke="rgba(0,0,0,0.35)" strokeWidth="1.5" strokeDasharray="3 3" />
-                <line x1={vialCenter - 27} y1="8" x2={vialCenter - 27} y2="40" stroke="rgba(0,0,0,0.35)" strokeWidth="1.5" strokeDasharray="3 3" />
-                <line x1={vialCenter + 27} y1="8" x2={vialCenter + 27} y2="40" stroke="rgba(0,0,0,0.35)" strokeWidth="1.5" strokeDasharray="3 3" />
-                <line x1={vialCenter + 54} y1="8" x2={vialCenter + 54} y2="40" stroke="rgba(0,0,0,0.35)" strokeWidth="1.5" strokeDasharray="3 3" />
+                <line
+                  x1={vialCenter - 54}
+                  y1="8"
+                  x2={vialCenter - 54}
+                  y2="40"
+                  stroke="rgba(0,0,0,0.35)"
+                  strokeWidth="1.5"
+                  strokeDasharray="3 3"
+                />
+                <line
+                  x1={vialCenter - 27}
+                  y1="8"
+                  x2={vialCenter - 27}
+                  y2="40"
+                  stroke="rgba(0,0,0,0.35)"
+                  strokeWidth="1.5"
+                  strokeDasharray="3 3"
+                />
+                <line
+                  x1={vialCenter + 27}
+                  y1="8"
+                  x2={vialCenter + 27}
+                  y2="40"
+                  stroke="rgba(0,0,0,0.35)"
+                  strokeWidth="1.5"
+                  strokeDasharray="3 3"
+                />
+                <line
+                  x1={vialCenter + 54}
+                  y1="8"
+                  x2={vialCenter + 54}
+                  y2="40"
+                  stroke="rgba(0,0,0,0.35)"
+                  strokeWidth="1.5"
+                  strokeDasharray="3 3"
+                />
 
                 {/* Target Center Level Pair of Lines */}
-                <line x1={vialCenter - 14} y1="6" x2={vialCenter - 14} y2="42" stroke={isMatched ? '#ffffff' : '#000000'} strokeWidth="2.5" />
-                <line x1={vialCenter + 14} y1="6" x2={vialCenter + 14} y2="42" stroke={isMatched ? '#ffffff' : '#000000'} strokeWidth="2.5" />
+                <line
+                  x1={vialCenter - 14}
+                  y1="6"
+                  x2={vialCenter - 14}
+                  y2="42"
+                  stroke={isMatched ? '#ffffff' : '#000000'}
+                  strokeWidth="2.5"
+                />
+                <line
+                  x1={vialCenter + 14}
+                  y1="6"
+                  x2={vialCenter + 14}
+                  y2="42"
+                  stroke={isMatched ? '#ffffff' : '#000000'}
+                  strokeWidth="2.5"
+                />
 
                 {/* Floating Tubular Liquid Bubble (moves horizontally) */}
                 <rect

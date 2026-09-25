@@ -30,13 +30,8 @@ export default function App() {
   )
 
   return (
-    <MotionConfig
-      reducedMotion={isEink ? 'always' : 'never'}
-      transition={isEink ? { duration: 0 } : undefined}
-    >
-      <Layout>
-        {routes}
-      </Layout>
+    <MotionConfig reducedMotion={isEink ? 'always' : 'never'} transition={isEink ? { duration: 0 } : undefined}>
+      <Layout>{routes}</Layout>
     </MotionConfig>
   )
 }

@@ -44,7 +44,7 @@ describe('DevVault cryptoEngine', () => {
           passphraseWords: 4,
           passphraseSeparator: '.',
         },
-        'en'
+        'en',
       )
       const partsEn = passphraseEn.split('.')
       expect(partsEn.length).toBe(4)
@@ -61,7 +61,7 @@ describe('DevVault cryptoEngine', () => {
           passphraseWords: 5,
           passphraseSeparator: '_',
         },
-        'pl'
+        'pl',
       )
       const partsPl = passphrasePl.split('_')
       expect(partsPl.length).toBe(5)

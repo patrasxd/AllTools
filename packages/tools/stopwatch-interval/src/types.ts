@@ -30,7 +30,7 @@ export interface IntervalStep {
   id: string
   name?: string
   cycles: number // e.g. 2 in 2 x 8
-  sets: number   // e.g. 8 in 2 x 8
+  sets: number // e.g. 8 in 2 x 8
   workSec: number
   restSec: number
 }

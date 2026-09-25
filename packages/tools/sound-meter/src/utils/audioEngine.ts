@@ -3,10 +3,34 @@ import type { SoundReferenceLevel, SoundWeighting } from '../types'
 export const REFERENCE_LEVELS: SoundReferenceLevel[] = [
   { min: 0, max: 35, labelEn: 'Quiet Room / Whisper', labelPl: 'Cichy pokój / Szept', severity: 'calm' },
   { min: 35, max: 55, labelEn: 'Library / Moderate Room', labelPl: 'Biblioteka / Spokojne wnętrze', severity: 'calm' },
-  { min: 55, max: 70, labelEn: 'Normal Conversation / Office', labelPl: 'Normalna rozmowa / Biuro', severity: 'normal' },
-  { min: 70, max: 85, labelEn: 'Street Traffic / Loud Music', labelPl: 'Ruch uliczny / Głośna muzyka', severity: 'loud' },
-  { min: 85, max: 100, labelEn: 'Heavy Machinery / Warning Level', labelPl: 'Hałas przemysłowy / Próg ryzyka', severity: 'warning' },
-  { min: 100, max: 140, labelEn: 'Siren / Hearing Damage Risk', labelPl: 'Syreny alarmowe / Zagrożenie słuchu', severity: 'danger' },
+  {
+    min: 55,
+    max: 70,
+    labelEn: 'Normal Conversation / Office',
+    labelPl: 'Normalna rozmowa / Biuro',
+    severity: 'normal',
+  },
+  {
+    min: 70,
+    max: 85,
+    labelEn: 'Street Traffic / Loud Music',
+    labelPl: 'Ruch uliczny / Głośna muzyka',
+    severity: 'loud',
+  },
+  {
+    min: 85,
+    max: 100,
+    labelEn: 'Heavy Machinery / Warning Level',
+    labelPl: 'Hałas przemysłowy / Próg ryzyka',
+    severity: 'warning',
+  },
+  {
+    min: 100,
+    max: 140,
+    labelEn: 'Siren / Hearing Damage Risk',
+    labelPl: 'Syreny alarmowe / Zagrożenie słuchu',
+    severity: 'danger',
+  },
 ]
 
 export function getSoundReference(db: number, locale: 'en' | 'pl' = 'en'): { label: string; severity: string } {
@@ -45,7 +69,8 @@ export class DecibelMeterEngine {
     })
     this.mediaStream = stream
 
-    const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+    const AudioContextClass =
+      window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
     this.audioContext = new AudioContextClass()
 
     if (this.audioContext.state === 'suspended') {

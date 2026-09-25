@@ -87,7 +87,9 @@
   box-sizing: border-box;
   text-align: center;
   cursor: pointer;
-  transition: border-color 150ms ease, background-color 150ms ease;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease;
   user-select: none;
   outline: none;
 }
@@ -100,7 +102,9 @@
 
 .img-drop-icon {
   color: var(--all-text-muted, var(--text-muted, #888));
-  transition: transform 150ms ease, color 150ms ease;
+  transition:
+    transform 150ms ease,
+    color 150ms ease;
 }
 
 .img-dropzone:hover .img-drop-icon,
@@ -173,7 +177,10 @@
   border-radius: var(--all-radius-sm, 4px);
   color: var(--all-text-muted, var(--text-muted, #888));
   cursor: pointer;
-  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+  transition:
+    background 120ms ease,
+    color 120ms ease,
+    border-color 120ms ease;
   user-select: none;
 }
 
@@ -297,10 +304,30 @@
   box-shadow: 0 0 1px rgba(0, 0, 0, 0.6);
 }
 
-.img-grid-line--h1 { top: 33.33%; left: 0; right: 0; height: 1px; }
-.img-grid-line--h2 { top: 66.66%; left: 0; right: 0; height: 1px; }
-.img-grid-line--v1 { left: 33.33%; top: 0; bottom: 0; width: 1px; }
-.img-grid-line--v2 { left: 66.66%; top: 0; bottom: 0; width: 1px; }
+.img-grid-line--h1 {
+  top: 33.33%;
+  left: 0;
+  right: 0;
+  height: 1px;
+}
+.img-grid-line--h2 {
+  top: 66.66%;
+  left: 0;
+  right: 0;
+  height: 1px;
+}
+.img-grid-line--v1 {
+  left: 33.33%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+}
+.img-grid-line--v2 {
+  left: 66.66%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+}
 
 .img-passport-overlay {
   position: absolute;
@@ -344,7 +371,9 @@
 }
 
 @keyframes imgSpin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ─── Right: Context Settings Panel ────────────────────────── */
@@ -550,7 +579,9 @@
   cursor: pointer;
   padding: 3px;
   box-sizing: border-box;
-  transition: border-color 120ms ease, box-shadow 120ms ease;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
 }
 
 .img-color-input:hover,

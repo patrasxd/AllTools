@@ -1,20 +1,6 @@
 import React, { useState, useEffect, useMemo, useId, useCallback } from 'react'
-import {
-  BoardLayout,
-  Button,
-  PillGroup,
-  StatsHeader,
-  ControlsBar,
-  CopyIcon,
-  CheckIcon,
-  RestartIcon,
-} from '@all/ui'
-import type {
-  DevVaultMode,
-  PasswordConfig,
-  EncoderFormat,
-  HashAlgorithm,
-} from './types'
+import { BoardLayout, Button, PillGroup, StatsHeader, ControlsBar, CopyIcon, CheckIcon, RestartIcon } from '@all/ui'
+import type { DevVaultMode, PasswordConfig, EncoderFormat, HashAlgorithm } from './types'
 import { devVaultTranslations, getStrengthLabel, getIpTypeLabel } from './i18n'
 import {
   generateSecurePassword,
@@ -184,12 +170,7 @@ export function DevVault({ locale = 'en', setHeader, isEink = false }: ToolCompo
       ]
     }
 
-    setHeader(
-      <StatsHeader
-        label={headerTitle}
-        items={items}
-      />
-    )
+    setHeader(<StatsHeader label={headerTitle} items={items} />)
 
     return () => {
       setHeader(null)
@@ -309,9 +290,7 @@ export function DevVault({ locale = 'en', setHeader, isEink = false }: ToolCompo
                       min="8"
                       max="48"
                       value={pwdConfig.length}
-                      onChange={(e) =>
-                        setPwdConfig((p) => ({ ...p, length: parseInt(e.target.value, 10) }))
-                      }
+                      onChange={(e) => setPwdConfig((p) => ({ ...p, length: parseInt(e.target.value, 10) }))}
                       className="vault-slider"
                     />
                   </div>
@@ -411,13 +390,17 @@ export function DevVault({ locale = 'en', setHeader, isEink = false }: ToolCompo
                       </div>
                       <div className="vault-grid-cell" style={{ gridColumn: 'span 2' }}>
                         <span className="vault-cell-title">{t.classification}</span>
-                        <span className="vault-cell-value">
-                          {getIpTypeLabel(subnetInfo, locale)}
-                        </span>
+                        <span className="vault-cell-value">{getIpTypeLabel(subnetInfo, locale)}</span>
                       </div>
                     </div>
                   ) : (
-                    <div style={{ color: 'var(--all-text-muted, var(--text-muted))', textAlign: 'center', padding: '1rem' }}>
+                    <div
+                      style={{
+                        color: 'var(--all-text-muted, var(--text-muted))',
+                        textAlign: 'center',
+                        padding: '1rem',
+                      }}
+                    >
                       {t.invalidIpNotice}
                     </div>
                   )}
@@ -494,11 +477,7 @@ export function DevVault({ locale = 'en', setHeader, isEink = false }: ToolCompo
                     placeholder={t.enterHashPlaceholder}
                   />
 
-                  <div
-                    className="vault-screen"
-                    onClick={() => copyToClipboard(hashOutput)}
-                    title={t.clickToCopy}
-                  >
+                  <div className="vault-screen" onClick={() => copyToClipboard(hashOutput)} title={t.clickToCopy}>
                     <span className="vault-screen-val" style={{ fontSize: '0.8125rem' }}>
                       {hashOutput}
                     </span>
@@ -523,7 +502,14 @@ export function DevVault({ locale = 'en', setHeader, isEink = false }: ToolCompo
                 <div className="vault-subnet-grid">
                   <div className="vault-grid-cell" style={{ gridColumn: 'span 2' }}>
                     <span className="vault-cell-title">{t.uuidV4}</span>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.2rem' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginTop: '0.2rem',
+                      }}
+                    >
                       <span className="vault-cell-value" style={{ fontSize: '0.95rem' }}>
                         {uuid}
                       </span>

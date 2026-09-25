@@ -18,7 +18,7 @@ Classify the tool against the workspace archetypes catalog:
 
 ## 2. Package Scaffolding & Module Graph Separation
 1. Create `packages/tools/<slug>`:
-   - `package.json` (`@alltools/<slug>`, version `0.1.0`, private)
+   - `package.json` (`@alltools/<slug>`, version `0.1.0`, private; declare `"@all/ui": "file:../../../AllUI"` in dependencies, and `"@alltools/ui": "*"` only if using tool-specific vector icons)
    - `src/metadata.ts` (isolated static metadata: localized name, description, category, tags, and icon — MUST contain zero imports of the component or heavy runtime libraries)
    - `src/types.ts` (`ToolComponentProps` including `isEink?: boolean`)
    - `src/i18n.ts` (bilingual `en` and `pl` strings)
@@ -26,13 +26,13 @@ Classify the tool against the workspace archetypes catalog:
    - `src/<Tool>.tsx` (main component)
    - `src/index.tsx` (lazy component entry point, exporting `ToolComponent`)
 2. **CRITICAL Module Graph Rule**: The metadata entry point (`metadata.ts`) and the component entry point (`index.tsx`) must be resolvable as genuinely separate module graphs, never re-exported from one common barrel file. If metadata is imported from a barrel that re-exports the component, Rollup/Vite treats the lazy `import()` as an eager static dependency, pulling the component and its heavy libraries (`heic2any`, `pdfjs-dist`, `pdf-lib`, etc.) directly into the initial shell bundle.
-3. **Use Shared UI Components (`@all/ui` or `@alltools/ui`)**:
-   - Layout Templates: `SplitWorkspaceLayout`, `CenteredUtilityLayout`, `FullBleedLayout`.
-   - Action Bars & Navigation: `ControlsBar`, `BackLink`.
-   - Controls & Forms: `Button`, `IconButton`, `ToolButton`, `Input`, `Select`, `Toggle`, `PillGroup`, `ModeSelect`.
-   - Content & Surfaces: `Card`, `Badge`, `Heading`, `Text`, `Stack`.
-   - Modals & Notifications: `Dialog`, `Alert`, `Toast`.
-   - Utilities & Formatters: `formatTime`, `formatStopwatchTime`, `pad3`.
+3. **Use Shared UI Components (`@all/ui`) & Tool Icons (`@alltools/ui`)**:
+   - Layout Templates (`@all/ui`): `SplitWorkspaceLayout`, `CenteredUtilityLayout`, `FullBleedLayout`.
+   - Action Bars & Controls (`@all/ui`): `ControlsBar`, `Button`, `IconButton`, `Input`, `Select`, `Toggle`, `PillGroup`, `ModeSelect`.
+   - Content & Surfaces (`@all/ui`): `Card`, `Badge`.
+   - Modals & Dialogs (`@all/ui`): `ConfirmDialog`, `Dialog`, `Modal`.
+   - Utilities & Formatters (`@all/ui`): `formatTime`, `formatStopwatchTime`, `pad3`.
+   - Tool Vector Icons (`@alltools/ui`): `IconGuitar`, `IconCalculator`, `IconProtractor`, `IconVolume`, `IconFileText`, `IconKey`.
 4. Embed inside an appropriate responsive template (`SplitWorkspaceLayout`, `CenteredUtilityLayout`, or `FullBleedLayout`).
 
 ## 3. Register in App Shell

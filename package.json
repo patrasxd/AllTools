@@ -12,8 +12,10 @@
     "start": "npm run dev --workspace=@alltools/shell",
     "dev": "npm run dev --workspace=@alltools/shell",
     "build": "npm run build --workspace=@alltools/shell",
+    "typecheck": "tsc -b apps/shell",
+    "lint": "eslint .",
+    "format:check": "prettier --check .",
     "preview": "npm run preview --workspace=@alltools/shell",
-    "deploy": "npm run build --workspace=@alltools/shell && gh-pages -d apps/shell/dist",
     "test": "vitest run packages/tools",
     "install-all": "npm install"
   },
@@ -31,10 +33,17 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@eslint/js": "^9.20.0",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
-    "gh-pages": "^6.3.0",
+    "eslint": "^9.20.0",
+    "eslint-config-prettier": "^10.0.0",
+    "eslint-plugin-jsx-a11y": "^6.10.0",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "globals": "^15.0.0",
     "jsdom": "^30.0.1",
+    "prettier": "^3.5.0",
+    "typescript-eslint": "^8.24.0",
     "vitest": "^5.0.0"
   },
   "dependencies": {

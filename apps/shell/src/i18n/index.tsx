@@ -102,7 +102,8 @@ export const translations: Record<Locale, TranslationDictionary> = {
     closeMenuAria: 'Zamknij menu preferencji',
     heroEyebrow: 'Kolekcja narzędzi',
     heroTitle: 'All\nTools',
-    heroDescription: 'Podręczne narzędzia w przeglądarce. Bez rejestracji, bez reklam. Twoje dane zostają na tym urządzeniu.',
+    heroDescription:
+      'Podręczne narzędzia w przeglądarce. Bez rejestracji, bez reklam. Twoje dane zostają na tym urządzeniu.',
     toolCount: (n: number) => {
       if (n === 1) return '1 narzędzie'
       if (n >= 2 && n <= 4) return `${n} narzędzia`
@@ -154,11 +155,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
 
   const t = useMemo(() => translations[locale], [locale])
 
-  return (
-    <I18nContext.Provider value={{ locale, setLocale, t }}>
-      {children}
-    </I18nContext.Provider>
-  )
+  return <I18nContext.Provider value={{ locale, setLocale, t }}>{children}</I18nContext.Provider>
 }
 
 export function useI18n(): I18nContextValue {

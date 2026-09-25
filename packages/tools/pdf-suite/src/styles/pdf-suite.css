@@ -1,5 +1,12 @@
-/* ─── Google Fonts for Typed Signatures ────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Dancing+Script:wght@600&family=Great+Vibes&family=Sacramento&display=swap');
+/* ─── Self-hosted Fonts for Typed Signatures (Latin & Latin-ext) ─── */
+@import '@fontsource/caveat/latin-600.css';
+@import '@fontsource/caveat/latin-ext-600.css';
+@import '@fontsource/dancing-script/latin-600.css';
+@import '@fontsource/dancing-script/latin-ext-600.css';
+@import '@fontsource/great-vibes/latin-400.css';
+@import '@fontsource/great-vibes/latin-ext-400.css';
+@import '@fontsource/sacramento/latin-400.css';
+@import '@fontsource/sacramento/latin-ext-400.css';
 
 /* ─── PDF Suite Root & Stage ───────────────────────────────── */
 .pdf-root {
@@ -88,7 +95,9 @@
   box-sizing: border-box;
   text-align: center;
   cursor: pointer;
-  transition: border-color 150ms ease, background-color 150ms ease;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease;
   user-select: none;
 }
 .pdf-dropzone:hover {
@@ -302,7 +311,9 @@
   cursor: pointer;
   user-select: none;
   box-sizing: border-box;
-  transition: border-color 150ms ease, transform 150ms ease;
+  transition:
+    border-color 150ms ease,
+    transform 150ms ease;
   position: relative;
 }
 .pdf-page-card:hover {
@@ -329,6 +340,8 @@
   align-items: center;
   justify-content: center;
   position: relative;
+  pointer-events: none;
+  user-select: none;
 }
 
 .pdf-page-real-thumb {
@@ -336,6 +349,9 @@
   height: 100%;
   object-fit: contain;
   transition: transform 200ms ease;
+  pointer-events: none;
+  -webkit-user-drag: none;
+  user-select: none;
 }
 
 .pdf-page-fallback-sheet {
@@ -605,6 +621,8 @@
   height: 100%;
   display: block;
   pointer-events: none;
+  -webkit-user-drag: none;
+  user-select: none;
 }
 
 .pdf-placement-page-fallback {
@@ -665,7 +683,9 @@
   z-index: 10;
   touch-action: none;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
-  transition: transform 120ms ease, background-color 120ms ease;
+  transition:
+    transform 120ms ease,
+    background-color 120ms ease;
 }
 
 .pdf-sig-resize-handle:hover,
@@ -799,7 +819,9 @@
   border: 1px solid var(--all-border, #444);
   border-radius: var(--all-radius-sm, 6px);
   cursor: pointer;
-  transition: border-color 120ms ease, box-shadow 120ms ease;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
   user-select: none;
   flex-shrink: 0;
 }
@@ -852,7 +874,9 @@
   font-size: 10px;
   cursor: pointer;
   opacity: 0.8;
-  transition: opacity 120ms ease, transform 120ms ease;
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease;
 }
 
 .pdf-img-thumb-delete:hover {
@@ -924,7 +948,9 @@
   border-radius: 50%;
   background: var(--all-text, #fff);
   border: 3px solid var(--all-surface, #1e1e24);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.4);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.4);
   cursor: grab;
   pointer-events: auto;
   touch-action: none;

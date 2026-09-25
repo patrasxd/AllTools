@@ -22,7 +22,17 @@ import './styles/calc-converter.css'
 
 function BackspaceIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" />
       <line x1="18" y1="9" x2="12" y2="15" />
       <line x1="12" y1="9" x2="18" y2="15" />
@@ -32,7 +42,17 @@ function BackspaceIcon() {
 
 function SwapIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <path d="M7 16V4m0 0L3 8m4-4l4 4" />
       <path d="M17 8v12m0 0l4-4m-4 4l-4-4" />
     </svg>
@@ -41,7 +61,17 @@ function SwapIcon() {
 
 function HistoryIcon() {
   return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <circle cx="12" cy="12" r="10" />
       <polyline points="12 6 12 12 14 14" />
     </svg>
@@ -50,7 +80,17 @@ function HistoryIcon() {
 
 function SearchIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <circle cx="11" cy="11" r="8" />
       <line x1="21" y1="21" x2="16.65" y2="16.65" />
     </svg>
@@ -132,17 +172,20 @@ export function CalcConverter({ locale = 'en', setHeader, isEink = false }: Tool
     }
   }
 
-  const handleInputDigit = useCallback((digit: string) => {
-    if (isNewNumber || displayVal === '0' || displayVal === 'Error') {
-      setDisplayVal(digit)
-      setIsNewNumber(false)
-    } else {
-      if (displayVal.replace(/[^0-9]/g, '').length < 15) {
-        setDisplayVal(displayVal + digit)
+  const handleInputDigit = useCallback(
+    (digit: string) => {
+      if (isNewNumber || displayVal === '0' || displayVal === 'Error') {
+        setDisplayVal(digit)
+        setIsNewNumber(false)
+      } else {
+        if (displayVal.replace(/[^0-9]/g, '').length < 15) {
+          setDisplayVal(displayVal + digit)
+        }
       }
-    }
-    setActiveOperator(null)
-  }, [isNewNumber, displayVal])
+      setActiveOperator(null)
+    },
+    [isNewNumber, displayVal],
+  )
 
   const handleInputDot = useCallback(() => {
     if (isNewNumber || displayVal === 'Error') {
@@ -154,23 +197,26 @@ export function CalcConverter({ locale = 'en', setHeader, isEink = false }: Tool
     setActiveOperator(null)
   }, [isNewNumber, displayVal])
 
-  const handleOperator = useCallback((op: string) => {
-    setActiveOperator(op)
-    if (expression && !isNewNumber) {
-      try {
-        const fullExpr = `${expression} ${displayVal}`
-        const intermediate = safeEvaluate(fullExpr)
-        const formatted = formatCalcDisplay(intermediate)
-        setExpression(`${formatted} ${op}`)
-        setDisplayVal(formatted)
-      } catch {
+  const handleOperator = useCallback(
+    (op: string) => {
+      setActiveOperator(op)
+      if (expression && !isNewNumber) {
+        try {
+          const fullExpr = `${expression} ${displayVal}`
+          const intermediate = safeEvaluate(fullExpr)
+          const formatted = formatCalcDisplay(intermediate)
+          setExpression(`${formatted} ${op}`)
+          setDisplayVal(formatted)
+        } catch {
+          setExpression(`${displayVal} ${op}`)
+        }
+      } else {
         setExpression(`${displayVal} ${op}`)
       }
-    } else {
-      setExpression(`${displayVal} ${op}`)
-    }
-    setIsNewNumber(true)
-  }, [expression, isNewNumber, displayVal])
+      setIsNewNumber(true)
+    },
+    [expression, isNewNumber, displayVal],
+  )
 
   const handleEvaluate = useCallback(() => {
     if (!expression && isNewNumber) return
@@ -228,19 +274,22 @@ export function CalcConverter({ locale = 'en', setHeader, isEink = false }: Tool
     }
   }, [displayVal])
 
-  const handleScientificFn = useCallback((fn: ScientificFn) => {
-    try {
-      const num = parseFloat(displayVal)
-      const res = evaluateScientific(fn, num)
-      const formatted = formatCalcDisplay(res)
-      saveToHistory(`${fn}(${displayVal})`, formatted)
-      setDisplayVal(formatted)
-      setIsNewNumber(true)
-    } catch {
-      setDisplayVal('Error')
-      setIsNewNumber(true)
-    }
-  }, [displayVal])
+  const handleScientificFn = useCallback(
+    (fn: ScientificFn) => {
+      try {
+        const num = parseFloat(displayVal)
+        const res = evaluateScientific(fn, num)
+        const formatted = formatCalcDisplay(res)
+        saveToHistory(`${fn}(${displayVal})`, formatted)
+        setDisplayVal(formatted)
+        setIsNewNumber(true)
+      } catch {
+        setDisplayVal('Error')
+        setIsNewNumber(true)
+      }
+    },
+    [displayVal],
+  )
 
   // Keyboard support for calculator
   useEffect(() => {
@@ -275,7 +324,16 @@ export function CalcConverter({ locale = 'en', setHeader, isEink = false }: Tool
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [activeMode, handleInputDigit, handleInputDot, handleOperator, handleEvaluate, handleBackspace, handleClear, handlePercent])
+  }, [
+    activeMode,
+    handleInputDigit,
+    handleInputDot,
+    handleOperator,
+    handleEvaluate,
+    handleBackspace,
+    handleClear,
+    handlePercent,
+  ])
 
   // ─── Converter Logic ────────────────────────────────────────
   const handleSwapUnits = () => {
@@ -352,10 +410,13 @@ export function CalcConverter({ locale = 'en', setHeader, isEink = false }: Tool
   }, [locale])
 
   // Mode options for PillGroup
-  const modeOptions = useMemo(() => [
-    { value: 'calc' as const, label: t.calculator },
-    { value: 'convert' as const, label: t.unitConverter },
-  ], [t])
+  const modeOptions = useMemo(
+    () => [
+      { value: 'calc' as const, label: t.calculator },
+      { value: 'convert' as const, label: t.unitConverter },
+    ],
+    [t],
+  )
 
   // Select dropdown options for units
   const unitSelectOptions = useMemo(() => {
@@ -369,19 +430,35 @@ export function CalcConverter({ locale = 'en', setHeader, isEink = false }: Tool
     <div className="all-calc-suite" data-eink={isEink}>
       <BoardLayout
         variant="wide"
-        align="center"
+        align={activeMode === 'calc' ? 'center' : 'top'}
         board={
-          <div className="calc-stage">
+          <div className={`calc-stage ${activeMode === 'calc' ? 'calc-stage--calc' : 'calc-stage--conv'}`}>
             {activeMode === 'calc' ? (
               /* ─── CALCULATOR VIEW ─── */
-              <Card variant="outlined" padding="none" className={`calc-card ${calcMode === 'scientific' ? 'calc-card--scientific' : ''}`}>
+              <Card
+                variant="outlined"
+                padding="none"
+                className={`calc-card ${calcMode === 'scientific' ? 'calc-card--scientific' : ''}`}
+              >
+                {/* Upper Card Header: Mode badge & History button */}
+                <div className="calc-card-header">
+                  <span className="calc-card-mode-badge">{calcMode === 'scientific' ? t.scientific : t.standard}</span>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="calc-history-btn"
+                    onClick={() => setIsHistoryOpen(true)}
+                    icon={<HistoryIcon />}
+                  >
+                    {t.history} ({history.length})
+                  </Button>
+                </div>
+
                 {/* 1. Terminal Screen */}
                 <div className="calc-screen">
                   <div className="calc-screen-meta">
                     <span className="calc-screen-expr">{expression || '\u00A0'}</span>
-                    {activeOperator && (
-                      <span className="calc-screen-op-badge">{activeOperator}</span>
-                    )}
+                    {activeOperator && <span className="calc-screen-op-badge">{activeOperator}</span>}
                   </div>
                   <div className={`calc-screen-digits ${displayVal.length > 12 ? 'calc-screen-digits--sm' : ''}`}>
                     {displayVal}
@@ -391,27 +468,113 @@ export function CalcConverter({ locale = 'en', setHeader, isEink = false }: Tool
                 {/* 2. Scientific Keys (when toggled on) */}
                 {calcMode === 'scientific' && (
                   <div className="calc-sci-grid">
-                    <Button variant="secondary" size="sm" className="calc-key calc-key--sci" onClick={() => handleScientificFn('sqrt')}>√</Button>
-                    <Button variant="secondary" size="sm" className="calc-key calc-key--sci" onClick={() => handleScientificFn('sqr')}>x²</Button>
-                    <Button variant="secondary" size="sm" className="calc-key calc-key--sci" onClick={() => handleOperator('^')}>^</Button>
-                    <Button variant="secondary" size="sm" className="calc-key calc-key--sci" onClick={() => handleScientificFn('inv')}>1/x</Button>
-                    <Button variant="secondary" size="sm" className="calc-key calc-key--sci" onClick={() => handleScientificFn('pi')}>π</Button>
-                    <Button variant="secondary" size="sm" className="calc-key calc-key--sci" onClick={() => handleScientificFn('e')}>e</Button>
-                    <Button variant="secondary" size="sm" className="calc-key calc-key--sci" onClick={() => handleScientificFn('sin')}>sin</Button>
-                    <Button variant="secondary" size="sm" className="calc-key calc-key--sci" onClick={() => handleScientificFn('cos')}>cos</Button>
-                    <Button variant="secondary" size="sm" className="calc-key calc-key--sci" onClick={() => handleScientificFn('tan')}>tan</Button>
-                    <Button variant="secondary" size="sm" className="calc-key calc-key--sci" onClick={() => handleScientificFn('ln')}>ln</Button>
-                    <Button variant="secondary" size="sm" className="calc-key calc-key--sci" onClick={() => handleScientificFn('log')}>log</Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="calc-key calc-key--sci"
+                      onClick={() => handleScientificFn('sqrt')}
+                    >
+                      √
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="calc-key calc-key--sci"
+                      onClick={() => handleScientificFn('sqr')}
+                    >
+                      x²
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="calc-key calc-key--sci"
+                      onClick={() => handleOperator('^')}
+                    >
+                      ^
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="calc-key calc-key--sci"
+                      onClick={() => handleScientificFn('inv')}
+                    >
+                      1/x
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="calc-key calc-key--sci"
+                      onClick={() => handleScientificFn('pi')}
+                    >
+                      π
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="calc-key calc-key--sci"
+                      onClick={() => handleScientificFn('e')}
+                    >
+                      e
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="calc-key calc-key--sci"
+                      onClick={() => handleScientificFn('sin')}
+                    >
+                      sin
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="calc-key calc-key--sci"
+                      onClick={() => handleScientificFn('cos')}
+                    >
+                      cos
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="calc-key calc-key--sci"
+                      onClick={() => handleScientificFn('tan')}
+                    >
+                      tan
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="calc-key calc-key--sci"
+                      onClick={() => handleScientificFn('ln')}
+                    >
+                      ln
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="calc-key calc-key--sci"
+                      onClick={() => handleScientificFn('log')}
+                    >
+                      log
+                    </Button>
                   </div>
                 )}
 
                 {/* 3. Primary Keypad using AllUI Button */}
                 <div className="calc-numpad">
-                  <Button variant="secondary" className="calc-key calc-key--action" onClick={handleClear}>AC</Button>
-                  <Button variant="secondary" className="calc-key calc-key--action" onClick={handleBackspace} aria-label="Backspace">
+                  <Button variant="secondary" className="calc-key calc-key--action" onClick={handleClear}>
+                    AC
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    className="calc-key calc-key--action"
+                    onClick={handleBackspace}
+                    aria-label="Backspace"
+                  >
                     <BackspaceIcon />
                   </Button>
-                  <Button variant="secondary" className="calc-key calc-key--action" onClick={handlePercent}>%</Button>
+                  <Button variant="secondary" className="calc-key calc-key--action" onClick={handlePercent}>
+                    %
+                  </Button>
                   <Button
                     variant={activeOperator === '÷' ? 'primary' : 'secondary'}
                     className={`calc-key calc-key--op ${activeOperator === '÷' ? 'calc-key--op-active' : ''}`}
@@ -420,9 +583,15 @@ export function CalcConverter({ locale = 'en', setHeader, isEink = false }: Tool
                     ÷
                   </Button>
 
-                  <Button variant="secondary" className="calc-key calc-key--num" onClick={() => handleInputDigit('7')}>7</Button>
-                  <Button variant="secondary" className="calc-key calc-key--num" onClick={() => handleInputDigit('8')}>8</Button>
-                  <Button variant="secondary" className="calc-key calc-key--num" onClick={() => handleInputDigit('9')}>9</Button>
+                  <Button variant="secondary" className="calc-key calc-key--num" onClick={() => handleInputDigit('7')}>
+                    7
+                  </Button>
+                  <Button variant="secondary" className="calc-key calc-key--num" onClick={() => handleInputDigit('8')}>
+                    8
+                  </Button>
+                  <Button variant="secondary" className="calc-key calc-key--num" onClick={() => handleInputDigit('9')}>
+                    9
+                  </Button>
                   <Button
                     variant={activeOperator === '×' ? 'primary' : 'secondary'}
                     className={`calc-key calc-key--op ${activeOperator === '×' ? 'calc-key--op-active' : ''}`}
@@ -431,19 +600,32 @@ export function CalcConverter({ locale = 'en', setHeader, isEink = false }: Tool
                     ×
                   </Button>
 
-                  <Button variant="secondary" className="calc-key calc-key--num" onClick={() => handleInputDigit('4')}>4</Button>
-                  <Button variant="secondary" className="calc-key calc-key--num" onClick={() => handleInputDigit('5')}>5</Button>
-                  <Button variant="secondary" className="calc-key calc-key--num" onClick={() => handleInputDigit('6')}>6</Button>
+                  <Button variant="secondary" className="calc-key calc-key--num" onClick={() => handleInputDigit('4')}>
+                    4
+                  </Button>
+                  <Button variant="secondary" className="calc-key calc-key--num" onClick={() => handleInputDigit('5')}>
+                    5
+                  </Button>
+                  <Button variant="secondary" className="calc-key calc-key--num" onClick={() => handleInputDigit('6')}>
+                    6
+                  </Button>
                   <Button
                     variant={activeOperator === '−' ? 'primary' : 'secondary'}
                     className={`calc-key calc-key--op ${activeOperator === '−' ? 'calc-key--op-active' : ''}`}
                     onClick={() => handleOperator('−')}
                   >
-                    −</Button>
+                    −
+                  </Button>
 
-                  <Button variant="secondary" className="calc-key calc-key--num" onClick={() => handleInputDigit('1')}>1</Button>
-                  <Button variant="secondary" className="calc-key calc-key--num" onClick={() => handleInputDigit('2')}>2</Button>
-                  <Button variant="secondary" className="calc-key calc-key--num" onClick={() => handleInputDigit('3')}>3</Button>
+                  <Button variant="secondary" className="calc-key calc-key--num" onClick={() => handleInputDigit('1')}>
+                    1
+                  </Button>
+                  <Button variant="secondary" className="calc-key calc-key--num" onClick={() => handleInputDigit('2')}>
+                    2
+                  </Button>
+                  <Button variant="secondary" className="calc-key calc-key--num" onClick={() => handleInputDigit('3')}>
+                    3
+                  </Button>
                   <Button
                     variant={activeOperator === '+' ? 'primary' : 'secondary'}
                     className={`calc-key calc-key--op ${activeOperator === '+' ? 'calc-key--op-active' : ''}`}
@@ -452,15 +634,23 @@ export function CalcConverter({ locale = 'en', setHeader, isEink = false }: Tool
                     +
                   </Button>
 
-                  <Button variant="secondary" className="calc-key calc-key--action" onClick={handleToggleSign}>±</Button>
-                  <Button variant="secondary" className="calc-key calc-key--num" onClick={() => handleInputDigit('0')}>0</Button>
-                  <Button variant="secondary" className="calc-key calc-key--num" onClick={handleInputDot}>.</Button>
-                  <Button variant="primary" className="calc-key calc-key--equals" onClick={handleEvaluate}>=</Button>
+                  <Button variant="secondary" className="calc-key calc-key--action" onClick={handleToggleSign}>
+                    ±
+                  </Button>
+                  <Button variant="secondary" className="calc-key calc-key--num" onClick={() => handleInputDigit('0')}>
+                    0
+                  </Button>
+                  <Button variant="secondary" className="calc-key calc-key--num" onClick={handleInputDot}>
+                    .
+                  </Button>
+                  <Button variant="primary" className="calc-key calc-key--equals" onClick={handleEvaluate}>
+                    =
+                  </Button>
                 </div>
               </Card>
             ) : (
-              /* ─── UNIT CONVERTER VIEW ─── */
-              <Card variant="outlined" padding="none" className="conv-card">
+              /* ─── UNIT CONVERTER VIEW (OCCUPIES 100% OF SPACE) ─── */
+              <div className="conv-suite">
                 {/* 1. Category Bar using AllUI PillGroup */}
                 <div className="conv-category-strip">
                   <PillGroup
@@ -475,33 +665,38 @@ export function CalcConverter({ locale = 'en', setHeader, isEink = false }: Tool
                 </div>
 
                 {/* 2. From & To Hero Conversion Box */}
-                <Card variant="flat" padding="none" className="conv-exchange-box">
-                  {/* From Row */}
-                  <div className="conv-unit-row">
-                    <div className="conv-input-wrap">
-                      <Input
-                        label={t.from}
-                        type={activeCategory.id === 'radix' ? 'text' : 'number'}
-                        value={convInput}
-                        onChange={(e) => setConvInput(e.target.value)}
-                        placeholder="0"
-                        step="any"
-                        fullWidth
-                      />
+                <Card variant="flat" padding="none" className="conv-exchange-card">
+                  {/* FROM Section */}
+                  <div className="conv-section conv-section--from">
+                    <div className="conv-section-header">
+                      <span className="conv-section-title">{t.from}</span>
                     </div>
-                    <div className="conv-select-wrap">
-                      <Select
-                        label={t.category}
-                        options={unitSelectOptions}
-                        value={fromUnitId}
-                        onChange={(e) => setFromUnitId(e.target.value)}
-                        fullWidth
-                      />
+                    <div className="conv-controls-grid">
+                      <div className="conv-input-field">
+                        <Input
+                          type={activeCategory.id === 'radix' ? 'text' : 'number'}
+                          value={convInput}
+                          onChange={(e) => setConvInput(e.target.value)}
+                          placeholder="0"
+                          step="any"
+                          fullWidth
+                          aria-label={t.from}
+                        />
+                      </div>
+                      <div className="conv-select-field">
+                        <Select
+                          options={unitSelectOptions}
+                          value={fromUnitId}
+                          onChange={(e) => setFromUnitId(e.target.value)}
+                          fullWidth
+                          aria-label={`${t.from} ${t.unit}`}
+                        />
+                      </div>
                     </div>
                   </div>
 
                   {/* Centered Swap Divider */}
-                  <div className="conv-divider">
+                  <div className="conv-swap-divider">
                     <IconButton
                       variant="secondary"
                       size="sm"
@@ -513,165 +708,157 @@ export function CalcConverter({ locale = 'en', setHeader, isEink = false }: Tool
                     />
                   </div>
 
-                  {/* To Row */}
-                  <div className="conv-unit-row conv-unit-row--target">
-                    <div className="conv-input-wrap">
-                      <span className="conv-field-tag">{t.to}</span>
-                      <div className="conv-result-display">
-                        <span className="conv-result-num">{primaryConvertedValue}</span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => copyResult(primaryConvertedValue, 'main-target')}
-                          icon={copiedId === 'main-target' ? <CheckIcon /> : <CopyIcon />}
-                          title={t.copy}
-                        >
-                          {copiedId === 'main-target' ? t.copied : t.copy}
-                        </Button>
-                      </div>
+                  {/* TO Section */}
+                  <div className="conv-section conv-section--to">
+                    <div className="conv-section-header">
+                      <span className="conv-section-title">{t.to}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="conv-copy-action"
+                        onClick={() => copyResult(primaryConvertedValue, 'main-target')}
+                        icon={copiedId === 'main-target' ? <CheckIcon /> : <CopyIcon />}
+                        title={t.copy}
+                      >
+                        {copiedId === 'main-target' ? t.copied : t.copy}
+                      </Button>
                     </div>
-                    <div className="conv-select-wrap">
-                      <Select
-                        label={t.to}
-                        options={unitSelectOptions}
-                        value={toUnitId}
-                        onChange={(e) => setToUnitId(e.target.value)}
-                        fullWidth
-                      />
+                    <div className="conv-controls-grid">
+                      <div
+                        className="conv-output-display"
+                        onClick={() => copyResult(primaryConvertedValue, 'main-target')}
+                        title={t.copy}
+                      >
+                        <span className="conv-output-val">{primaryConvertedValue}</span>
+                      </div>
+                      <div className="conv-select-field">
+                        <Select
+                          options={unitSelectOptions}
+                          value={toUnitId}
+                          onChange={(e) => setToUnitId(e.target.value)}
+                          fullWidth
+                          aria-label={`${t.to} ${t.unit}`}
+                        />
+                      </div>
                     </div>
                   </div>
                 </Card>
 
-                {/* 3. Live All Units Matrix with Search */}
+                {/* 3. Live All Units Matrix with Search (Takes 100% of remaining vertical space) */}
                 <Card variant="flat" padding="none" className="conv-matrix-card">
                   <div className="conv-matrix-header">
-                    <span className="conv-matrix-title">{t.equivalentInOtherUnits}</span>
+                    <div className="conv-matrix-title-wrap">
+                      <span className="conv-matrix-title">{t.equivalentInOtherUnits}</span>
+                      <span className="conv-matrix-count">({conversionResults.length})</span>
+                    </div>
                     <div className="conv-matrix-search">
                       <Input
                         startIcon={<SearchIcon />}
                         placeholder={t.searchUnitPlaceholder}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
+                        fullWidth
                       />
                     </div>
                   </div>
 
                   <div className="conv-matrix-list">
-                    {conversionResults.map(({ unit, value, isCurrent }) => (
-                      <div
-                        key={unit.id}
-                        className={`conv-matrix-item ${isCurrent ? 'conv-matrix-item--current' : ''}`}
-                        onClick={() => {
-                          if (!isCurrent) setToUnitId(unit.id)
-                        }}
-                      >
-                        <div className="conv-matrix-left">
-                          <span className="conv-matrix-unit-name">{unit.name[locale]}</span>
-                          <span className="conv-matrix-unit-val">{value}</span>
+                    {conversionResults.map(({ unit, value, isCurrent }) => {
+                      const isTarget = unit.id === toUnitId
+                      return (
+                        <div
+                          key={unit.id}
+                          className={`conv-matrix-item ${isTarget ? 'conv-matrix-item--target' : ''} ${isCurrent ? 'conv-matrix-item--source' : ''}`}
+                          onClick={() => {
+                            if (!isCurrent) setToUnitId(unit.id)
+                          }}
+                          title={isCurrent ? t.from : t.clickToSetTo}
+                        >
+                          <div className="conv-matrix-left">
+                            <span className="conv-matrix-unit-name">{unit.name[locale]}</span>
+                            <span className="conv-matrix-unit-sym">{unit.symbol}</span>
+                          </div>
+                          <div className="conv-matrix-right">
+                            <span className="conv-matrix-unit-val">{value}</span>
+                            <IconButton
+                              variant="ghost"
+                              size="sm"
+                              icon={copiedId === unit.id ? <CheckIcon /> : <CopyIcon />}
+                              aria-label={t.copy}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                copyResult(value, unit.id)
+                              }}
+                              title={t.copy}
+                            />
+                          </div>
                         </div>
-                        <div className="conv-matrix-right">
-                          <span className="conv-matrix-unit-sym">{unit.symbol}</span>
-                          <IconButton
-                            variant="ghost"
-                            size="sm"
-                            icon={copiedId === unit.id ? <CheckIcon /> : <CopyIcon />}
-                            aria-label={t.copy}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              copyResult(value, unit.id)
-                            }}
-                            title={t.copy}
-                          />
-                        </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </Card>
-              </Card>
+              </div>
             )}
           </div>
         }
         controls={
-          <ControlsBar>
-            <PillGroup<ToolMode>
-              size="sm"
-              options={modeOptions}
-              value={activeMode}
-              onChange={(m) => setActiveMode(m)}
-            />
+          <ControlsBar className="calc-controls-bar">
+            {/* Secondary actions row above navigation */}
+            <div className="calc-controls-actions">
+              {activeMode === 'calc' ? (
+                <>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setCalcMode((m) => (m === 'standard' ? 'scientific' : 'standard'))}
+                  >
+                    {calcMode === 'standard' ? t.scientific : t.standard}
+                  </Button>
 
-            {activeMode === 'calc' ? (
-              <>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setCalcMode((m) => (m === 'standard' ? 'scientific' : 'standard'))}
-                >
-                  {calcMode === 'standard' ? t.scientific : t.standard}
-                </Button>
+                  <Button variant="secondary" size="sm" onClick={handleClear} icon={<RotateCcwIcon />}>
+                    {t.clear}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="secondary" size="sm" onClick={handleSwapUnits} icon={<SwapIcon />}>
+                    {t.swap}
+                  </Button>
 
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={handleClear}
-                  icon={<RotateCcwIcon />}
-                >
-                  {t.clear}
-                </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                      setConvInput('1')
+                      setSearchQuery('')
+                    }}
+                    icon={<RotateCcwIcon />}
+                  >
+                    {t.reset}
+                  </Button>
+                </>
+              )}
+            </div>
 
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setIsHistoryOpen(true)}
-                  icon={<HistoryIcon />}
-                >
-                  {t.history} ({history.length})
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={handleSwapUnits}
-                  icon={<SwapIcon />}
-                >
-                  {t.swap}
-                </Button>
-
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => {
-                    setConvInput('1')
-                    setSearchQuery('')
-                  }}
-                  icon={<RotateCcwIcon />}
-                >
-                  {t.reset}
-                </Button>
-              </>
-            )}
+            {/* Bottom-most row: Mode nav switcher (always at the bottom) */}
+            <div className="calc-controls-nav">
+              <PillGroup<ToolMode>
+                size="sm"
+                options={modeOptions}
+                value={activeMode}
+                onChange={(m) => setActiveMode(m)}
+              />
+            </div>
           </ControlsBar>
         }
       />
 
       {/* History Dialog Modal using AllUI Dialog */}
-      <Dialog
-        open={isHistoryOpen}
-        onClose={() => setIsHistoryOpen(false)}
-        title={t.history}
-        maxWidth="sm"
-      >
+      <Dialog open={isHistoryOpen} onClose={() => setIsHistoryOpen(false)} title={t.history} maxWidth="sm">
         <div className="calc-history-dialog">
           {history.length > 0 && (
             <div className="calc-history-dialog-actions">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={clearHistory}
-                icon={<TrashIcon />}
-              >
+              <Button variant="secondary" size="sm" onClick={clearHistory} icon={<TrashIcon />}>
                 {t.clearHistory}
               </Button>
             </div>

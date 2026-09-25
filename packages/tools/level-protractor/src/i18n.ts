@@ -78,6 +78,8 @@ export interface LevelProtractorTranslations {
     grantButton: string
     notNow: string
     reopen: string
+    enableCompass: string
+    enableCompassDesc: string
   }
   settings: {
     title: string
@@ -176,6 +178,8 @@ export const levelTranslations: Record<Locale, LevelProtractorTranslations> = {
       grantButton: 'Enable Motion Sensors',
       notNow: 'Not Now',
       reopen: 'Sensors',
+      enableCompass: 'Enable Compass',
+      enableCompassDesc: 'iOS Safari requires permission to access motion sensors for live compass orientation.',
     },
     settings: {
       title: 'Sensor & Tool Settings',
@@ -272,6 +276,8 @@ export const levelTranslations: Record<Locale, LevelProtractorTranslations> = {
       grantButton: 'Włącz czujniki ruchu',
       notNow: 'Nie teraz',
       reopen: 'Czujniki',
+      enableCompass: 'Włącz kompas',
+      enableCompassDesc: 'iOS Safari wymaga zgody na dostęp do czujników ruchu w celu wskazywania kierunku.',
     },
     settings: {
       title: 'Ustawienia czujników i narzędzia',

@@ -169,7 +169,9 @@
   max-width: 100%;
   z-index: 2;
   pointer-events: none;
-  transition: width 150ms ease, height 150ms ease;
+  transition:
+    width 150ms ease,
+    height 150ms ease;
 }
 
 [data-eink='true'] .ruler-card-outline,

@@ -47,7 +47,7 @@ export function computeLapsStats(laps: Lap[]): LapsStats {
 export function recordNewLap(
   currentLaps: Lap[],
   currentElapsedMs: number,
-  lastLapTotalMs: number
+  lastLapTotalMs: number,
 ): { lap: Lap; updatedLaps: Lap[] } {
   const lapDuration = Math.max(0, currentElapsedMs - lastLapTotalMs)
   const lap: Lap = {
@@ -73,7 +73,7 @@ export interface IntervalTickResult {
 export function calculateIntervalTick(
   phaseStartMs: number,
   phaseDurationSec: number,
-  nowMs: number
+  nowMs: number,
 ): IntervalTickResult {
   const phaseDurationMs = Math.max(1, phaseDurationSec * 1000)
   const elapsedMs = Math.max(0, nowMs - phaseStartMs)
@@ -94,17 +94,14 @@ export function calculateIntervalTick(
 import type { IntervalStep } from '../types'
 
 export function calculateTotalSets(steps: IntervalStep[]): number {
-  return steps.reduce(
-    (acc, step) => acc + Math.max(1, step.cycles || 1) * Math.max(1, step.sets || 1),
-    0
-  )
+  return steps.reduce((acc, step) => acc + Math.max(1, step.cycles || 1) * Math.max(1, step.sets || 1), 0)
 }
 
 export function computeCumulativeSetNumber(
   stepIndex: number,
   cycle: number,
   set: number,
-  steps: IntervalStep[]
+  steps: IntervalStep[],
 ): number {
   let count = 0
   for (let i = 0; i < stepIndex; i++) {
@@ -132,7 +129,7 @@ export function transitionIntervalPhase(
   cycle: number,
   set: number,
   phase: 'work' | 'rest',
-  steps: IntervalStep[]
+  steps: IntervalStep[],
 ): IntervalTransitionResult {
   if (steps.length === 0) {
     return { stepIndex: 0, cycle: 1, set: 1, phase: 'finished', durationSec: 0, isFinished: true }
@@ -222,4 +219,3 @@ export function transitionIntervalPhase(
     }
   }
 }
-

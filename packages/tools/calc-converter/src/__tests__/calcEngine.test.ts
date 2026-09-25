@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import {
-  safeEvaluate,
-  evaluateScientific,
-  formatCalcDisplay,
-  cleanPrecision,
-} from '../utils/calcEngine'
+import { safeEvaluate, evaluateScientific, formatCalcDisplay, cleanPrecision } from '../utils/calcEngine'
 
 describe('calcEngine', () => {
   describe('safeEvaluate', () => {

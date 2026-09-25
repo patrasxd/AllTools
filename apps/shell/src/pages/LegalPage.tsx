@@ -15,21 +15,14 @@ export function LegalPage() {
   const { locale, t } = useI18n()
 
   return (
-    <motion.div
-      className="tool-page"
-      variants={pageVariants}
-      initial="hidden"
-      animate="visible"
-      exit="exit"
-    >
+    <motion.div className="tool-page" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
       <div className="tool-page-inner">
-        <div className="container" style={{ maxWidth: '720px', width: '100%', margin: '0 auto', paddingTop: '1.5rem', paddingBottom: '3rem' }}>
+        <div
+          className="container"
+          style={{ maxWidth: '720px', width: '100%', margin: '0 auto', paddingTop: '1.5rem', paddingBottom: '3rem' }}
+        >
           <div style={{ marginBottom: '1.25rem' }}>
-            <BackLink
-              label={t.backToTools}
-              ariaLabel={t.backToToolsAria}
-              onClick={() => navigate('/')}
-            />
+            <BackLink label={t.backToTools} ariaLabel={t.backToToolsAria} onClick={() => navigate('/')} />
           </div>
 
           <LegalNotice appName="AllTools" locale={locale} />

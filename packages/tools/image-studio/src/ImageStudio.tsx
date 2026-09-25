@@ -14,18 +14,8 @@ import {
   CheckIcon,
   PhotoIcon,
 } from '@all/ui'
-import type {
-  ImageFormat,
-  AspectRatioPreset,
-  WatermarkConfig,
-  ResizeConfig,
-  CompressionConfig,
-} from './types'
-import {
-  loadFileToImage,
-  renderProcessedCanvas,
-  exportCompressedBlob,
-} from './utils/imageEngine'
+import type { ImageFormat, AspectRatioPreset, WatermarkConfig, ResizeConfig, CompressionConfig } from './types'
+import { loadFileToImage, renderProcessedCanvas, exportCompressedBlob } from './utils/imageEngine'
 import { imageStudioTranslations } from './i18n'
 import './styles/image-studio.css'
 
@@ -134,7 +124,7 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
             { key: 'status', label: t.labelStatus, value: t.statusReady },
             { key: 'heic', label: 'HEIC', value: t.statusSupported },
           ]}
-        />
+        />,
       )
       return () => {
         setHeader(null)
@@ -142,9 +132,7 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
     }
 
     const saved =
-      originalBytes > 0 && outputBytes > 0
-        ? Math.round(((originalBytes - outputBytes) / originalBytes) * 100)
-        : 0
+      originalBytes > 0 && outputBytes > 0 ? Math.round(((originalBytes - outputBytes) / originalBytes) * 100) : 0
 
     setHeader(
       <StatsHeader
@@ -165,7 +153,7 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
             value: `${outputDimensions.w}×${outputDimensions.h}px`,
           },
         ]}
-      />
+      />,
     )
 
     return () => {
@@ -217,7 +205,7 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
           previewCanvasRef.current!,
           format,
           compression.quality,
-          compression.targetMaxKb
+          compression.targetMaxKb,
         )
         setOutputBlob(blob)
         setOutputBytes(sizeBytes)
@@ -366,7 +354,9 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
         const ctx = canvas.getContext('2d')
         const img = new Image()
         img.src = outputDataUrl || (previewCanvasRef.current ? previewCanvasRef.current.toDataURL() : '')
-        await new Promise((res) => { img.onload = res })
+        await new Promise((res) => {
+          img.onload = res
+        })
         ctx?.drawImage(img, 0, 0)
         canvas.toBlob(async (pngBlob) => {
           if (pngBlob) {
@@ -403,12 +393,16 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
       ctx.font = '26px sans-serif'
       ctx.fillText('Demo Photograph (1200x800)', 600, 430)
 
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const file = new File([blob], 'sample_demo.jpg', { type: 'image/jpeg' })
-          handleFileSelect(file)
-        }
-      }, 'image/jpeg', 0.95)
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            const file = new File([blob], 'sample_demo.jpg', { type: 'image/jpeg' })
+            handleFileSelect(file)
+          }
+        },
+        'image/jpeg',
+        0.95,
+      )
     }
   }
 
@@ -493,12 +487,8 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
                   <div className="img-drop-icon">
                     <PhotoIcon width={40} height={40} />
                   </div>
-                  <div className="img-drop-title">
-                    {t.dropTitle}
-                  </div>
-                  <div className="img-drop-sub">
-                    {t.dropSubtitle}
-                  </div>
+                  <div className="img-drop-title">{t.dropTitle}</div>
+                  <div className="img-drop-sub">{t.dropSubtitle}</div>
                   <div className="img-drop-actions" onClick={(e) => e.stopPropagation()}>
                     <Button
                       id="img-browse-btn"
@@ -509,12 +499,7 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
                     >
                       {t.browseFiles}
                     </Button>
-                    <Button
-                      id="img-demo-btn"
-                      variant="secondary"
-                      size="sm"
-                      onClick={loadDemoImage}
-                    >
+                    <Button id="img-demo-btn" variant="secondary" size="sm" onClick={loadDemoImage}>
                       {t.demoImage}
                     </Button>
                   </div>
@@ -560,10 +545,7 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
                                 : undefined,
                           }}
                         >
-                          <canvas
-                            ref={previewCanvasRef}
-                            className="img-preview-canvas"
-                          />
+                          <canvas ref={previewCanvasRef} className="img-preview-canvas" />
 
                           {/* Rule of Thirds Grid Overlay */}
                           {!showOriginal && activeTab === 'crop' && (
@@ -591,12 +573,7 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
                                 </defs>
 
                                 {/* Dim outer framing slightly to highlight biometric face area */}
-                                <rect
-                                  width="350"
-                                  height="450"
-                                  fill="rgba(0, 0, 0, 0.15)"
-                                  mask="url(#id-photo-mask)"
-                                />
+                                <rect width="350" height="450" fill="rgba(0, 0, 0, 0.15)" mask="url(#id-photo-mask)" />
 
                                 {/* Central Head & Chin Biometric Oval (standard 70-80% height coverage) */}
                                 <ellipse
@@ -722,7 +699,9 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
                             {motionEnabled ? (
                               <span className="img-loading-spinner" aria-hidden="true" />
                             ) : (
-                              <span className="img-loading-static" aria-hidden="true">⏳</span>
+                              <span className="img-loading-static" aria-hidden="true">
+                                ⏳
+                              </span>
                             )}
                           </div>
                         )}
@@ -761,7 +740,9 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
                           {/* Zoom Level Slider */}
                           <div className="img-panel-group">
                             <div className="img-panel-label-row">
-                              <label htmlFor="img-zoom-slider" className="img-panel-label">{t.zoom}</label>
+                              <label htmlFor="img-zoom-slider" className="img-panel-label">
+                                {t.zoom}
+                              </label>
                               <span className="img-panel-badge">{resize.crop.zoom.toFixed(1)}×</span>
                             </div>
                             <input
@@ -834,9 +815,7 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
                           )}
 
                           {/* Clean guidance text without emojis */}
-                          <p className="img-help-text">
-                            {t.dragHint}
-                          </p>
+                          <p className="img-help-text">{t.dragHint}</p>
                         </div>
                       )}
 
@@ -906,7 +885,9 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
                                   max="0.9"
                                   step="0.05"
                                   value={watermark.opacity}
-                                  onChange={(e) => setWatermark((w) => ({ ...w, opacity: Number(e.target.value), enabled: true }))}
+                                  onChange={(e) =>
+                                    setWatermark((w) => ({ ...w, opacity: Number(e.target.value), enabled: true }))
+                                  }
                                   className="img-slider"
                                 />
                               </div>
@@ -925,7 +906,9 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
                                   max="72"
                                   step="2"
                                   value={watermark.fontSize}
-                                  onChange={(e) => setWatermark((w) => ({ ...w, fontSize: Number(e.target.value), enabled: true }))}
+                                  onChange={(e) =>
+                                    setWatermark((w) => ({ ...w, fontSize: Number(e.target.value), enabled: true }))
+                                  }
                                   className="img-slider"
                                 />
                               </div>
@@ -933,13 +916,17 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
 
                             {/* Simple Color Picker */}
                             <div className="img-panel-group">
-                              <label htmlFor="img-watermark-color" className="img-panel-label">{t.textColor}</label>
+                              <label htmlFor="img-watermark-color" className="img-panel-label">
+                                {t.textColor}
+                              </label>
                               <div className="img-color-picker-row">
                                 <input
                                   id="img-watermark-color"
                                   type="color"
                                   value={watermark.color}
-                                  onChange={(e) => setWatermark((w) => ({ ...w, color: e.target.value, enabled: true }))}
+                                  onChange={(e) =>
+                                    setWatermark((w) => ({ ...w, color: e.target.value, enabled: true }))
+                                  }
                                   className="img-color-input"
                                   aria-label={t.textColor}
                                 />
@@ -1001,9 +988,7 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
                           )}
 
                           <div className="img-panel-group">
-                            <label className="img-panel-label">
-                              {t.targetFileSize}
-                            </label>
+                            <label className="img-panel-label">{t.targetFileSize}</label>
                             <div className="img-budget-grid">
                               {[
                                 { value: 'none', label: t.budgetNone },
@@ -1027,9 +1012,7 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
                                 </Button>
                               ))}
                             </div>
-                            <p className="img-help-text">
-                              {t.budgetHint}
-                            </p>
+                            <p className="img-help-text">{t.budgetHint}</p>
                           </div>
                         </div>
                       )}

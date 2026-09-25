@@ -1,38 +1,51 @@
 <!doctype html>
-<html lang="en" style="background-color: #0a0a0a; color: #efefef;">
+<html lang="en" style="background-color: #0a0a0a; color: #efefef">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' blob: data:; worker-src 'self' blob:; child-src 'self' blob:; media-src 'self' blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';"
+    />
     <meta name="theme-color" content="#0a0a0a" />
-    <meta name="description" content="Essential browser utilities. No registration, no ads. All your data stays on this device." />
+    <meta
+      name="description"
+      content="Essential browser utilities. No registration, no ads. All your data stays on this device."
+    />
     <meta property="og:title" content="AllTools" />
-    <meta property="og:description" content="Essential browser utilities. No registration, no ads. All your data stays on this device." />
+    <meta
+      property="og:description"
+      content="Essential browser utilities. No registration, no ads. All your data stays on this device."
+    />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="AllTools" />
-    <meta name="twitter:description" content="Essential browser utilities. No registration, no ads. All your data stays on this device." />
+    <meta
+      name="twitter:description"
+      content="Essential browser utilities. No registration, no ads. All your data stays on this device."
+    />
     <link rel="icon" type="image/svg+xml" href="./icons/favicon.svg" />
     <link rel="apple-touch-icon" href="./icons/favicon.svg" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <title>AllTools</title>
     <script>
-      (function() {
+      ;(function () {
         try {
-          var t = localStorage.getItem('alltools:theme') || localStorage.getItem('all_theme') || 'dark';
-          document.documentElement.setAttribute('data-theme', t);
-          document.documentElement.setAttribute('data-all-theme', t);
-          var isLight = t === 'light' || t === 'e-ink-light';
-          var bg = isLight ? '#f2f1ec' : '#0a0a0a';
-          var fg = isLight ? '#111111' : '#efefef';
-          document.documentElement.style.backgroundColor = bg;
-          document.documentElement.style.color = fg;
+          var t = localStorage.getItem('alltools:theme') || localStorage.getItem('all_theme') || 'dark'
+          document.documentElement.setAttribute('data-theme', t)
+          document.documentElement.setAttribute('data-all-theme', t)
+          var isLight = t === 'light' || t === 'e-ink-light'
+          var bg = isLight ? '#f2f1ec' : '#0a0a0a'
+          var fg = isLight ? '#111111' : '#efefef'
+          document.documentElement.style.backgroundColor = bg
+          document.documentElement.style.color = fg
           if (t.indexOf('e-ink') !== -1) {
-            document.documentElement.setAttribute('data-eink', 'true');
+            document.documentElement.setAttribute('data-eink', 'true')
           }
         } catch (e) {}
-      })();
+      })()
     </script>
   </head>
-  <body style="background-color: inherit; color: inherit;">
+  <body style="background-color: inherit; color: inherit">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

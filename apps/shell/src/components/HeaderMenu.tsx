@@ -11,13 +11,15 @@ export function HeaderMenu() {
   return (
     <UiHeaderMenu
       locale={locale}
-      onLocaleChange={loc => setLocale(loc as any)}
+      onLocaleChange={(loc) => setLocale(loc as any)}
       theme={theme}
-      onThemeChange={th => setTheme(th as any)}
+      onThemeChange={(th) => setTheme(th as any)}
       isEink={isEink}
-      onEinkChange={enable => setTheme(enable ? (isDark ? 'e-ink-dark' : 'e-ink-light') : (isDark ? 'dark' : 'light'))}
+      onEinkChange={(enable) => setTheme(enable ? (isDark ? 'e-ink-dark' : 'e-ink-light') : isDark ? 'dark' : 'light')}
       canInstall={canInstall}
-      onInstall={() => { void install() }}
+      onInstall={() => {
+        void install()
+      }}
       labels={{
         language: t.language,
         theme: t.theme,

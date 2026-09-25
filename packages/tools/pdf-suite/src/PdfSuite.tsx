@@ -26,19 +26,8 @@ import type {
   Point2D,
 } from './types'
 import { pdfSuiteTranslations } from './i18n'
-import {
-  loadPdfInfo,
-  mergePdfs,
-  extractAndRotatePages,
-  imagesToPdf,
-  signPdf,
-} from './utils/pdfEngine'
-import {
-  loadImageElement,
-  rotateCanvas,
-  applyDocumentFilter,
-  processEditableImage,
-} from './utils/imageEngine'
+import { loadPdfInfo, mergePdfs, extractAndRotatePages, imagesToPdf, signPdf } from './utils/pdfEngine'
+import { loadImageElement, rotateCanvas, applyDocumentFilter, processEditableImage } from './utils/imageEngine'
 import './styles/pdf-suite.css'
 
 export interface ToolComponentProps {
@@ -111,6 +100,60 @@ function trimCanvas(canvas: HTMLCanvasElement): string {
   return trimmedCanvas.toDataURL('image/png')
 }
 
+export const SIGNATURE_FONT_CONFIG: Record<SignatureFont, { family: string; fontSpec: string }> = {
+  'dancing-script': { family: 'Dancing Script', fontSpec: "'Dancing Script', cursive" },
+  caveat: { family: 'Caveat', fontSpec: "'Caveat', cursive" },
+  calligraphy: { family: 'Great Vibes', fontSpec: "'Great Vibes', cursive" },
+  cursive: { family: 'Sacramento', fontSpec: "'Sacramento', cursive" },
+}
+
+/**
+ * Renders a typed signature to a transparent PNG with dynamic measurement & padding.
+ * Awaits document.fonts.load() before drawing to ensure the web font is fully loaded
+ * and does not fall back to generic cursive.
+ */
+export async function renderTypedSignaturePng(text: string, font: SignatureFont): Promise<string> {
+  const label = text.trim() || 'Signature'
+  const config = SIGNATURE_FONT_CONFIG[font] || { family: 'cursive', fontSpec: 'cursive' }
+  const baseFontSize = 72
+
+  // Await font loading before measuring or drawing on canvas
+  if (typeof document !== 'undefined' && document.fonts && typeof document.fonts.load === 'function') {
+    try {
+      await document.fonts.load(`${baseFontSize}px "${config.family}"`, label)
+    } catch {
+      // Graceful fallback if font loading fails or is unsupported
+    }
+  }
+
+  const offscreen = document.createElement('canvas')
+  const ctx = offscreen.getContext('2d')
+  if (!ctx) return ''
+
+  const fontName = config.fontSpec
+
+  // High resolution base font size for crisp, unclipped signature
+  ctx.font = `${baseFontSize}px ${fontName}`
+  const metrics = ctx.measureText(label)
+  const textWidth = Math.ceil(metrics.width) || 300
+
+  // Set canvas dimensions with generous padding so glyph ascenders/descenders never clip
+  const paddingX = 60
+  const paddingY = 40
+  offscreen.width = Math.max(400, textWidth + paddingX * 2)
+  offscreen.height = Math.max(160, Math.ceil(baseFontSize * 2) + paddingY * 2)
+
+  // Clear and redraw with font setting on resized canvas
+  ctx.clearRect(0, 0, offscreen.width, offscreen.height)
+  ctx.font = `${baseFontSize}px ${fontName}`
+  ctx.fillStyle = '#111111'
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText(label, offscreen.width / 2, offscreen.height / 2)
+
+  return trimCanvas(offscreen)
+}
+
 export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: ToolComponentProps) {
   const t = pdfSuiteTranslations[locale] || pdfSuiteTranslations.en
   const fileInputId = useId()
@@ -134,10 +177,14 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
   const [sigScale, setSigScale] = useState<number | string>(100)
   const [boxWidthPercent, setBoxWidthPercent] = useState<number>(32)
   const [boxHeightPercent, setBoxHeightPercent] = useState<number>(12)
-  const [customCoords, setCustomCoords] = useState<{ xPercent: number; yPercent: number }>({ xPercent: 80, yPercent: 90 })
+  const [customCoords, setCustomCoords] = useState<{ xPercent: number; yPercent: number }>({
+    xPercent: 80,
+    yPercent: 90,
+  })
   const [isDraggingSig, setIsDraggingSig] = useState<boolean>(false)
   const [isResizingSig, setIsResizingSig] = useState<boolean>(false)
   const [drawSigDataUrl, setDrawSigDataUrl] = useState<string>('')
+  const [typedSigDataUrl, setTypedSigDataUrl] = useState<string>('')
   const [isDrawing, setIsDrawing] = useState<boolean>(false)
 
   // Editable Images (Images to PDF & Document Scanner)
@@ -186,11 +233,7 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
       ]
     }
 
-    setHeader(
-      <StatsHeader
-        items={items}
-      />
-    )
+    setHeader(<StatsHeader items={items} />)
 
     return () => {
       setHeader(null)
@@ -554,16 +597,40 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
       // Page 1
       const page1 = doc.addPage([595, 842])
       page1.drawText('AllTools PDF Suite — Document Demo', { x: 50, y: 760, size: 20, font, color: rgb(0.1, 0.1, 0.1) })
-      page1.drawText('Page 1: Overview & Executive Summary', { x: 50, y: 720, size: 14, font: fontRegular, color: rgb(0.3, 0.3, 0.3) })
+      page1.drawText('Page 1: Overview & Executive Summary', {
+        x: 50,
+        y: 720,
+        size: 14,
+        font: fontRegular,
+        color: rgb(0.3, 0.3, 0.3),
+      })
 
       // Page 2
       const page2 = doc.addPage([595, 842])
-      page2.drawText('Page 2: Specifications & Project Roadmap', { x: 50, y: 760, size: 18, font, color: rgb(0.1, 0.1, 0.1) })
+      page2.drawText('Page 2: Specifications & Project Roadmap', {
+        x: 50,
+        y: 760,
+        size: 18,
+        font,
+        color: rgb(0.1, 0.1, 0.1),
+      })
 
       // Page 3
       const page3 = doc.addPage([595, 842])
-      page3.drawText('Page 3: Signatures & Verification Clause', { x: 50, y: 760, size: 18, font, color: rgb(0.1, 0.1, 0.1) })
-      page3.drawText('Sign here at the bottom to verify document integrity.', { x: 50, y: 720, size: 12, font: fontRegular, color: rgb(0.4, 0.4, 0.4) })
+      page3.drawText('Page 3: Signatures & Verification Clause', {
+        x: 50,
+        y: 760,
+        size: 18,
+        font,
+        color: rgb(0.1, 0.1, 0.1),
+      })
+      page3.drawText('Sign here at the bottom to verify document integrity.', {
+        x: 50,
+        y: 720,
+        size: 12,
+        font: fontRegular,
+        color: rgb(0.4, 0.4, 0.4),
+      })
 
       const pdfBytes = await doc.save()
       const demoFile = new File([pdfBytes.buffer as ArrayBuffer], 'sample_document.pdf', { type: 'application/pdf' })
@@ -653,23 +720,15 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
   }
 
   const togglePageSelection = (id: string) => {
-    setPdfPages((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, selected: !p.selected } : p))
-    )
+    setPdfPages((prev) => prev.map((p) => (p.id === id ? { ...p, selected: !p.selected } : p)))
   }
 
   const rotatePage = (id: string) => {
-    setPdfPages((prev) =>
-      prev.map((p) =>
-        p.id === id ? { ...p, rotation: (p.rotation + 90) % 360 } : p
-      )
-    )
+    setPdfPages((prev) => prev.map((p) => (p.id === id ? { ...p, rotation: (p.rotation + 90) % 360 } : p)))
   }
 
   const rotateAllPages = () => {
-    setPdfPages((prev) =>
-      prev.map((p) => ({ ...p, rotation: (p.rotation + 90) % 360 }))
-    )
+    setPdfPages((prev) => prev.map((p) => ({ ...p, rotation: (p.rotation + 90) % 360 })))
   }
 
   const allSelected = pdfPages.length > 0 && pdfPages.every((p) => p.selected)
@@ -735,7 +794,7 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
     setDrawSigDataUrl('')
   }
 
-  const numericScale = typeof sigScale === 'number' ? sigScale : (parseInt(sigScale, 10) || 100)
+  const numericScale = typeof sigScale === 'number' ? sigScale : parseInt(sigScale, 10) || 100
   const effectiveScale = Math.max(10, Math.min(500, numericScale))
 
   const halfW = Math.max(1, Math.round(boxWidthPercent / 2))
@@ -767,44 +826,50 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
   }
 
   // Manual interactive click / drag handler on document preview (safely clamped so box never overflows paper edges)
-  const handlePlacementPointer = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    if (!viewportRef.current) return
-    const rect = viewportRef.current.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
-    const minX = halfW + 1
-    const maxX = 100 - halfW - 1
-    const minY = halfH + 1
-    const maxY = 100 - halfH - 1
-    const xPercent = Math.max(minX, Math.min(maxX, Math.round((x / rect.width) * 100)))
-    const yPercent = Math.max(minY, Math.min(maxY, Math.round((y / rect.height) * 100)))
-    setCustomCoords({ xPercent, yPercent })
-    setSigPosition('custom')
-  }, [halfW, halfH])
+  const handlePlacementPointer = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (!viewportRef.current) return
+      const rect = viewportRef.current.getBoundingClientRect()
+      const x = e.clientX - rect.left
+      const y = e.clientY - rect.top
+      const minX = halfW + 1
+      const maxX = 100 - halfW - 1
+      const minY = halfH + 1
+      const maxY = 100 - halfH - 1
+      const xPercent = Math.max(minX, Math.min(maxX, Math.round((x / rect.width) * 100)))
+      const yPercent = Math.max(minY, Math.min(maxY, Math.round((y / rect.height) * 100)))
+      setCustomCoords({ xPercent, yPercent })
+      setSigPosition('custom')
+    },
+    [halfW, halfH],
+  )
 
   // Interactive resize handle dragging (resizes both the blue box and text proportionally)
-  const handleResizePointer = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    if (!viewportRef.current) return
-    const rect = viewportRef.current.getBoundingClientRect()
-    const pointerX = e.clientX - rect.left
-    const pointerY = e.clientY - rect.top
+  const handleResizePointer = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (!viewportRef.current) return
+      const rect = viewportRef.current.getBoundingClientRect()
+      const pointerX = e.clientX - rect.left
+      const pointerY = e.clientY - rect.top
 
-    // Center of the signature box in pixels
-    const centerX = (customCoords.xPercent / 100) * rect.width
-    const centerY = (customCoords.yPercent / 100) * rect.height
+      // Center of the signature box in pixels
+      const centerX = (customCoords.xPercent / 100) * rect.width
+      const centerY = (customCoords.yPercent / 100) * rect.height
 
-    // Distance from center to pointer
-    const distX = Math.abs(pointerX - centerX)
-    const distY = Math.abs(pointerY - centerY)
+      // Distance from center to pointer
+      const distX = Math.abs(pointerX - centerX)
+      const distY = Math.abs(pointerY - centerY)
 
-    const newW = Math.max(10, Math.min(95, Math.round(((distX * 2) / rect.width) * 100)))
-    const newH = Math.max(4, Math.min(60, Math.round(((distY * 2) / rect.height) * 100)))
+      const newW = Math.max(10, Math.min(95, Math.round(((distX * 2) / rect.width) * 100)))
+      const newH = Math.max(4, Math.min(60, Math.round(((distY * 2) / rect.height) * 100)))
 
-    setBoxWidthPercent(newW)
-    setBoxHeightPercent(newH)
-    setSigScale(Math.round((newW / 32) * 100))
-    setSigPosition('custom')
-  }, [customCoords.xPercent, customCoords.yPercent])
+      setBoxWidthPercent(newW)
+      setBoxHeightPercent(newH)
+      setSigScale(Math.round((newW / 32) * 100))
+      setSigPosition('custom')
+    },
+    [customCoords.xPercent, customCoords.yPercent],
+  )
 
   const resolvedPageIndex = useMemo(() => {
     const pageCount = pdfPages.length
@@ -819,53 +884,45 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
   const targetPageThumbnail = pdfPages[resolvedPageIndex]?.thumbnailUrl
   const currentPageAspectRatio = pdfPages[resolvedPageIndex]?.aspectRatio || 1 / 1.414
 
-  // Render typed signature to transparent PNG with dynamic measurement & padding
-  const renderTypedSignaturePng = (text: string, font: SignatureFont): string => {
-    const offscreen = document.createElement('canvas')
-    const ctx = offscreen.getContext('2d')
-    if (!ctx) return ''
+  // Re-render typed signature once font is loaded
+  useEffect(() => {
+    let isMounted = true
+    renderTypedSignaturePng(typedName, selectedFont).then((url) => {
+      if (isMounted) {
+        setTypedSigDataUrl(url)
+      }
+    })
 
-    let fontName = 'cursive'
-    if (font === 'dancing-script') fontName = "'Dancing Script', cursive"
-    else if (font === 'caveat') fontName = "'Caveat', cursive"
-    else if (font === 'calligraphy') fontName = "'Great Vibes', cursive"
-    else if (font === 'cursive') fontName = "'Sacramento', cursive"
+    if (typeof document !== 'undefined' && document.fonts && 'ready' in document.fonts) {
+      document.fonts.ready.then(() => {
+        if (isMounted) {
+          renderTypedSignaturePng(typedName, selectedFont).then((url) => {
+            if (isMounted) {
+              setTypedSigDataUrl(url)
+            }
+          })
+        }
+      })
+    }
 
-    const label = text.trim() || 'Signature'
-
-    // High resolution base font size for crisp, unclipped signature
-    const baseFontSize = 72
-    ctx.font = `${baseFontSize}px ${fontName}`
-    const metrics = ctx.measureText(label)
-    const textWidth = Math.ceil(metrics.width) || 300
-
-    // Set canvas dimensions with generous padding so glyph ascenders/descenders never clip
-    const paddingX = 60
-    const paddingY = 40
-    offscreen.width = Math.max(400, textWidth + paddingX * 2)
-    offscreen.height = Math.max(160, Math.ceil(baseFontSize * 2) + paddingY * 2)
-
-    // Clear and redraw with font setting on resized canvas
-    ctx.clearRect(0, 0, offscreen.width, offscreen.height)
-    ctx.font = `${baseFontSize}px ${fontName}`
-    ctx.fillStyle = '#111111'
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.fillText(label, offscreen.width / 2, offscreen.height / 2)
-
-    return trimCanvas(offscreen)
-  }
+    return () => {
+      isMounted = false
+    }
+  }, [typedName, selectedFont])
 
   const activeSignatureDataUrl = useMemo(() => {
     if (signMode === 'draw') {
       return drawSigDataUrl || (sigCanvasRef.current ? trimCanvas(sigCanvasRef.current) : '')
     }
-    return renderTypedSignaturePng(typedName, selectedFont)
-  }, [signMode, drawSigDataUrl, typedName, selectedFont])
+    return typedSigDataUrl
+  }, [signMode, drawSigDataUrl, typedSigDataUrl])
 
-  const handleProceedToPlacement = () => {
+  const handleProceedToPlacement = async () => {
     if (signMode === 'draw' && sigCanvasRef.current) {
       setDrawSigDataUrl(trimCanvas(sigCanvasRef.current))
+    } else if (signMode === 'type') {
+      const url = await renderTypedSignaturePng(typedName, selectedFont)
+      setTypedSigDataUrl(url)
     }
     setSigStep('place')
   }
@@ -880,7 +937,7 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
         signatureDataUrl = drawSigDataUrl || (sigCanvasRef.current ? trimCanvas(sigCanvasRef.current) : '')
         if (!signatureDataUrl) return
       } else {
-        signatureDataUrl = renderTypedSignaturePng(typedName, selectedFont)
+        signatureDataUrl = await renderTypedSignaturePng(typedName, selectedFont)
       }
 
       // Determine target page index (0-indexed)
@@ -898,9 +955,11 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
           widthPercent: boxWidthPercent,
           heightPercent: boxHeightPercent,
         },
-        1
+        1,
       )
-      const signedFile = new File([signedBlob], `${pdfFiles[0].name.replace(/\.pdf$/i, '')}_signed.pdf`, { type: 'application/pdf' })
+      const signedFile = new File([signedBlob], `${pdfFiles[0].name.replace(/\.pdf$/i, '')}_signed.pdf`, {
+        type: 'application/pdf',
+      })
 
       const info = await loadPdfInfo(signedFile)
       setPdfFiles([
@@ -987,12 +1046,7 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
                     >
                       {t.browseFiles}
                     </Button>
-                    <Button
-                      id="pdf-demo-btn"
-                      variant="secondary"
-                      size="sm"
-                      onClick={loadDemoPdf}
-                    >
+                    <Button id="pdf-demo-btn" variant="secondary" size="sm" onClick={loadDemoPdf}>
                       {t.demoDocument}
                     </Button>
                   </div>
@@ -1085,12 +1139,7 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
                       >
                         {allSelected ? t.deselectAll : t.selectAll}
                       </Button>
-                      <Button
-                        id="pdf-rotate-all-btn"
-                        variant="secondary"
-                        size="sm"
-                        onClick={rotateAllPages}
-                      >
+                      <Button id="pdf-rotate-all-btn" variant="secondary" size="sm" onClick={rotateAllPages}>
                         {t.rotateAll90}
                       </Button>
                       <Button
@@ -1155,6 +1204,8 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
                                 type="button"
                                 className="pdf-page-mini-arrow"
                                 disabled={idx === 0}
+                                draggable={false}
+                                onDragStart={(e) => e.stopPropagation()}
                                 onClick={(e) => {
                                   e.stopPropagation()
                                   movePage(idx, idx - 1)
@@ -1170,6 +1221,8 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
                                 type="button"
                                 className="pdf-page-mini-arrow"
                                 disabled={idx === pdfPages.length - 1}
+                                draggable={false}
+                                onDragStart={(e) => e.stopPropagation()}
                                 onClick={(e) => {
                                   e.stopPropagation()
                                   movePage(idx, idx + 1)
@@ -1183,6 +1236,8 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
                             <button
                               type="button"
                               className="pdf-page-rotate-btn"
+                              draggable={false}
+                              onDragStart={(e) => e.stopPropagation()}
                               onClick={(e) => {
                                 e.stopPropagation()
                                 rotatePage(page.id)
@@ -1291,9 +1346,7 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
                           </div>
                         </div>
 
-                        <p className="pdf-img-hint-text">
-                          {t.perspectiveHint}
-                        </p>
+                        <p className="pdf-img-hint-text">{t.perspectiveHint}</p>
 
                         {/* Filter, Rotation & Perspective Controls Toolbar */}
                         <div className="pdf-img-edit-bar">
@@ -1329,20 +1382,10 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
                           </div>
 
                           <div className="pdf-img-actions-group">
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              onClick={rotateActiveImage}
-                              title={t.rotatePage90}
-                            >
+                            <Button variant="secondary" size="sm" onClick={rotateActiveImage} title={t.rotatePage90}>
                               ↻ 90°
                             </Button>
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              onClick={resetCornersActive}
-                              title={t.resetCorners}
-                            >
+                            <Button variant="secondary" size="sm" onClick={resetCornersActive} title={t.resetCorners}>
                               {t.resetCorners}
                             </Button>
                             <Button
@@ -1451,12 +1494,7 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
                 {t.clearSignature}
               </Button>
               <div style={{ display: 'flex', gap: '8px' }}>
-                <Button
-                  id="sig-cancel-btn"
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setIsSignOpen(false)}
-                >
+                <Button id="sig-cancel-btn" variant="secondary" size="sm" onClick={() => setIsSignOpen(false)}>
                   {t.cancel}
                 </Button>
                 <Button
@@ -1471,13 +1509,10 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
               </div>
             </div>
           ) : (
-            <div style={{ display: 'flex', width: '100%', alignItems: 'center', justifyContent: 'flex-end', gap: '8px' }}>
-              <Button
-                id="sig-back-btn"
-                variant="secondary"
-                size="sm"
-                onClick={() => setSigStep('create')}
-              >
+            <div
+              style={{ display: 'flex', width: '100%', alignItems: 'center', justifyContent: 'flex-end', gap: '8px' }}
+            >
+              <Button id="sig-back-btn" variant="secondary" size="sm" onClick={() => setSigStep('create')}>
                 {t.backToSignature}
               </Button>
               <Button
@@ -1604,7 +1639,9 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
                 />
               </div>
 
-              <span className="pdf-placement-hint">{t.manualPlacementHint} • {t.resizeBoxHint}</span>
+              <span className="pdf-placement-hint">
+                {t.manualPlacementHint} • {t.resizeBoxHint}
+              </span>
 
               {/* Centered Document Page with Real Page Format & Proportions */}
               <div className="pdf-placement-stage">
@@ -1642,7 +1679,9 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
                     />
                   ) : (
                     <div className="pdf-placement-page-fallback">
-                      <span>{t.pageNumber} {resolvedPageIndex + 1}</span>
+                      <span>
+                        {t.pageNumber} {resolvedPageIndex + 1}
+                      </span>
                       <span style={{ fontSize: '0.65rem', marginTop: '4px' }}>{t.dragToMoveHint}</span>
                     </div>
                   )}
@@ -1662,15 +1701,9 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
                     }}
                   >
                     {activeSignatureDataUrl ? (
-                      <img
-                        src={activeSignatureDataUrl}
-                        alt="Signature"
-                        className="pdf-placement-sig-preview"
-                      />
+                      <img src={activeSignatureDataUrl} alt="Signature" className="pdf-placement-sig-preview" />
                     ) : (
-                      <span className="pdf-placement-sig-fallback">
-                        {typedName || 'Signature'}
-                      </span>
+                      <span className="pdf-placement-sig-fallback">{typedName || 'Signature'}</span>
                     )}
 
                     {/* Interactive Corner Resize Handle */}

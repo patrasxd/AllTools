@@ -43,11 +43,7 @@ export const NeedleGauge: React.FC<NeedleGaugeProps> = ({
       aria-valuemax={50}
       aria-valuetext={statusText}
     >
-      <svg
-        viewBox="0 0 300 165"
-        className="tuner-gauge-svg"
-        aria-hidden="true"
-      >
+      <svg viewBox="0 0 300 165" className="tuner-gauge-svg" aria-hidden="true">
         {/* Background Arc */}
         <path
           d="M 30 150 A 120 120 0 0 1 270 150"
@@ -149,11 +145,7 @@ export const NeedleGauge: React.FC<NeedleGaugeProps> = ({
       {/* Cents indicator & In Tune badge */}
       <div className="tuner-gauge-footer">
         <span className="tuner-gauge-label">{flatLabel}</span>
-        <span
-          className={`tuner-status-badge ${
-            hasAudio && isInTune ? 'tuner-status-badge--in-tune' : ''
-          }`}
-        >
+        <span className={`tuner-status-badge ${hasAudio && isInTune ? 'tuner-status-badge--in-tune' : ''}`}>
           {statusText}
         </span>
         <span className="tuner-gauge-label">{sharpLabel}</span>

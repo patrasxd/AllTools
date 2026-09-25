@@ -39,10 +39,10 @@ export function HomePage() {
   // Extract all unique tags in current locale, sorted descending by tool count
   const allTags = useMemo(() => {
     const tagCountMap = new Map<string, number>()
-    TOOLS_METADATA.forEach(tool => {
+    TOOLS_METADATA.forEach((tool) => {
       const tags = getLocalizedTags(tool.tags, locale)
-      const uniqueToolTags = new Set(tags.map(tg => tg.trim().toLowerCase()))
-      uniqueToolTags.forEach(tg => {
+      const uniqueToolTags = new Set(tags.map((tg) => tg.trim().toLowerCase()))
+      uniqueToolTags.forEach((tg) => {
         tagCountMap.set(tg, (tagCountMap.get(tg) || 0) + 1)
       })
     })
@@ -56,8 +56,8 @@ export function HomePage() {
   const filteredTools = useMemo(() => {
     if (!selectedTag) return TOOLS_METADATA
     const normalizedSelected = selectedTag.trim().toLowerCase()
-    return TOOLS_METADATA.filter(tool => {
-      const tags = getLocalizedTags(tool.tags, locale).map(tg => tg.trim().toLowerCase())
+    return TOOLS_METADATA.filter((tool) => {
+      const tags = getLocalizedTags(tool.tags, locale).map((tg) => tg.trim().toLowerCase())
       return tags.includes(normalizedSelected)
     })
   }, [selectedTag, locale])
@@ -84,7 +84,9 @@ export function HomePage() {
             {t.heroEyebrow}
           </motion.p>
           <motion.h1 className="home-title" id="home-title" variants={lineVariants} custom={isReturning}>
-            All<br />Tools
+            All
+            <br />
+            Tools
           </motion.h1>
           <motion.p className="home-description" variants={lineVariants} custom={isReturning}>
             {t.heroDescription}
@@ -131,10 +133,10 @@ export function HomePage() {
                   <span className="home-filter-count">{TOOLS_METADATA.length}</span>
                 </button>
 
-                {allTags.map(tag => {
+                {allTags.map((tag) => {
                   const isSelected = selectedTag === tag
-                  const count = TOOLS_METADATA.filter(tool =>
-                    getLocalizedTags(tool.tags, locale).some(tg => tg.trim().toLowerCase() === tag)
+                  const count = TOOLS_METADATA.filter((tool) =>
+                    getLocalizedTags(tool.tags, locale).some((tg) => tg.trim().toLowerCase() === tag),
                   ).length
 
                   return (
@@ -187,11 +189,7 @@ export function HomePage() {
                   transition={{ duration: 0.3 }}
                 >
                   <p>{t.noFilteredTools}</p>
-                  <button
-                    type="button"
-                    className="home-filter-reset-btn"
-                    onClick={() => setSelectedTag(null)}
-                  >
+                  <button type="button" className="home-filter-reset-btn" onClick={() => setSelectedTag(null)}>
                     {t.clearFilter}
                   </button>
                 </motion.div>

@@ -406,7 +406,9 @@
   overflow: hidden;
   height: 38px;
   box-sizing: border-box;
-  transition: border-color var(--all-duration-fast, 150ms) ease, box-shadow var(--all-duration-fast, 150ms) ease;
+  transition:
+    border-color var(--all-duration-fast, 150ms) ease,
+    box-shadow var(--all-duration-fast, 150ms) ease;
 }
 
 .interval-stepper-control:focus-within {
@@ -427,7 +429,9 @@
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
-  transition: background-color var(--all-duration-fast, 150ms) ease, color var(--all-duration-fast, 150ms) ease;
+  transition:
+    background-color var(--all-duration-fast, 150ms) ease,
+    color var(--all-duration-fast, 150ms) ease;
 }
 
 .interval-stepper-btn:hover:not(:disabled) {

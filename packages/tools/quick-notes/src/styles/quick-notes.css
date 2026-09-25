@@ -73,7 +73,9 @@
   border-radius: var(--all-radius-sm, 6px);
   color: var(--all-text, currentColor);
   outline: none;
-  transition: border-color 150ms ease, background-color 150ms ease;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease;
   box-sizing: border-box;
 }
 
@@ -107,7 +109,9 @@
   border-radius: var(--all-radius-sm, 6px);
   font-size: 0.8125rem;
   user-select: none;
-  transition: border-color 150ms ease, background-color 150ms ease;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease;
 }
 
 .notes-item:hover {
@@ -134,7 +138,10 @@
 }
 
 .notes-item-text {
-  transition: color 150ms ease, opacity 150ms ease, text-decoration 150ms ease;
+  transition:
+    color 150ms ease,
+    opacity 150ms ease,
+    text-decoration 150ms ease;
   line-height: 1.3;
   color: var(--all-text, currentColor);
   word-break: break-word;
@@ -156,7 +163,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: color 150ms ease, background-color 150ms ease;
+  transition:
+    color 150ms ease,
+    background-color 150ms ease;
   flex-shrink: 0;
 }
 

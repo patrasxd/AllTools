@@ -34,20 +34,15 @@ import {
 import { screenRulerTranslations } from './i18n'
 import './styles/screen-ruler.css'
 
-export function ScreenRuler({
-  locale = 'en',
-  setHeader,
-  isEink = false,
-  theme,
-}: ToolComponentProps) {
+export function ScreenRuler({ locale = 'en', setHeader, isEink = false, theme }: ToolComponentProps) {
   const t = screenRulerTranslations[locale as Locale] || screenRulerTranslations.en
 
   // Theme detection
   const isDark = theme
     ? theme === 'dark' || theme === 'e-ink-dark'
     : typeof document !== 'undefined'
-    ? (document.documentElement.getAttribute('data-theme')?.includes('dark') ?? true)
-    : true
+      ? (document.documentElement.getAttribute('data-theme')?.includes('dark') ?? true)
+      : true
 
   const themeClass = useMemo(() => {
     if (isEink) {
@@ -80,24 +75,25 @@ export function ScreenRuler({
 
   // Calibration slider value (width of on-screen card in pixels)
   const [cardWidthPx, setCardWidthPx] = useState<number>(() => {
-    const initTarget = (typeof window !== 'undefined' && window.innerWidth < 640)
-      ? CARD_SHORT_MM
-      : CARD_LONG_MM
+    const initTarget = typeof window !== 'undefined' && window.innerWidth < 640 ? CARD_SHORT_MM : CARD_LONG_MM
     return Math.round(getInitialPpm() * initTarget)
   })
 
-  const handleOrientationChange = useCallback((orient: string) => {
-    const nextOrient = orient as CardOrientation
-    if (nextOrient === cardOrientation) return
+  const handleOrientationChange = useCallback(
+    (orient: string) => {
+      const nextOrient = orient as CardOrientation
+      if (nextOrient === cardOrientation) return
 
-    // Preserve the active PPM calibrated so far by the user
-    const currentActivePpm = cardWidthPx / targetWidthMm
-    setCardOrientation(nextOrient)
-    const newTarget = nextOrient === 'landscape' ? CARD_LONG_MM : CARD_SHORT_MM
-    const nextWidth = Math.round(currentActivePpm * newTarget)
-    setCardWidthPx(nextWidth)
-    setPixelsPerMm(currentActivePpm)
-  }, [cardOrientation, cardWidthPx, targetWidthMm])
+      // Preserve the active PPM calibrated so far by the user
+      const currentActivePpm = cardWidthPx / targetWidthMm
+      setCardOrientation(nextOrient)
+      const newTarget = nextOrient === 'landscape' ? CARD_LONG_MM : CARD_SHORT_MM
+      const nextWidth = Math.round(currentActivePpm * newTarget)
+      setCardWidthPx(nextWidth)
+      setPixelsPerMm(currentActivePpm)
+    },
+    [cardOrientation, cardWidthPx, targetWidthMm],
+  )
 
   // Measurement unit
   const [unit, setUnit] = useState<MeasurementUnit>('cm')
@@ -168,10 +164,7 @@ export function ScreenRuler({
 
   // Calculated values
   const currentPpm = isCalibrated ? pixelsPerMm : calculatePpm(cardWidthPx, targetWidthMm)
-  const measurements = useMemo(
-    () => calculateMeasurements(caliperPx, currentPpm),
-    [caliperPx, currentPpm]
-  )
+  const measurements = useMemo(() => calculateMeasurements(caliperPx, currentPpm), [caliperPx, currentPpm])
 
   // Sync StatsHeader (Single source of truth for stats)
   useEffect(() => {
@@ -192,7 +185,7 @@ export function ScreenRuler({
               value: measurements.estimatedDpi,
             },
           ]}
-        />
+        />,
       )
     } else {
       setHeader(
@@ -201,39 +194,23 @@ export function ScreenRuler({
             {
               key: 'x',
               label: t.widthX,
-              value: formatMeasurement(
-                unit === 'cm' ? measurements.cmX : measurements.inX,
-                unit
-              ),
+              value: formatMeasurement(unit === 'cm' ? measurements.cmX : measurements.inX, unit),
             },
             {
               key: 'y',
               label: t.heightY,
-              value: formatMeasurement(
-                unit === 'cm' ? measurements.cmY : measurements.inY,
-                unit
-              ),
+              value: formatMeasurement(unit === 'cm' ? measurements.cmY : measurements.inY, unit),
             },
             {
               key: 'diag',
               label: t.diagonal,
-              value: formatMeasurement(
-                unit === 'cm' ? measurements.diagCm : measurements.diagIn,
-                unit
-              ),
+              value: formatMeasurement(unit === 'cm' ? measurements.diagCm : measurements.diagIn, unit),
             },
           ]}
-        />
+        />,
       )
     }
-  }, [
-    setHeader,
-    isCalibrated,
-    unit,
-    measurements,
-    targetWidthMm,
-    t,
-  ])
+  }, [setHeader, isCalibrated, unit, measurements, targetWidthMm, t])
 
   // Pointer tracking for caliper dragging
   const updatePointer = useCallback((clientX: number, clientY: number) => {
@@ -243,16 +220,22 @@ export function ScreenRuler({
     setCaliperPx(newPos)
   }, [])
 
-  const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    setIsDragging(true)
-    updatePointer(e.clientX, e.clientY)
-    e.currentTarget.setPointerCapture?.(e.pointerId)
-  }, [updatePointer])
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      setIsDragging(true)
+      updatePointer(e.clientX, e.clientY)
+      e.currentTarget.setPointerCapture?.(e.pointerId)
+    },
+    [updatePointer],
+  )
 
-  const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDragging) return
-    updatePointer(e.clientX, e.clientY)
-  }, [isDragging, updatePointer])
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (!isDragging) return
+      updatePointer(e.clientX, e.clientY)
+    },
+    [isDragging, updatePointer],
+  )
 
   const handlePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     setIsDragging(false)
@@ -265,36 +248,39 @@ export function ScreenRuler({
 
   // Keyboard accessibility for fine caliper control
   const rulerSize = 60
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
-    const stepMm = e.shiftKey ? 10 : 1
-    const stepPx = Math.max(1, Math.round(stepMm * currentPpm))
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      const stepMm = e.shiftKey ? 10 : 1
+      const stepPx = Math.max(1, Math.round(stepMm * currentPpm))
 
-    if (e.key === 'ArrowLeft') {
-      e.preventDefault()
-      setCaliperPx((prev) => ({
-        ...prev,
-        x: Math.min(dims.width - rulerSize, prev.x + stepPx),
-      }))
-    } else if (e.key === 'ArrowRight') {
-      e.preventDefault()
-      setCaliperPx((prev) => ({
-        ...prev,
-        x: Math.max(0, prev.x - stepPx),
-      }))
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault()
-      setCaliperPx((prev) => ({
-        ...prev,
-        y: Math.min(dims.height - rulerSize, prev.y + stepPx),
-      }))
-    } else if (e.key === 'ArrowDown') {
-      e.preventDefault()
-      setCaliperPx((prev) => ({
-        ...prev,
-        y: Math.max(0, prev.y - stepPx),
-      }))
-    }
-  }, [currentPpm, dims.width, dims.height, rulerSize])
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault()
+        setCaliperPx((prev) => ({
+          ...prev,
+          x: Math.min(dims.width - rulerSize, prev.x + stepPx),
+        }))
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault()
+        setCaliperPx((prev) => ({
+          ...prev,
+          x: Math.max(0, prev.x - stepPx),
+        }))
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setCaliperPx((prev) => ({
+          ...prev,
+          y: Math.min(dims.height - rulerSize, prev.y + stepPx),
+        }))
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setCaliperPx((prev) => ({
+          ...prev,
+          y: Math.max(0, prev.y - stepPx),
+        }))
+      }
+    },
+    [currentPpm, dims.width, dims.height, rulerSize],
+  )
 
   const cardHeightPx = calculateCardHeightPx(cardWidthPx, targetWidthMm, targetHeightMm)
 
@@ -303,7 +289,7 @@ export function ScreenRuler({
       { value: 'landscape', label: t.optHorizontal },
       { value: 'portrait', label: t.optVertical },
     ],
-    [t.optHorizontal, t.optVertical]
+    [t.optHorizontal, t.optVertical],
   )
 
   const unitOptions = useMemo(
@@ -311,7 +297,7 @@ export function ScreenRuler({
       { value: 'cm', label: t.optCm },
       { value: 'inch', label: t.optInch },
     ],
-    [t.optCm, t.optInch]
+    [t.optCm, t.optInch],
   )
 
   const sliderMin = cardOrientation === 'landscape' ? 240 : 150
@@ -323,18 +309,15 @@ export function ScreenRuler({
 
   const ticksX = useMemo(
     () => generateTickMarks(maxMmX, currentPpm, rulerSize, dims.width),
-    [maxMmX, currentPpm, rulerSize, dims.width]
+    [maxMmX, currentPpm, rulerSize, dims.width],
   )
 
   const ticksY = useMemo(
     () => generateTickMarks(maxMmY, currentPpm, rulerSize, dims.height),
-    [maxMmY, currentPpm, rulerSize, dims.height]
+    [maxMmY, currentPpm, rulerSize, dims.height],
   )
 
-  const { laserX, laserY } = useMemo(
-    () => clampLaser(caliperPx, dims, rulerSize),
-    [caliperPx, dims, rulerSize]
-  )
+  const { laserX, laserY } = useMemo(() => clampLaser(caliperPx, dims, rulerSize), [caliperPx, dims, rulerSize])
 
   return (
     <div className={`ruler-root ${themeClass}`}>
@@ -344,12 +327,8 @@ export function ScreenRuler({
           className="ruler-fullbleed"
           floatingToolbar={
             <div className="ruler-calib-floating-status">
-              <h2 className="ruler-calib-status-text">
-                {t.placeCard}
-              </h2>
-              <div className="ruler-calib-status-sub">
-                {t.adjustWidth(targetWidthMm.toFixed(1))}
-              </div>
+              <h2 className="ruler-calib-status-text">{t.placeCard}</h2>
+              <div className="ruler-calib-status-sub">{t.adjustWidth(targetWidthMm.toFixed(1))}</div>
             </div>
           }
           footer={
@@ -441,7 +420,9 @@ export function ScreenRuler({
 
               <div className="ruler-card-bottom-row">
                 <span>ISO/IEC 7810</span>
-                <span>{targetWidthMm.toFixed(1)} × {targetHeightMm.toFixed(1)} mm</span>
+                <span>
+                  {targetWidthMm.toFixed(1)} × {targetHeightMm.toFixed(1)} mm
+                </span>
               </div>
             </div>
           </div>
@@ -452,12 +433,7 @@ export function ScreenRuler({
           className="ruler-fullbleed"
           floatingToolbar={
             <div className="ruler-top-bar-inner">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={startRecalibration}
-                aria-label={t.recalibrate}
-              >
+              <Button variant="secondary" size="sm" onClick={startRecalibration} aria-label={t.recalibrate}>
                 {t.recalibrate}
               </Button>
               <PillGroup
@@ -482,17 +458,9 @@ export function ScreenRuler({
             onKeyDown={handleKeyDown}
           >
             {/* Master SVG Canvas */}
-            <svg
-              className="ruler-master-svg"
-              viewBox={`0 0 ${dims.width} ${dims.height}`}
-              aria-hidden="true"
-            >
+            <svg className="ruler-master-svg" viewBox={`0 0 ${dims.width} ${dims.height}`} aria-hidden="true">
               {/* Background Area */}
-              <rect
-                width={dims.width}
-                height={dims.height}
-                fill="var(--ruler-bg)"
-              />
+              <rect width={dims.width} height={dims.height} fill="var(--ruler-bg)" />
 
               {/* Bottom Ruler Band (Horizontal) */}
               <rect
@@ -550,8 +518,8 @@ export function ScreenRuler({
                       tick.isCm
                         ? 'var(--ruler-tick-cm)'
                         : tick.isHalfCm
-                        ? 'var(--ruler-tick-half)'
-                        : 'var(--ruler-tick-mm)'
+                          ? 'var(--ruler-tick-half)'
+                          : 'var(--ruler-tick-mm)'
                     }
                     strokeWidth={tick.isCm ? 2 : 1}
                   />
@@ -583,8 +551,8 @@ export function ScreenRuler({
                       tick.isCm
                         ? 'var(--ruler-tick-cm)'
                         : tick.isHalfCm
-                        ? 'var(--ruler-tick-half)'
-                        : 'var(--ruler-tick-mm)'
+                          ? 'var(--ruler-tick-half)'
+                          : 'var(--ruler-tick-mm)'
                     }
                     strokeWidth={tick.isCm ? 2 : 1}
                   />

@@ -21,10 +21,7 @@ export const DEFAULT_LISTS: NoteList[] = [
   },
 ]
 
-export function loadNotesFromStorage(
-  rawJson: string | null,
-  fallback = DEFAULT_LISTS
-): NoteList[] {
+export function loadNotesFromStorage(rawJson: string | null, fallback = DEFAULT_LISTS): NoteList[] {
   if (!rawJson) return fallback
   try {
     const parsed = JSON.parse(rawJson)
@@ -39,7 +36,7 @@ export function addItem(
   lists: NoteList[],
   categoryId: string,
   text: string,
-  generateId: () => string = () => `it_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
+  generateId: () => string = () => `it_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
 ): NoteList[] {
   const trimmed = text.trim()
   if (!trimmed) return lists
@@ -59,27 +56,17 @@ export function addItem(
   })
 }
 
-export function toggleItem(
-  lists: NoteList[],
-  categoryId: string,
-  itemId: string
-): NoteList[] {
+export function toggleItem(lists: NoteList[], categoryId: string, itemId: string): NoteList[] {
   return lists.map((list) => {
     if (list.category !== categoryId && list.id !== categoryId) return list
     return {
       ...list,
-      items: list.items.map((item) =>
-        item.id === itemId ? { ...item, completed: !item.completed } : item
-      ),
+      items: list.items.map((item) => (item.id === itemId ? { ...item, completed: !item.completed } : item)),
     }
   })
 }
 
-export function deleteItem(
-  lists: NoteList[],
-  categoryId: string,
-  itemId: string
-): NoteList[] {
+export function deleteItem(lists: NoteList[], categoryId: string, itemId: string): NoteList[] {
   return lists.map((list) => {
     if (list.category !== categoryId && list.id !== categoryId) return list
     return {
@@ -89,10 +76,7 @@ export function deleteItem(
   })
 }
 
-export function clearCompleted(
-  lists: NoteList[],
-  categoryId: string
-): NoteList[] {
+export function clearCompleted(lists: NoteList[], categoryId: string): NoteList[] {
   return lists.map((list) => {
     if (list.category !== categoryId && list.id !== categoryId) return list
     return {

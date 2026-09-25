@@ -202,4 +202,3 @@ describe('Sensor and Math Utilities (level-protractor)', () => {
     })
   })
 })
-

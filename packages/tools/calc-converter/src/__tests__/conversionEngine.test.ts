@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import {
-  UNIT_CATEGORIES,
-  convertValue,
-  convertRadix,
-  formatFormattedValue,
-} from '../conversionData'
+import { UNIT_CATEGORIES, convertValue, convertRadix, formatFormattedValue } from '../conversionData'
 
 describe('conversionData', () => {
   describe('convertValue', () => {

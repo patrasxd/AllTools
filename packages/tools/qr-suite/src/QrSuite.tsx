@@ -16,28 +16,12 @@ import {
   SwitchCameraIcon,
   ExternalLinkIcon,
 } from '@all/ui'
-import type {
-  ToolComponentProps,
-  Locale,
-  QrMode,
-  PayloadType,
-  CameraLabels,
-  ZoomCapabilities,
-} from './types'
-import {
-  generatePayload,
-  formatCameraName,
-  clampZoom,
-  isWebUrl,
-} from './utils/qrPayload'
+import type { ToolComponentProps, Locale, QrMode, PayloadType, CameraLabels, ZoomCapabilities } from './types'
+import { generatePayload, formatCameraName, clampZoom, isWebUrl } from './utils/qrPayload'
 import { qrSuiteTranslations } from './i18n'
 import './styles/qr-suite.css'
 
-export function QrSuite({
-  locale = 'en',
-  setHeader,
-  isEink = false,
-}: ToolComponentProps) {
+export function QrSuite({ locale = 'en', setHeader, isEink = false }: ToolComponentProps) {
   const t = qrSuiteTranslations[locale as Locale] || qrSuiteTranslations.en
 
   const [activeMode, setActiveMode] = useState<QrMode>('generate')
@@ -81,7 +65,7 @@ export function QrSuite({
       cameraLabel: t.cameraLabel,
       cameraIndex: t.cameraIndex,
     }),
-    [t]
+    [t],
   )
 
   const payload = useMemo(
@@ -94,7 +78,7 @@ export function QrSuite({
         contactName,
         contactPhone,
       }),
-    [payloadType, inputValue, wifiSsid, wifiPass, contactName, contactPhone]
+    [payloadType, inputValue, wifiSsid, wifiPass, contactName, contactPhone],
   )
 
   // Render QR Code to Canvas
@@ -110,7 +94,7 @@ export function QrSuite({
       },
       (err) => {
         if (err) console.error('QRCode canvas error:', err)
-      }
+      },
     )
   }, [activeMode, payload])
 
@@ -129,7 +113,7 @@ export function QrSuite({
             { key: 'type', label: t.type, value: payloadType.toUpperCase() },
             { key: 'len', label: t.chars, value: payload.length },
           ]}
-        />
+        />,
       )
     } else {
       setHeader(
@@ -142,7 +126,7 @@ export function QrSuite({
             },
             { key: 'found', label: t.scan, value: scannedResult ? 'OK' : '—' },
           ]}
-        />
+        />,
       )
     }
   }, [
@@ -188,7 +172,7 @@ export function QrSuite({
       }
       reader.readAsDataURL(blob)
     },
-    [t.noQrFound]
+    [t.noQrFound],
   )
 
   // Global paste handler (Ctrl+V)
@@ -286,7 +270,12 @@ export function QrSuite({
       if (track) {
         try {
           const caps = (track.getCapabilities?.() as { zoom?: { min: number; max: number; step?: number } }) || {}
-          if (caps.zoom && typeof caps.zoom.min === 'number' && typeof caps.zoom.max === 'number' && caps.zoom.max > caps.zoom.min) {
+          if (
+            caps.zoom &&
+            typeof caps.zoom.min === 'number' &&
+            typeof caps.zoom.max === 'number' &&
+            caps.zoom.max > caps.zoom.min
+          ) {
             setZoomCapabilities({
               min: caps.zoom.min,
               max: caps.zoom.max,
@@ -415,7 +404,7 @@ export function QrSuite({
       { value: 'generate' as const, label: t.generator },
       { value: 'scan' as const, label: t.scanner },
     ],
-    [t.generator, t.scanner]
+    [t.generator, t.scanner],
   )
 
   const payloadOptions = useMemo(
@@ -425,28 +414,28 @@ export function QrSuite({
       { value: 'text' as const, label: t.text },
       { value: 'contact' as const, label: t.vCard },
     ],
-    [t.text, t.vCard]
+    [t.text, t.vCard],
   )
 
   const statusTitle =
     activeMode === 'generate'
       ? t.qrCodeReady
       : isScanning
-      ? t.scanningInProgress
-      : scanError
-      ? scanError
-      : scannedResult
-      ? t.qrCodeDetected
-      : t.pasteOrCamera
+        ? t.scanningInProgress
+        : scanError
+          ? scanError
+          : scannedResult
+            ? t.qrCodeDetected
+            : t.pasteOrCamera
 
   const statusSubtitle =
     activeMode === 'generate'
       ? `${payloadType.toUpperCase()} · ${t.charsCount(payload.length)}`
       : isScanning
-      ? videoDevices.length > 1
-        ? t.activeCamera(activeDeviceLabel)
-        : t.pointCamera
-      : t.scanHint
+        ? videoDevices.length > 1
+          ? t.activeCamera(activeDeviceLabel)
+          : t.pointCamera
+        : t.scanHint
 
   return (
     <div className={`qr-root ${isEink ? 'is-eink' : ''}`}>
@@ -476,12 +465,7 @@ export function QrSuite({
               {activeMode === 'generate' ? (
                 <div className="qr-generator-view">
                   {/* Payload Type Selector */}
-                  <PillGroup
-                    size="sm"
-                    options={payloadOptions}
-                    value={payloadType}
-                    onChange={setPayloadType}
-                  />
+                  <PillGroup size="sm" options={payloadOptions} value={payloadType} onChange={setPayloadType} />
 
                   {/* Input fields */}
                   <div className="qr-input-group">

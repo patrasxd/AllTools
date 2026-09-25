@@ -9,14 +9,7 @@ describe('TubularLevel Component', () => {
   })
   it('renders centered bubble when perfectly level (0 deg)', () => {
     const { container } = render(
-      <TubularLevel
-        calibratedPitch={0}
-        calibratedRoll={0}
-        pitch={85}
-        roll={0}
-        setPitch={vi.fn()}
-        setRoll={vi.fn()}
-      />
+      <TubularLevel calibratedPitch={0} calibratedRoll={0} pitch={85} roll={0} setPitch={vi.fn()} setRoll={vi.fn()} />,
     )
 
     // Center is 130px in 260px vial: bubble rect x is 130 - 13 = 117
@@ -38,7 +31,7 @@ describe('TubularLevel Component', () => {
         roll={-10} // tilted left
         setPitch={vi.fn()}
         setRoll={vi.fn()}
-      />
+      />,
     )
 
     const bubbleRect = container.querySelector('.level-vial-svg rect[rx="12"]')
@@ -56,7 +49,7 @@ describe('TubularLevel Component', () => {
         roll={10} // tilted right
         setPitch={vi.fn()}
         setRoll={vi.fn()}
-      />
+      />,
     )
 
     const bubbleRect = container.querySelector('.level-vial-svg rect[rx="12"]')
@@ -67,14 +60,7 @@ describe('TubularLevel Component', () => {
 
   it('renders exactly 2 edge selector buttons (Bottom Edge & Left Edge) and NO auto-detect', () => {
     render(
-      <TubularLevel
-        calibratedPitch={0}
-        calibratedRoll={0}
-        pitch={85}
-        roll={0}
-        setPitch={vi.fn()}
-        setRoll={vi.fn()}
-      />
+      <TubularLevel calibratedPitch={0} calibratedRoll={0} pitch={85} roll={0} setPitch={vi.fn()} setRoll={vi.fn()} />,
     )
 
     // Two edge options exist
@@ -101,7 +87,7 @@ describe('TubularLevel Component', () => {
         setPitch={vi.fn()}
         setRoll={setRoll}
         showSimulationSliders={true}
-      />
+      />,
     )
 
     // Quick buttons include negative, zero, and positive tilts

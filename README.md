@@ -57,19 +57,19 @@ Packaged as an npm workspaces monorepo and styled with a tactile ink-and-paper a
 
 AllTools currently provides **11 high-utility tools**:
 
-| Tool | Slug | Category | Template | Key Capabilities |
-| :--- | :--- | :--- | :--- | :--- |
-| **Sound Meter** | `sound-meter` | Audio / Sensor | `FullBleedLayout` | Real-time acoustic noise meter via microphone input with dBA/dBZ frequency weighting, peak hold, and live audio oscilloscope. |
-| **Dev Vault** | `dev-vault` | Utility / Dev | `SplitWorkspaceLayout` | CSPRNG password & passphrase generator, UUIDv4, SHA/MD5 hashing, Base64 encoder/decoder, JWT payload inspector, and IPv4/CIDR subnet calculator. |
-| **PDF Suite** | `pdf-suite` | Documents | `SplitWorkspaceLayout` | In-browser PDF toolkit powered by `pdf-lib` & `pdfjs-dist`: merge documents, extract/split pages, rotate orientations, and convert images into PDF. |
-| **Image Studio** | `image-studio` | Media / Graphics | `CenteredUtilityLayout` | Client-side image editor: crop, resize, text/image watermarking, quality compression, and conversion between PNG, JPEG, WebP, and HEIC (`heic2any`). |
-| **Calc & Converter** | `calc-converter` | Math / Utility | `CenteredUtilityLayout` | Dual-mode calculator (Standard & Scientific) paired with multi-unit converter across Length, Mass, Temperature, Speed, Time, and Digital Storage. |
-| **Guitar Tuner** | `guitar-tuner` | Audio | `FullBleedLayout` | High-precision chromatic and guitar tuner using real-time Web Audio FFT pitch detection, note frequency gauge, and reference tone generator. |
-| **Level & Protractor** | `level-protractor` | Measurement | `FullBleedLayout` | Dual-axis bubble level using DeviceOrientation API, calibrated tubular spirit level, and interactive touch-canvas protractor with angle lock. |
-| **Screen Ruler** | `screen-ruler` | Measurement | `FullBleedLayout` | Screen-calibrated on-screen ruler supporting millimeters, centimeters, and inches with standard credit-card PPI calibration and dual-axis calipers. |
-| **QR Suite** | `qr-suite` | Utility | `SplitWorkspaceLayout` | Offline QR Code generator (URL, text, WiFi credentials, vCard) with custom sizing and error correction, paired with live camera & file QR scanner. |
-| **Stopwatch & Interval**| `stopwatch-interval` | Time | `CenteredUtilityLayout` | Precision stopwatch with millisecond timing, lap recordings, split differences, and customizable interval HIIT workout timer with audio beeps. |
-| **Quick Notes** | `quick-notes` | Productivity | `SplitWorkspaceLayout` | Minimalist offline scratchpad and checklist with markdown support, color tags, live text search, and automatic local persistence. |
+| Tool                     | Slug                 | Category         | Template                | Key Capabilities                                                                                                                                     |
+| :----------------------- | :------------------- | :--------------- | :---------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Sound Meter**          | `sound-meter`        | Audio / Sensor   | `FullBleedLayout`       | Real-time acoustic noise meter via microphone input with dBA/dBZ frequency weighting, peak hold, and live audio oscilloscope.                        |
+| **Dev Vault**            | `dev-vault`          | Utility / Dev    | `SplitWorkspaceLayout`  | CSPRNG password & passphrase generator, UUIDv4, SHA/MD5 hashing, Base64 encoder/decoder, JWT payload inspector, and IPv4/CIDR subnet calculator.     |
+| **PDF Suite**            | `pdf-suite`          | Documents        | `SplitWorkspaceLayout`  | In-browser PDF toolkit powered by `pdf-lib` & `pdfjs-dist`: merge documents, extract/split pages, rotate orientations, and convert images into PDF.  |
+| **Image Studio**         | `image-studio`       | Media / Graphics | `CenteredUtilityLayout` | Client-side image editor: crop, resize, text/image watermarking, quality compression, and conversion between PNG, JPEG, WebP, and HEIC (`heic2any`). |
+| **Calc & Converter**     | `calc-converter`     | Math / Utility   | `CenteredUtilityLayout` | Dual-mode calculator (Standard & Scientific) paired with multi-unit converter across Length, Mass, Temperature, Speed, Time, and Digital Storage.    |
+| **Guitar Tuner**         | `guitar-tuner`       | Audio            | `FullBleedLayout`       | High-precision chromatic and guitar tuner using real-time Web Audio FFT pitch detection, note frequency gauge, and reference tone generator.         |
+| **Level & Protractor**   | `level-protractor`   | Measurement      | `FullBleedLayout`       | Dual-axis bubble level using DeviceOrientation API, calibrated tubular spirit level, and interactive touch-canvas protractor with angle lock.        |
+| **Screen Ruler**         | `screen-ruler`       | Measurement      | `FullBleedLayout`       | Screen-calibrated on-screen ruler supporting millimeters, centimeters, and inches with standard credit-card PPI calibration and dual-axis calipers.  |
+| **QR Suite**             | `qr-suite`           | Utility          | `SplitWorkspaceLayout`  | Offline QR Code generator (URL, text, WiFi credentials, vCard) with custom sizing and error correction, paired with live camera & file QR scanner.   |
+| **Stopwatch & Interval** | `stopwatch-interval` | Time             | `CenteredUtilityLayout` | Precision stopwatch with millisecond timing, lap recordings, split differences, and customizable interval HIIT workout timer with audio beeps.       |
+| **Quick Notes**          | `quick-notes`        | Productivity     | `SplitWorkspaceLayout`  | Minimalist offline scratchpad and checklist with markdown support, color tags, live text search, and automatic local persistence.                    |
 
 ---
 
@@ -237,8 +237,17 @@ npm install
 # Start local development server
 npm run dev
 
+# Run linter
+npm run lint
+
+# Check code formatting with Prettier
+npm run format:check
+
 # Run Vitest test suite across all tools
 npm test
+
+# Run TypeScript type check across shell and packages
+npm run typecheck
 
 # Build production bundle
 npm run build
@@ -246,6 +255,14 @@ npm run build
 # Preview production build locally
 npm run preview
 ```
+
+### Deployment
+
+Deployment is fully automated via GitHub Actions ([`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)) on push to the `main` branch:
+
+1. **Verification**: Runs a clean install (`npm ci`), ESLint linter (`npm run lint`), static TypeScript check (`npm run typecheck`), and Vitest test suite (`npm test`). If any check fails, the deployment is aborted.
+2. **Build & Routing Setup**: Builds the production bundle (`npm run build`) and copies `apps/shell/dist/index.html` to `apps/shell/dist/404.html` to ensure deep-linking and page refreshes work properly under GitHub Pages without `HashRouter`.
+3. **Publishing**: Deploys `./apps/shell/dist` to the `gh-pages` branch via `peaceiris/actions-gh-pages`.
 
 ---
 
@@ -270,12 +287,12 @@ npm run preview
 
 All data is stored purely in client-side browser `localStorage` or `IndexedDB` under organized prefixes:
 
-| Key Format | Type | Description |
-| :--- | :--- | :--- |
-| `alltools:theme` | `'dark' \| 'light' \| 'e-ink-light' \| 'e-ink-dark'` | User theme preference |
-| `alltools:language` | `'en' \| 'pl'` | User language preference |
-| `alltools:notes:*` | `JSON Object` | Quick Notes saved items and checklists |
-| `alltools:ruler:ppi` | `number` | Calibrated screen pixels-per-inch |
+| Key Format           | Type                                                 | Description                            |
+| :------------------- | :--------------------------------------------------- | :------------------------------------- |
+| `alltools:theme`     | `'dark' \| 'light' \| 'e-ink-light' \| 'e-ink-dark'` | User theme preference                  |
+| `alltools:language`  | `'en' \| 'pl'`                                       | User language preference               |
+| `alltools:notes:*`   | `JSON Object`                                        | Quick Notes saved items and checklists |
+| `alltools:ruler:ppi` | `number`                                             | Calibrated screen pixels-per-inch      |
 
 No data, file contents, camera feeds, or audio waveforms are transmitted over the network.
 

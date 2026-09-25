@@ -195,7 +195,10 @@
   border-radius: var(--radius-md, 8px);
   color: var(--text, #f4f4f5);
   cursor: pointer;
-  transition: border-color 150ms ease, background 150ms ease, transform 100ms ease;
+  transition:
+    border-color 150ms ease,
+    background 150ms ease,
+    transform 100ms ease;
   user-select: none;
 }
 

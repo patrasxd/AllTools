@@ -21,9 +21,7 @@ describe('notesEngine', () => {
     })
 
     it('returns parsed array when valid JSON is provided', () => {
-      const custom: NoteList[] = [
-        { id: 'custom', title: 'Custom', category: 'shopping', items: [] },
-      ]
+      const custom: NoteList[] = [{ id: 'custom', title: 'Custom', category: 'shopping', items: [] }]
       expect(loadNotesFromStorage(JSON.stringify(custom))).toEqual(custom)
     })
   })
@@ -130,7 +128,7 @@ describe('notesEngine', () => {
           { id: '1', text: 'A', completed: true },
           { id: '2', text: 'B', completed: false },
           { id: '3', text: 'C', completed: true },
-        ])
+        ]),
       ).toEqual({ completedCount: 2, totalCount: 3 })
     })
   })

@@ -2,13 +2,7 @@ export type PdfMode = 'merge' | 'split' | 'rotate' | 'images'
 
 export type GuidedStep = 'upload' | 'merge_files' | 'edit_pages' | 'images'
 
-export type SignaturePosition =
-  | 'bottom-right'
-  | 'bottom-left'
-  | 'bottom-center'
-  | 'top-right'
-  | 'center'
-  | 'custom'
+export type SignaturePosition = 'bottom-right' | 'bottom-left' | 'bottom-center' | 'top-right' | 'center' | 'custom'
 
 export interface SignatureCoordinates {
   xPercent: number // 0 to 100 (% from left)

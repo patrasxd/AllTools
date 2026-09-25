@@ -9,15 +9,37 @@
 }
 
 /* ─── Central Stage ──────────────────────────────────────────── */
+.all-calc-suite .all-board-layout__workspace {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.all-calc-suite .all-board-layout__board-stage {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+}
+
 .calc-stage {
   width: 100%;
   height: 100%;
   min-height: 0;
   display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding: var(--all-space-2, 0.5rem) var(--all-space-3, 0.75rem);
+}
+
+.calc-stage--calc {
   align-items: center;
   justify-content: center;
-  padding: var(--all-space-2, 0.5rem) var(--all-space-3, 0.75rem);
-  box-sizing: border-box;
+}
+
+.calc-stage--conv {
+  align-items: stretch;
+  justify-content: flex-start;
 }
 
 /* ─── 1. CALCULATOR INSTRUMENT CARD ──────────────────────────── */
@@ -26,14 +48,39 @@
   max-width: 390px;
   display: flex;
   flex-direction: column;
-  gap: var(--all-space-3, 0.75rem);
-  padding: var(--all-space-4, 1rem);
+  gap: var(--all-space-2, 0.5rem);
+  padding: var(--all-space-3, 0.75rem) var(--all-space-4, 1rem) var(--all-space-4, 1rem);
   box-sizing: border-box;
   margin: auto;
 }
 
 .calc-card--scientific {
   max-width: 460px;
+}
+
+/* Card Header: Mode badge & Upper History Button */
+.calc-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 28px;
+  box-sizing: border-box;
+}
+
+.calc-card-mode-badge {
+  font-family: var(--all-font-sans, inherit);
+  font-size: var(--all-font-size-xs, 0.75rem);
+  font-weight: 600;
+  color: var(--all-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.calc-history-btn {
+  font-size: var(--all-font-size-xs, 0.75rem) !important;
+  padding: 0.2rem 0.6rem !important;
+  height: 28px !important;
 }
 
 /* Terminal Screen */
@@ -166,18 +213,18 @@
   font-weight: 700 !important;
 }
 
-/* ─── 2. UNIT CONVERTER STUDIO CARD ──────────────────────────── */
-.conv-card {
+/* ─── 2. UNIT CONVERTER SUITE (OCCUPIES 100% OF SPACE) ──────── */
+.conv-suite {
   width: 100%;
-  max-width: 640px;
+  max-width: 680px;
   height: 100%;
-  max-height: 520px;
+  min-height: 0;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  gap: var(--all-space-3, 0.75rem);
-  padding: var(--all-space-4, 1rem);
+  gap: var(--all-space-2, 0.5rem);
   box-sizing: border-box;
-  margin: auto;
+  margin: 0 auto;
 }
 
 /* Category Strip using PillGroup */
@@ -193,8 +240,8 @@
   display: none;
 }
 
-/* From & To Exchange Card */
-.conv-exchange-box {
+/* From & To Hero Conversion Box */
+.conv-exchange-card {
   background: var(--all-surface-2);
   border: var(--all-border-width, 1.5px) solid var(--all-border);
   border-radius: var(--all-radius, 4px);
@@ -206,72 +253,96 @@
   box-sizing: border-box;
 }
 
-.conv-unit-row {
+.conv-section {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--all-space-3, 0.75rem);
-}
-
-.conv-input-wrap {
-  flex: 1;
-  min-width: 0;
-}
-
-.conv-select-wrap {
-  width: 190px;
-  flex-shrink: 0;
-}
-
-.conv-unit-row--target {
-  padding-top: var(--all-space-2, 0.5rem);
-  border-top: var(--all-border-width, 1.5px) solid var(--all-border);
-}
-
-.conv-field-tag {
-  display: block;
-  font-size: var(--all-font-size-xs, 0.75rem);
-  font-weight: 500;
-  color: var(--all-text-muted);
-  margin-bottom: var(--all-space-1, 4px);
-}
-
-.conv-result-display {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--all-space-2, 0.5rem);
-  height: 40px;
-  background-color: var(--all-surface-2, var(--all-surface));
-  border: var(--all-border-width, 1.5px) solid var(--all-border);
-  border-radius: var(--all-radius, 4px);
-  padding: 0 var(--all-space-3, 12px);
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
   box-sizing: border-box;
 }
 
-.conv-result-num {
+.conv-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 1.5rem;
+}
+
+.conv-section-title {
+  font-size: var(--all-font-size-xs, 0.75rem);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--all-text-muted);
+}
+
+.conv-copy-action {
+  height: 26px !important;
+  padding: 0 0.5rem !important;
+  font-size: var(--all-font-size-xs, 0.75rem) !important;
+}
+
+.conv-controls-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(135px, 1.25fr);
+  gap: var(--all-space-2, 0.5rem);
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.conv-input-field,
+.conv-select-field {
+  min-width: 0;
+  width: 100%;
+}
+
+.conv-output-display {
+  height: 40px;
+  background: var(--all-surface);
+  border: var(--all-border-width, 1.5px) solid var(--all-border);
+  border-radius: var(--all-radius, 4px);
+  padding: 0 var(--all-space-3, 0.75rem);
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: border-color var(--all-duration-fast, 150ms) ease;
+}
+.conv-output-display:hover {
+  border-color: var(--all-border-2);
+}
+
+.conv-output-val {
   font-family: var(--all-font-mono, monospace);
+  font-variant-numeric: tabular-nums;
   font-size: var(--all-font-size-base, 1rem);
   font-weight: 700;
   color: var(--all-text);
-  word-break: break-all;
-  min-width: 0;
-  flex: 1;
+  white-space: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  width: 100%;
+  line-height: 1;
+}
+.conv-output-val::-webkit-scrollbar {
+  display: none;
 }
 
 /* Centered Swap Divider */
-.conv-divider {
+.conv-swap-divider {
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-  margin: -0.35rem 0;
+  margin: -0.25rem 0;
   z-index: 2;
 }
 
-/* 3. Live All Units Matrix Card */
+/* 3. Live All Units Matrix Card (Expands to fill 100% of remaining vertical space) */
 .conv-matrix-card {
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-height: 0;
   background: var(--all-surface-2);
   border: var(--all-border-width, 1.5px) solid var(--all-border);
@@ -294,6 +365,12 @@
   border-bottom: var(--all-border-width, 1.5px) solid var(--all-border);
 }
 
+.conv-matrix-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--all-space-2, 0.5rem);
+}
+
 .conv-matrix-title {
   font-size: var(--all-font-size-xs, 0.75rem);
   font-weight: 600;
@@ -302,12 +379,19 @@
   letter-spacing: 0.05em;
 }
 
+.conv-matrix-count {
+  font-size: var(--all-font-size-xs, 0.75rem);
+  color: var(--all-text-dim);
+  font-family: var(--all-font-mono, monospace);
+}
+
 .conv-matrix-search {
-  width: 200px;
+  width: 180px;
+  max-width: 100%;
 }
 
 .conv-matrix-list {
-  flex: 1;
+  flex: 1 1 0;
   min-height: 0;
   overflow-y: auto;
   display: flex;
@@ -332,33 +416,48 @@
   background: var(--all-surface);
   border: var(--all-border-width, 1.5px) solid var(--all-border);
   cursor: pointer;
-  transition: background-color var(--all-duration-fast, 150ms) ease, border-color var(--all-duration-fast, 150ms) ease;
+  transition:
+    background-color var(--all-duration-fast, 150ms) ease,
+    border-color var(--all-duration-fast, 150ms) ease;
+  gap: var(--all-space-2, 0.5rem);
 }
 .conv-matrix-item:hover {
   background: var(--all-surface-2);
   border-color: var(--all-border-2);
 }
-.conv-matrix-item--current {
-  border-color: var(--all-border-2);
+.conv-matrix-item--target {
+  border-color: var(--all-accent, var(--all-border-2));
   background: var(--all-surface-2);
+}
+.conv-matrix-item--source {
+  opacity: 0.85;
 }
 
 .conv-matrix-left {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: var(--all-space-2, 0.5rem);
   min-width: 0;
+  flex: 1;
 }
 .conv-matrix-unit-name {
-  font-size: var(--all-font-size-xs, 0.75rem);
-  color: var(--all-text-muted);
-}
-.conv-matrix-unit-val {
-  font-family: var(--all-font-mono, monospace);
   font-size: var(--all-font-size-sm, 0.875rem);
-  font-weight: 600;
+  font-weight: 500;
   color: var(--all-text);
-  word-break: break-all;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.conv-matrix-unit-sym {
+  font-family: var(--all-font-mono, monospace);
+  font-size: var(--all-font-size-xs, 0.6875rem);
+  font-weight: 600;
+  color: var(--all-text-dim);
+  background: var(--all-surface-2);
+  padding: 0.1rem 0.35rem;
+  border-radius: var(--all-radius-sm, 2px);
+  border: var(--all-border-width, 1px) solid var(--all-border);
+  flex-shrink: 0;
 }
 
 .conv-matrix-right {
@@ -367,15 +466,36 @@
   gap: var(--all-space-2, 0.5rem);
   flex-shrink: 0;
 }
-.conv-matrix-unit-sym {
+.conv-matrix-unit-val {
   font-family: var(--all-font-mono, monospace);
-  font-size: var(--all-font-size-xs, 0.6875rem);
-  font-weight: 600;
-  color: var(--all-text-dim);
-  background: var(--all-surface-2);
-  padding: 0.15rem 0.4rem;
-  border-radius: var(--all-radius-sm, 2px);
-  border: var(--all-border-width, 1.5px) solid var(--all-border);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--all-font-size-sm, 0.875rem);
+  font-weight: 700;
+  color: var(--all-text);
+  white-space: nowrap;
+}
+
+/* ─── ControlsBar Overrides: Navigation Always at Bottom ────── */
+.calc-controls-bar {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: var(--all-space-2, 0.5rem) !important;
+  width: 100% !important;
+}
+
+.calc-controls-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--all-space-2, 0.5rem);
+  flex-wrap: wrap;
+}
+
+.calc-controls-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* ─── 3. HISTORY DIALOG MODAL ────────────────────────────────── */

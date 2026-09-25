@@ -15,6 +15,7 @@ export interface CompassProps {
   isFrozen?: boolean
   sensorPermissionGranted?: boolean
   onHeadingChange?: (heading: number, direction: string) => void
+  onPermissionGranted?: () => void
 }
 
 export function Compass({
@@ -23,13 +24,31 @@ export function Compass({
   isFrozen = false,
   sensorPermissionGranted = false,
   onHeadingChange,
+  onPermissionGranted,
 }: CompassProps) {
   const t = levelTranslations[locale] || levelTranslations.en
   const [heading, setHeading] = useState<number>(0)
   const [visualAngle, setVisualAngle] = useState<number>(0)
   const [hasSensor, setHasSensor] = useState<boolean | null>(null)
+  const [internalPermissionGranted, setInternalPermissionGranted] = useState<boolean>(sensorPermissionGranted)
+
   const needsPermission = requiresOrientationPermission()
-  const isPermitted = !needsPermission || sensorPermissionGranted
+  const isGranted = sensorPermissionGranted || internalPermissionGranted
+  const isPermitted = !needsPermission || isGranted
+
+  useEffect(() => {
+    if (sensorPermissionGranted) {
+      setInternalPermissionGranted(true)
+    }
+  }, [sensorPermissionGranted])
+
+  const handleEnableCompass = async () => {
+    const res = await requestOrientationPermission()
+    if (res === 'granted') {
+      setInternalPermissionGranted(true)
+      onPermissionGranted?.()
+    }
+  }
 
   // Track continuous unwrapped angle to prevent 360° spin at 0°/360° meridian
   const visualAngleRef = useRef<number>(0)
@@ -84,9 +103,7 @@ export function Compass({
       // Adjust for screen orientation (landscape vs portrait)
       const screenAngle =
         typeof window !== 'undefined'
-          ? (window.screen?.orientation?.angle ??
-              (window as unknown as { orientation?: number }).orientation ??
-              0)
+          ? (window.screen?.orientation?.angle ?? (window as unknown as { orientation?: number }).orientation ?? 0)
           : 0
 
       const trueHeading = normalizeHeading(rawHeading + screenAngle)
@@ -98,7 +115,7 @@ export function Compass({
       } else {
         let diff = trueHeading - (visualAngleRef.current % 360)
         // Normalize diff to [-180, 180]
-        diff = (((diff + 180) % 360) + 360) % 360 - 180
+        diff = ((((diff + 180) % 360) + 360) % 360) - 180
         visualAngleRef.current += diff
       }
 
@@ -137,7 +154,7 @@ export function Compass({
   const handleManualRotate = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseInt(e.target.value, 10)
     let diff = val - (visualAngleRef.current % 360)
-    diff = (((diff + 180) % 360) + 360) % 360 - 180
+    diff = ((((diff + 180) % 360) + 360) % 360) - 180
     visualAngleRef.current += diff
     setVisualAngle(visualAngleRef.current)
     setHeading(val)
@@ -173,7 +190,10 @@ export function Compass({
         role="img"
         aria-label={`Compass showing ${heading} degrees ${cardinalInfo.code}`}
       >
-        <div className="compass-rose" style={roseTransformStyle}>
+        <div
+          className={`compass-rose ${needsPermission && !isGranted ? 'compass-rose--permission-needed' : ''}`}
+          style={roseTransformStyle}
+        >
           {/* Degree Ticks (every 15 degrees) */}
           {Array.from({ length: 24 }).map((_, i) => {
             const angle = i * 15
@@ -191,9 +211,7 @@ export function Compass({
           {CARDINALS.map((card) => (
             <div
               key={card.deg}
-              className={`compass-cardinal-point ${
-                card.deg === 0 ? 'compass-cardinal-point--north' : ''
-              }`}
+              className={`compass-cardinal-point ${card.deg === 0 ? 'compass-cardinal-point--north' : ''}`}
               style={{
                 transform: `rotate(${card.deg}deg) translateY(-88px) rotate(-${card.deg}deg)`,
               }}
@@ -212,14 +230,34 @@ export function Compass({
 
         {/* Center Crosshair & Outer Fixed Index Pointer */}
         <div className="compass-fixed-pointer" aria-hidden="true" />
+
+        {/* Prominent Enable Compass CTA when iOS permission is required */}
+        {needsPermission && !isGranted && (
+          <div className="compass-permission-overlay">
+            <div className="compass-permission-card">
+              <span className="compass-permission-icon" aria-hidden="true">
+                🧭
+              </span>
+              <span className="compass-permission-title">{t.permission.enableCompass}</span>
+              <p className="compass-permission-desc">{t.permission.enableCompassDesc}</p>
+              <Button
+                id="compass-enable-permission-btn"
+                variant="primary"
+                size="sm"
+                onClick={handleEnableCompass}
+                className="compass-permission-btn"
+              >
+                {t.permission.enableCompass}
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 3. Desktop Manual Rotation Slider (fallback when sensor not available) */}
       {(hasSensor === false || (!needsPermission && hasSensor === null)) && (
         <div className="compass-fallback-row">
-          <span className="compass-fallback-label">
-            {t.controls.manualDialNoSensor}
-          </span>
+          <span className="compass-fallback-label">{t.controls.manualDialNoSensor}</span>
           <input
             type="range"
             min="0"

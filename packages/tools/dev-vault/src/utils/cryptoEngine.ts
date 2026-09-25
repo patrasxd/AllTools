@@ -35,33 +35,195 @@ const CHARS_SYMBOLS = '!@#$%^&*()_+-=[]{}|;:,.<>?'
 const AMBIGUOUS = /[0OIl1]/g
 
 const PASSPHRASE_WORDS_EN = [
-  'alpha', 'beacon', 'breeze', 'canyon', 'castle', 'cherry', 'cipher', 'comet',
-  'crater', 'crystal', 'delta', 'dragon', 'echo', 'ember', 'falcon', 'feather',
-  'flame', 'forest', 'frost', 'galaxy', 'glacier', 'gravity', 'haven', 'horizon',
-  'island', 'jaguar', 'jungle', 'jupiter', 'knight', 'lagoon', 'lantern', 'laser',
-  'legend', 'lunar', 'magnet', 'matrix', 'meadow', 'meteor', 'monarch', 'nebula',
-  'ninja', 'nomad', 'oasis', 'ocean', 'orbit', 'orchid', 'panther', 'phoenix',
-  'planet', 'prism', 'pulse', 'pyramid', 'quantum', 'radar', 'raptor', 'raven',
-  'rocket', 'ruby', 'safari', 'sailor', 'saturn', 'shadow', 'shield', 'siren',
-  'solar', 'sphinx', 'spirit', 'spring', 'stream', 'summit', 'sunburst', 'tempest',
-  'thunder', 'timber', 'titan', 'topaz', 'torrent', 'tower', 'tsunami', 'tundra',
-  'twilight', 'typhoon', 'unicorn', 'valley', 'vector', 'velvet', 'vessel', 'viper',
-  'vortex', 'voyage', 'vulcan', 'walrus', 'warrior', 'whirlpool', 'willow', 'wizard',
-  'zenith', 'zephyr', 'zodiac'
+  'alpha',
+  'beacon',
+  'breeze',
+  'canyon',
+  'castle',
+  'cherry',
+  'cipher',
+  'comet',
+  'crater',
+  'crystal',
+  'delta',
+  'dragon',
+  'echo',
+  'ember',
+  'falcon',
+  'feather',
+  'flame',
+  'forest',
+  'frost',
+  'galaxy',
+  'glacier',
+  'gravity',
+  'haven',
+  'horizon',
+  'island',
+  'jaguar',
+  'jungle',
+  'jupiter',
+  'knight',
+  'lagoon',
+  'lantern',
+  'laser',
+  'legend',
+  'lunar',
+  'magnet',
+  'matrix',
+  'meadow',
+  'meteor',
+  'monarch',
+  'nebula',
+  'ninja',
+  'nomad',
+  'oasis',
+  'ocean',
+  'orbit',
+  'orchid',
+  'panther',
+  'phoenix',
+  'planet',
+  'prism',
+  'pulse',
+  'pyramid',
+  'quantum',
+  'radar',
+  'raptor',
+  'raven',
+  'rocket',
+  'ruby',
+  'safari',
+  'sailor',
+  'saturn',
+  'shadow',
+  'shield',
+  'siren',
+  'solar',
+  'sphinx',
+  'spirit',
+  'spring',
+  'stream',
+  'summit',
+  'sunburst',
+  'tempest',
+  'thunder',
+  'timber',
+  'titan',
+  'topaz',
+  'torrent',
+  'tower',
+  'tsunami',
+  'tundra',
+  'twilight',
+  'typhoon',
+  'unicorn',
+  'valley',
+  'vector',
+  'velvet',
+  'vessel',
+  'viper',
+  'vortex',
+  'voyage',
+  'vulcan',
+  'walrus',
+  'warrior',
+  'whirlpool',
+  'willow',
+  'wizard',
+  'zenith',
+  'zephyr',
+  'zodiac',
 ]
 
 const PASSPHRASE_WORDS_PL = [
-  'bizon', 'brama', 'burza', 'chmura', 'cisza', 'diament', 'dolina', 'droga',
-  'drzewo', 'delfin', 'ekran', 'fala', 'flota', 'forteca', 'gad', 'galaktyka',
-  'gazela', 'gora', 'gwiazda', 'haslo', 'horyzont', 'iskra', 'jaskinia', 'jastrzab',
-  'jezioro', 'kamien', 'kanion', 'koral', 'korona', 'kotwica', 'krysztal', 'ksiezyc',
-  'las', 'lawina', 'lider', 'lucznik', 'magia', 'maszt', 'miecz', 'mistrz',
-  'morze', 'motyl', 'namiot', 'nawias', 'ocean', 'ogniwo', 'orzel', 'palma',
-  'pantera', 'piasek', 'piorun', 'planeta', 'plotka', 'podroz', 'potok', 'promien',
-  'przystan', 'rakieta', 'rycerz', 'rzeka', 'safari', 'sokol', 'sosna', 'straznik',
-  'strzala', 'szmaragd', 'szczyt', 'sztorm', 'tarcza', 'tygrys', 'topaz', 'torpeda',
-  'twierdza', 'wiatr', 'widok', 'wiosna', 'woda', 'wodospad', 'wulkan', 'wyspa',
-  'zamek', 'zatoka', 'zegar', 'zrodlo', 'zorza', 'zwyciestwo', 'zywiol'
+  'bizon',
+  'brama',
+  'burza',
+  'chmura',
+  'cisza',
+  'diament',
+  'dolina',
+  'droga',
+  'drzewo',
+  'delfin',
+  'ekran',
+  'fala',
+  'flota',
+  'forteca',
+  'gad',
+  'galaktyka',
+  'gazela',
+  'gora',
+  'gwiazda',
+  'haslo',
+  'horyzont',
+  'iskra',
+  'jaskinia',
+  'jastrzab',
+  'jezioro',
+  'kamien',
+  'kanion',
+  'koral',
+  'korona',
+  'kotwica',
+  'krysztal',
+  'ksiezyc',
+  'las',
+  'lawina',
+  'lider',
+  'lucznik',
+  'magia',
+  'maszt',
+  'miecz',
+  'mistrz',
+  'morze',
+  'motyl',
+  'namiot',
+  'nawias',
+  'ocean',
+  'ogniwo',
+  'orzel',
+  'palma',
+  'pantera',
+  'piasek',
+  'piorun',
+  'planeta',
+  'plotka',
+  'podroz',
+  'potok',
+  'promien',
+  'przystan',
+  'rakieta',
+  'rycerz',
+  'rzeka',
+  'safari',
+  'sokol',
+  'sosna',
+  'straznik',
+  'strzala',
+  'szmaragd',
+  'szczyt',
+  'sztorm',
+  'tarcza',
+  'tygrys',
+  'topaz',
+  'torpeda',
+  'twierdza',
+  'wiatr',
+  'widok',
+  'wiosna',
+  'woda',
+  'wodospad',
+  'wulkan',
+  'wyspa',
+  'zamek',
+  'zatoka',
+  'zegar',
+  'zrodlo',
+  'zorza',
+  'zwyciestwo',
+  'zywiol',
 ]
 
 const PASSPHRASE_WORDS: Record<'en' | 'pl', string[]> = {
@@ -83,7 +245,7 @@ export function generateSecurePassword(config: PasswordConfig, locale: 'en' | 'p
   let upper = CHARS_UPPER
   let lower = CHARS_LOWER
   let numbers = CHARS_NUMBERS
-  let symbols = CHARS_SYMBOLS
+  const symbols = CHARS_SYMBOLS
 
   if (config.excludeAmbiguous) {
     upper = upper.replace(AMBIGUOUS, '')
@@ -179,18 +341,11 @@ export function calculatePasswordStrength(password: string): PasswordStrength {
 
 // ─── 3. IPv4 Subnet / CIDR Calculator ─────────────────────────
 function intToIp(int: number): string {
-  return [
-    (int >>> 24) & 255,
-    (int >>> 16) & 255,
-    (int >>> 8) & 255,
-    int & 255,
-  ].join('.')
+  return [(int >>> 24) & 255, (int >>> 16) & 255, (int >>> 8) & 255, int & 255].join('.')
 }
 
 function ipToInt(ip: string): number {
-  return ip
-    .split('.')
-    .reduce((acc, octet) => ((acc << 8) + parseInt(octet, 10)) >>> 0, 0)
+  return ip.split('.').reduce((acc, octet) => ((acc << 8) + parseInt(octet, 10)) >>> 0, 0)
 }
 
 function toBinaryStr(int: number): string {
@@ -218,7 +373,7 @@ export function calculateSubnet(input: string): SubnetInfo | null {
   if (octets.some((o) => o < 0 || o > 255)) return null
 
   const ipInt = ipToInt(ipPart)
-  const maskInt = cidr === 0 ? 0 : (((0xffffffff << (32 - cidr)) >>> 0))
+  const maskInt = cidr === 0 ? 0 : (0xffffffff << (32 - cidr)) >>> 0
   const wildcardInt = ~maskInt >>> 0
 
   const networkInt = (ipInt & maskInt) >>> 0
@@ -243,7 +398,11 @@ export function calculateSubnet(input: string): SubnetInfo | null {
   let ipTypeEn = 'Public IP'
   let ipTypePl = 'Publiczny IP'
 
-  if (firstOctet === 10 || (firstOctet === 172 && octets[1] >= 16 && octets[1] <= 31) || (firstOctet === 192 && octets[1] === 168)) {
+  if (
+    firstOctet === 10 ||
+    (firstOctet === 172 && octets[1] >= 16 && octets[1] <= 31) ||
+    (firstOctet === 192 && octets[1] === 168)
+  ) {
     ipTypeEn = 'Private (RFC 1918)'
     ipTypePl = 'Prywatny (RFC 1918)'
   } else if (firstOctet === 127) {
@@ -274,9 +433,7 @@ export function calculateSubnet(input: string): SubnetInfo | null {
 // ─── 4. Encoders & Decoders ───────────────────────────────────
 export function encodeBase64(str: string): string {
   try {
-    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_, p1) =>
-      String.fromCharCode(parseInt(p1, 16))
-    ))
+    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_, p1) => String.fromCharCode(parseInt(p1, 16))))
   } catch {
     return ''
   }
@@ -287,7 +444,7 @@ export function decodeBase64(b64: string): string {
     return decodeURIComponent(
       Array.prototype.map
         .call(atob(b64), (c: string) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
+        .join(''),
     )
   } catch {
     return 'Invalid Base64 string'
@@ -365,10 +522,18 @@ function md5(string: string): string {
       return lResult ^ lX8 ^ lY8
     }
   }
-  function F(x: number, y: number, z: number) { return (x & y) | (~x & z) }
-  function G(x: number, y: number, z: number) { return (x & z) | (y & ~z) }
-  function H(x: number, y: number, z: number) { return x ^ y ^ z }
-  function I(x: number, y: number, z: number) { return y ^ (x | ~z) }
+  function F(x: number, y: number, z: number) {
+    return (x & y) | (~x & z)
+  }
+  function G(x: number, y: number, z: number) {
+    return (x & z) | (y & ~z)
+  }
+  function H(x: number, y: number, z: number) {
+    return x ^ y ^ z
+  }
+  function I(x: number, y: number, z: number) {
+    return y ^ (x | ~z)
+  }
 
   function FF(a: number, b: number, c: number, d: number, x: number, s: number, ac: number) {
     a = addUnsigned(a, addUnsigned(addUnsigned(F(b, c, d), x), ac))
@@ -399,7 +564,7 @@ function md5(string: string): string {
     while (lByteCount < lMessageLength) {
       lWordCount = (lByteCount - (lByteCount % 4)) / 4
       lBytePosition = (lByteCount % 4) * 8
-      lWordArray[lWordCount] = (lWordArray[lWordCount] | (string.charCodeAt(lByteCount) << lBytePosition))
+      lWordArray[lWordCount] = lWordArray[lWordCount] | (string.charCodeAt(lByteCount) << lBytePosition)
       lByteCount++
     }
     lWordCount = (lByteCount - (lByteCount % 4)) / 4
@@ -411,7 +576,10 @@ function md5(string: string): string {
   }
 
   function wordToHex(lValue: number) {
-    let WordToHexValue = '', WordToHexValueTemp = '', lByte, lCount
+    let WordToHexValue = '',
+      WordToHexValueTemp = '',
+      lByte,
+      lCount
     for (lCount = 0; lCount <= 3; lCount++) {
       lByte = (lValue >>> (lCount * 8)) & 255
       WordToHexValueTemp = '0' + lByte.toString(16)
@@ -421,51 +589,104 @@ function md5(string: string): string {
   }
 
   const x = convertToWordArray(string)
-  let a = 0x67452301, b = 0xefcdab89, c = 0x98badcfe, d = 0x10325476
-  const S11 = 7, S12 = 12, S13 = 17, S14 = 22
-  const S21 = 5, S22 = 9, S23 = 14, S24 = 20
-  const S31 = 4, S32 = 11, S33 = 16, S34 = 23
-  const S41 = 6, S42 = 10, S43 = 15, S44 = 21
+  let a = 0x67452301,
+    b = 0xefcdab89,
+    c = 0x98badcfe,
+    d = 0x10325476
+  const S11 = 7,
+    S12 = 12,
+    S13 = 17,
+    S14 = 22
+  const S21 = 5,
+    S22 = 9,
+    S23 = 14,
+    S24 = 20
+  const S31 = 4,
+    S32 = 11,
+    S33 = 16,
+    S34 = 23
+  const S41 = 6,
+    S42 = 10,
+    S43 = 15,
+    S44 = 21
 
   for (let k = 0; k < x.length; k += 16) {
-    const AA = a, BB = b, CC = c, DD = d
-    a = FF(a, b, c, d, x[k + 0], S11, 0xd76aa478); d = FF(d, a, b, c, x[k + 1], S12, 0xe8c7b756)
-    c = FF(c, d, a, b, x[k + 2], S13, 0x242070db); b = FF(b, c, d, a, x[k + 3], S14, 0xc1bdceee)
-    a = FF(a, b, c, d, x[k + 4], S11, 0xf57c0faf); d = FF(d, a, b, c, x[k + 5], S12, 0x4787c62a)
-    c = FF(c, d, a, b, x[k + 6], S13, 0xa8304613); b = FF(b, c, d, a, x[k + 7], S14, 0xfd469501)
-    a = FF(a, b, c, d, x[k + 8], S11, 0x698098d8); d = FF(d, a, b, c, x[k + 9], S12, 0x8b44f7af)
-    c = FF(c, d, a, b, x[k + 10], S13, 0xffff5bb1); b = FF(b, c, d, a, x[k + 11], S14, 0x895cd7be)
-    a = FF(a, b, c, d, x[k + 12], S11, 0x6b901122); d = FF(d, a, b, c, x[k + 13], S12, 0xfd987193)
-    c = FF(c, d, a, b, x[k + 14], S13, 0xa679438e); b = FF(b, c, d, a, x[k + 15], S14, 0x49b40821)
+    const AA = a,
+      BB = b,
+      CC = c,
+      DD = d
+    a = FF(a, b, c, d, x[k + 0], S11, 0xd76aa478)
+    d = FF(d, a, b, c, x[k + 1], S12, 0xe8c7b756)
+    c = FF(c, d, a, b, x[k + 2], S13, 0x242070db)
+    b = FF(b, c, d, a, x[k + 3], S14, 0xc1bdceee)
+    a = FF(a, b, c, d, x[k + 4], S11, 0xf57c0faf)
+    d = FF(d, a, b, c, x[k + 5], S12, 0x4787c62a)
+    c = FF(c, d, a, b, x[k + 6], S13, 0xa8304613)
+    b = FF(b, c, d, a, x[k + 7], S14, 0xfd469501)
+    a = FF(a, b, c, d, x[k + 8], S11, 0x698098d8)
+    d = FF(d, a, b, c, x[k + 9], S12, 0x8b44f7af)
+    c = FF(c, d, a, b, x[k + 10], S13, 0xffff5bb1)
+    b = FF(b, c, d, a, x[k + 11], S14, 0x895cd7be)
+    a = FF(a, b, c, d, x[k + 12], S11, 0x6b901122)
+    d = FF(d, a, b, c, x[k + 13], S12, 0xfd987193)
+    c = FF(c, d, a, b, x[k + 14], S13, 0xa679438e)
+    b = FF(b, c, d, a, x[k + 15], S14, 0x49b40821)
 
-    a = GG(a, b, c, d, x[k + 1], S21, 0xf61e2562); d = GG(d, a, b, c, x[k + 6], S22, 0xc040b340)
-    c = GG(c, d, a, b, x[k + 11], S23, 0x265e5a51); b = GG(b, c, d, a, x[k + 0], S24, 0xe9b6c7aa)
-    a = GG(a, b, c, d, x[k + 5], S21, 0xd62f105d); d = GG(d, a, b, c, x[k + 10], S22, 0x2441453)
-    c = GG(c, d, a, b, x[k + 15], S23, 0xd8a1e681); b = GG(b, c, d, a, x[k + 4], S24, 0xe7d3fbc8)
-    a = GG(a, b, c, d, x[k + 9], S21, 0x21e1cde6); d = GG(d, a, b, c, x[k + 14], S22, 0xc33707d6)
-    c = GG(c, d, a, b, x[k + 3], S23, 0xf4d50d87); b = GG(b, c, d, a, x[k + 8], S24, 0x455a14ed)
-    a = GG(a, b, c, d, x[k + 13], S21, 0xa9e3e905); d = GG(d, a, b, c, x[k + 2], S22, 0xfcefa3f8)
-    c = GG(c, d, a, b, x[k + 7], S23, 0x676f02d9); b = GG(b, c, d, a, x[k + 12], S24, 0x8d2a4c8a)
+    a = GG(a, b, c, d, x[k + 1], S21, 0xf61e2562)
+    d = GG(d, a, b, c, x[k + 6], S22, 0xc040b340)
+    c = GG(c, d, a, b, x[k + 11], S23, 0x265e5a51)
+    b = GG(b, c, d, a, x[k + 0], S24, 0xe9b6c7aa)
+    a = GG(a, b, c, d, x[k + 5], S21, 0xd62f105d)
+    d = GG(d, a, b, c, x[k + 10], S22, 0x2441453)
+    c = GG(c, d, a, b, x[k + 15], S23, 0xd8a1e681)
+    b = GG(b, c, d, a, x[k + 4], S24, 0xe7d3fbc8)
+    a = GG(a, b, c, d, x[k + 9], S21, 0x21e1cde6)
+    d = GG(d, a, b, c, x[k + 14], S22, 0xc33707d6)
+    c = GG(c, d, a, b, x[k + 3], S23, 0xf4d50d87)
+    b = GG(b, c, d, a, x[k + 8], S24, 0x455a14ed)
+    a = GG(a, b, c, d, x[k + 13], S21, 0xa9e3e905)
+    d = GG(d, a, b, c, x[k + 2], S22, 0xfcefa3f8)
+    c = GG(c, d, a, b, x[k + 7], S23, 0x676f02d9)
+    b = GG(b, c, d, a, x[k + 12], S24, 0x8d2a4c8a)
 
-    a = HH(a, b, c, d, x[k + 5], S31, 0xfffa3942); d = HH(d, a, b, c, x[k + 8], S32, 0x8771f681)
-    c = HH(c, d, a, b, x[k + 11], S33, 0x6d9d6122); b = HH(b, c, d, a, x[k + 14], S34, 0xfde5380c)
-    a = HH(a, b, c, d, x[k + 1], S31, 0xa4beea44); d = HH(d, a, b, c, x[k + 4], S32, 0x4bdecfa9)
-    c = HH(c, d, a, b, x[k + 7], S33, 0xf6bb4b60); b = HH(b, c, d, a, x[k + 10], S34, 0xbebfbc70)
-    a = HH(a, b, c, d, x[k + 13], S31, 0x289b7ec6); d = HH(d, a, b, c, x[k + 0], S32, 0xeaa127fa)
-    c = HH(c, d, a, b, x[k + 3], S33, 0xd4ef3085); b = HH(b, c, d, a, x[k + 6], S34, 0x4881d05)
-    a = HH(a, b, c, d, x[k + 9], S31, 0xd9d4d039); d = HH(d, a, b, c, x[k + 12], S32, 0xe6db99e5)
-    c = HH(c, d, a, b, x[k + 15], S33, 0x1fa27cf8); b = HH(b, c, d, a, x[k + 2], S34, 0xc4ac5665)
+    a = HH(a, b, c, d, x[k + 5], S31, 0xfffa3942)
+    d = HH(d, a, b, c, x[k + 8], S32, 0x8771f681)
+    c = HH(c, d, a, b, x[k + 11], S33, 0x6d9d6122)
+    b = HH(b, c, d, a, x[k + 14], S34, 0xfde5380c)
+    a = HH(a, b, c, d, x[k + 1], S31, 0xa4beea44)
+    d = HH(d, a, b, c, x[k + 4], S32, 0x4bdecfa9)
+    c = HH(c, d, a, b, x[k + 7], S33, 0xf6bb4b60)
+    b = HH(b, c, d, a, x[k + 10], S34, 0xbebfbc70)
+    a = HH(a, b, c, d, x[k + 13], S31, 0x289b7ec6)
+    d = HH(d, a, b, c, x[k + 0], S32, 0xeaa127fa)
+    c = HH(c, d, a, b, x[k + 3], S33, 0xd4ef3085)
+    b = HH(b, c, d, a, x[k + 6], S34, 0x4881d05)
+    a = HH(a, b, c, d, x[k + 9], S31, 0xd9d4d039)
+    d = HH(d, a, b, c, x[k + 12], S32, 0xe6db99e5)
+    c = HH(c, d, a, b, x[k + 15], S33, 0x1fa27cf8)
+    b = HH(b, c, d, a, x[k + 2], S34, 0xc4ac5665)
 
-    a = II(a, b, c, d, x[k + 0], S41, 0xf4292244); d = II(d, a, b, c, x[k + 7], S42, 0x432aff97)
-    c = II(c, d, a, b, x[k + 14], S43, 0xab9423a7); b = II(b, c, d, a, x[k + 5], S44, 0xfc93a039)
-    a = II(a, b, c, d, x[k + 12], S41, 0x655b59c3); d = II(d, a, b, c, x[k + 3], S42, 0x8f0ccc92)
-    c = II(c, d, a, b, x[k + 10], S43, 0xffeff47d); b = II(b, c, d, a, x[k + 1], S44, 0x85845dd1)
-    a = II(a, b, c, d, x[k + 8], S41, 0x6fa87e4f); d = II(d, a, b, c, x[k + 15], S42, 0xfe2ce6e0)
-    c = II(c, d, a, b, x[k + 6], S43, 0xa3014314); b = II(b, c, d, a, x[k + 13], S44, 0x4e0811a1)
-    a = II(a, b, c, d, x[k + 4], S41, 0xf7537e82); d = II(d, a, b, c, x[k + 11], S42, 0xbd3af235)
-    c = II(c, d, a, b, x[k + 2], S43, 0x2ad7d2bb); b = II(b, c, d, a, x[k + 9], S44, 0xeb86d391)
+    a = II(a, b, c, d, x[k + 0], S41, 0xf4292244)
+    d = II(d, a, b, c, x[k + 7], S42, 0x432aff97)
+    c = II(c, d, a, b, x[k + 14], S43, 0xab9423a7)
+    b = II(b, c, d, a, x[k + 5], S44, 0xfc93a039)
+    a = II(a, b, c, d, x[k + 12], S41, 0x655b59c3)
+    d = II(d, a, b, c, x[k + 3], S42, 0x8f0ccc92)
+    c = II(c, d, a, b, x[k + 10], S43, 0xffeff47d)
+    b = II(b, c, d, a, x[k + 1], S44, 0x85845dd1)
+    a = II(a, b, c, d, x[k + 8], S41, 0x6fa87e4f)
+    d = II(d, a, b, c, x[k + 15], S42, 0xfe2ce6e0)
+    c = II(c, d, a, b, x[k + 6], S43, 0xa3014314)
+    b = II(b, c, d, a, x[k + 13], S44, 0x4e0811a1)
+    a = II(a, b, c, d, x[k + 4], S41, 0xf7537e82)
+    d = II(d, a, b, c, x[k + 11], S42, 0xbd3af235)
+    c = II(c, d, a, b, x[k + 2], S43, 0x2ad7d2bb)
+    b = II(b, c, d, a, x[k + 9], S44, 0xeb86d391)
 
-    a = addUnsigned(a, AA); b = addUnsigned(b, BB); c = addUnsigned(c, CC); d = addUnsigned(d, DD)
+    a = addUnsigned(a, AA)
+    b = addUnsigned(b, BB)
+    c = addUnsigned(c, CC)
+    d = addUnsigned(d, DD)
   }
 
   return (wordToHex(a) + wordToHex(b) + wordToHex(c) + wordToHex(d)).toLowerCase()
@@ -480,6 +701,8 @@ export function generateUuid(): string {
   window.crypto.getRandomValues(buf)
   buf[6] = (buf[6] & 0x0f) | 0x40
   buf[8] = (buf[8] & 0x3f) | 0x80
-  const hex = Array.from(buf).map((b) => b.toString(16).padStart(2, '0')).join('')
+  const hex = Array.from(buf)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`
 }

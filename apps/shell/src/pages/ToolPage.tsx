@@ -10,17 +10,19 @@ import { useToolHeader } from '../components/Layout'
 function ToolFallback() {
   const { t } = useI18n()
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      height: '100%',
-      color: 'var(--text-muted)',
-      fontSize: '0.8125rem',
-      letterSpacing: '0.1em',
-      textTransform: 'uppercase',
-      fontWeight: 500,
-    }}>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100%',
+        color: 'var(--text-muted)',
+        fontSize: '0.8125rem',
+        letterSpacing: '0.1em',
+        textTransform: 'uppercase',
+        fontWeight: 500,
+      }}
+    >
       <motion.span
         animate={{ opacity: [0.3, 1, 0.3] }}
         transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
@@ -36,7 +38,9 @@ function NotFound({ slug }: { slug: string }) {
   const { t } = useI18n()
   return (
     <div style={{ padding: '4rem 0', color: 'var(--text-muted)', textAlign: 'center' }}>
-      <p>{t.notFound} <code style={{ fontFamily: 'var(--font-mono)' }}>{slug}</code></p>
+      <p>
+        {t.notFound} <code style={{ fontFamily: 'var(--font-mono)' }}>{slug}</code>
+      </p>
       <Button
         variant="secondary"
         size="sm"
@@ -55,7 +59,7 @@ function NotFound({ slug }: { slug: string }) {
 const pageVariants = {
   hidden: { opacity: 0, y: 10 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } },
-  exit:   { opacity: 0, y: -6,  transition: { duration: 0.2, ease: [0.4, 0, 1, 1] } },
+  exit: { opacity: 0, y: -6, transition: { duration: 0.2, ease: [0.4, 0, 1, 1] } },
 }
 
 export function ToolPage() {
@@ -63,7 +67,7 @@ export function ToolPage() {
   const navigate = useNavigate()
   const { locale, t } = useI18n()
   const { theme, isEink } = useTheme()
-  const metadata = TOOLS_METADATA.find(item => item.slug === slug)
+  const metadata = TOOLS_METADATA.find((item) => item.slug === slug)
 
   useEffect(() => {
     if (slug) {
@@ -82,9 +86,12 @@ export function ToolPage() {
   const [loading, setLoading] = useState<boolean>(true)
 
   const { setHeaderExtra } = useToolHeader()
-  const setHeader = useCallback((content: React.ReactNode) => {
-    setHeaderExtra(content)
-  }, [setHeaderExtra])
+  const setHeader = useCallback(
+    (content: React.ReactNode) => {
+      setHeaderExtra(content)
+    },
+    [setHeaderExtra],
+  )
 
   useEffect(() => {
     setHeaderExtra(null)
@@ -116,15 +123,12 @@ export function ToolPage() {
   }
 
   return (
-    <motion.div
-      className="tool-page"
-      variants={pageVariants}
-      initial="hidden"
-      animate="visible"
-      exit="exit"
-    >
+    <motion.div className="tool-page" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
       <div className="tool-page-inner">
-        <div className="container tool-page-top-bar" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div
+          className="container tool-page-top-bar"
+          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+        >
           <BackLink
             id={`back-btn-${slug}`}
             label={t.backToTools}

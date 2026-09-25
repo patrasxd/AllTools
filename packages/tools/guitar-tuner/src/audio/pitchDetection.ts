@@ -34,7 +34,7 @@ export function midiToFreq(midi: number, a4: number = DEFAULT_A4): number {
 /** Convert frequency to closest MIDI note and cents offset with customizable A4 standard */
 export function freqToNote(
   freq: number,
-  a4: number = DEFAULT_A4
+  a4: number = DEFAULT_A4,
 ): { note: string; octave: number; midi: number; targetFreq: number; cents: number } {
   if (freq <= 0 || !Number.isFinite(freq)) {
     return { note: '-', octave: 0, midi: 0, targetFreq: 0, cents: 0 }
@@ -62,9 +62,9 @@ export const TUNING_PRESETS: TuningPreset[] = [
     name: { en: 'Guitar (Standard)', pl: 'Gitara (Standardowa)' },
     strings: [
       { note: 'E', octave: 2, freq: 82.41 },
-      { note: 'A', octave: 2, freq: 110.00 },
+      { note: 'A', octave: 2, freq: 110.0 },
       { note: 'D', octave: 3, freq: 146.83 },
-      { note: 'G', octave: 3, freq: 196.00 },
+      { note: 'G', octave: 3, freq: 196.0 },
       { note: 'B', octave: 3, freq: 246.94 },
       { note: 'E', octave: 4, freq: 329.63 },
     ],
@@ -74,9 +74,9 @@ export const TUNING_PRESETS: TuningPreset[] = [
     name: { en: 'Guitar (Drop D)', pl: 'Gitara (Drop D)' },
     strings: [
       { note: 'D', octave: 2, freq: 73.42 },
-      { note: 'A', octave: 2, freq: 110.00 },
+      { note: 'A', octave: 2, freq: 110.0 },
       { note: 'D', octave: 3, freq: 146.83 },
-      { note: 'G', octave: 3, freq: 196.00 },
+      { note: 'G', octave: 3, freq: 196.0 },
       { note: 'B', octave: 3, freq: 246.94 },
       { note: 'E', octave: 4, freq: 329.63 },
     ],
@@ -85,20 +85,20 @@ export const TUNING_PRESETS: TuningPreset[] = [
     id: 'bass-4',
     name: { en: 'Bass (4-String)', pl: 'Bas (4-strunowy)' },
     strings: [
-      { note: 'E', octave: 1, freq: 41.20 },
-      { note: 'A', octave: 1, freq: 55.00 },
+      { note: 'E', octave: 1, freq: 41.2 },
+      { note: 'A', octave: 1, freq: 55.0 },
       { note: 'D', octave: 2, freq: 73.42 },
-      { note: 'G', octave: 2, freq: 98.00 },
+      { note: 'G', octave: 2, freq: 98.0 },
     ],
   },
   {
     id: 'ukulele',
     name: { en: 'Ukulele (Standard)', pl: 'Ukulele (GCEA)' },
     strings: [
-      { note: 'G', octave: 4, freq: 392.00 },
+      { note: 'G', octave: 4, freq: 392.0 },
       { note: 'C', octave: 4, freq: 261.63 },
       { note: 'E', octave: 4, freq: 329.63 },
-      { note: 'A', octave: 4, freq: 440.00 },
+      { note: 'A', octave: 4, freq: 440.0 },
     ],
   },
   {
@@ -124,7 +124,7 @@ export function getCalibratedStrings(strings: TuningString[], a4: number = DEFAU
 export function autoCorrelate(
   buffer: Float32Array,
   sampleRate: number,
-  noiseGateThreshold: number = NOISE_GATE_THRESHOLDS.medium
+  noiseGateThreshold: number = NOISE_GATE_THRESHOLDS.medium,
 ): number {
   const SIZE = buffer.length
   if (SIZE < 4) return -1
@@ -206,8 +206,7 @@ export function playReferenceTone(freq: number) {
   stopReferenceTone()
   try {
     const AudioContextClass =
-      window.AudioContext ||
-      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+      window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
     if (!globalAudioCtx || globalAudioCtx.state === 'closed') {
       globalAudioCtx = new AudioContextClass()
     }

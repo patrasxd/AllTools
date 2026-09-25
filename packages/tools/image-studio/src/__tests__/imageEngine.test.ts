@@ -23,7 +23,7 @@ import type { ResizeConfig } from '../types'
 
 function makeResizeConfig(
   preset: ResizeConfig['preset'] = 'original',
-  overrides: Partial<ResizeConfig> = {}
+  overrides: Partial<ResizeConfig> = {},
 ): ResizeConfig {
   return {
     preset,
@@ -163,7 +163,7 @@ describe('exportCompressedBlob binary search', () => {
     vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation(function (
       cb: BlobCallback,
       _type?: string,
-      _quality?: number
+      _quality?: number,
     ) {
       const fakeBlob = new Blob([new Uint8Array(100)], { type: 'image/jpeg' })
       Promise.resolve().then(() => cb(fakeBlob))
@@ -182,8 +182,7 @@ describe('exportCompressedBlob binary search', () => {
     await exportCompressedBlob(canvas, 'image/jpeg', 85, 500)
 
     // toBlob spy counts every iteration of the binary search
-    expect((HTMLCanvasElement.prototype.toBlob as ReturnType<typeof vi.spyOn>).mock.calls.length)
-      .toBeLessThanOrEqual(6)
+    expect((HTMLCanvasElement.prototype.toBlob as ReturnType<typeof vi.spyOn>).mock.calls.length).toBeLessThanOrEqual(6)
   })
 
   it('returns a blob and dataUrl when targetMaxKb is null', async () => {
@@ -204,8 +203,7 @@ describe('exportCompressedBlob binary search', () => {
 
     await exportCompressedBlob(canvas, 'image/png', 100, null)
 
-    expect((HTMLCanvasElement.prototype.toBlob as ReturnType<typeof vi.spyOn>).mock.calls.length)
-      .toBe(1)
+    expect((HTMLCanvasElement.prototype.toBlob as ReturnType<typeof vi.spyOn>).mock.calls.length).toBe(1)
   })
 })
 
@@ -214,11 +212,7 @@ describe('exportCompressedBlob binary search', () => {
 
 describe('HEIC file detection heuristic', () => {
   function isHeicFile(file: File): boolean {
-    return (
-      file.type === 'image/heic' ||
-      file.type === 'image/heif' ||
-      /\.(heic|heif)$/i.test(file.name)
-    )
+    return file.type === 'image/heic' || file.type === 'image/heif' || /\.(heic|heif)$/i.test(file.name)
   }
 
   it('detects .heic extension as HEIC', () => {

@@ -132,11 +132,7 @@ function NumberStepper({
   )
 }
 
-export function StopwatchInterval({
-  locale = 'en',
-  isEink = false,
-  setHeader,
-}: ToolComponentProps) {
+export function StopwatchInterval({ locale = 'en', isEink = false, setHeader }: ToolComponentProps) {
   const [activeMode, setActiveMode] = useState<Mode>('stopwatch')
 
   // ─── Stopwatch state ───
@@ -189,9 +185,7 @@ export function StopwatchInterval({
 
   const activeSteps: IntervalStep[] = useMemo(() => {
     if (preset === 'custom') {
-      return customSteps.length > 0
-        ? customSteps
-        : [{ id: 'step-1', cycles: 1, sets: 5, workSec: 30, restSec: 15 }]
+      return customSteps.length > 0 ? customSteps : [{ id: 'step-1', cycles: 1, sets: 5, workSec: 30, restSec: 15 }]
     }
     const config = getPresetConfig(preset)
     return [
@@ -212,16 +206,17 @@ export function StopwatchInterval({
   const [currentSet, setCurrentSet] = useState<number>(1)
   const [phase, setPhase] = useState<Phase>('idle')
 
-  const currentStep = activeSteps[currentStepIndex] || activeSteps[0] || {
-    cycles: 1,
-    sets: 5,
-    workSec: 30,
-    restSec: 15,
-  }
+  const currentStep = activeSteps[currentStepIndex] ||
+    activeSteps[0] || {
+      cycles: 1,
+      sets: 5,
+      workSec: 30,
+      restSec: 15,
+    }
 
   const cumulativeSet = useMemo(
     () => computeCumulativeSetNumber(currentStepIndex, currentCycle, currentSet, activeSteps),
-    [currentStepIndex, currentCycle, currentSet, activeSteps]
+    [currentStepIndex, currentCycle, currentSet, activeSteps],
   )
 
   const [timeRemaining, setTimeRemaining] = useState<number>(activeSteps[0]?.workSec ?? 20)
@@ -247,8 +242,7 @@ export function StopwatchInterval({
   const playBeep = useCallback((freq: number, duration: number = 0.15) => {
     try {
       const AudioCtx =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+        window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
       if (!audioCtxRef.current) audioCtxRef.current = new AudioCtx()
       if (audioCtxRef.current.state === 'suspended') audioCtxRef.current.resume()
 
@@ -306,7 +300,6 @@ export function StopwatchInterval({
     lastLapTotalRef.current = cur
     setLaps(updatedLaps)
   }
-
 
   useEffect(() => {
     if (lapsContainerRef.current) {
@@ -379,16 +372,12 @@ export function StopwatchInterval({
         : [
             { id: 'step-1', cycles: 2, sets: 8, workSec: 30, restSec: 15 },
             { id: 'step-2', cycles: 1, sets: 5, workSec: 20, restSec: 10 },
-          ]
+          ],
     )
     setIsCustomDialogOpen(true)
   }
 
-  const handleUpdateStep = (
-    index: number,
-    field: keyof IntervalStep,
-    value: number
-  ) => {
+  const handleUpdateStep = (index: number, field: keyof IntervalStep, value: number) => {
     setFormSteps((prev) => {
       const copy = [...prev]
       copy[index] = { ...copy[index], [field]: value }
@@ -447,21 +436,13 @@ export function StopwatchInterval({
 
     intTimerRef.current = window.setInterval(() => {
       const now = performance.now()
-      const tick = calculateIntervalTick(
-        phaseStartRef.current,
-        phaseDurationRef.current,
-        now
-      )
+      const tick = calculateIntervalTick(phaseStartRef.current, phaseDurationRef.current, now)
 
       setTimeRemaining(tick.remainingSec)
       setDashOffset(tick.dashOffset)
 
       // Audio beeps for final 3, 2, 1 countdown
-      if (
-        tick.remainingSec <= 3 &&
-        tick.remainingSec >= 1 &&
-        tick.remainingSec !== lastBeepSecRef.current
-      ) {
+      if (tick.remainingSec <= 3 && tick.remainingSec >= 1 && tick.remainingSec !== lastBeepSecRef.current) {
         lastBeepSecRef.current = tick.remainingSec
         playBeep(520, 0.08)
       }
@@ -473,7 +454,7 @@ export function StopwatchInterval({
           currentCycle,
           currentSet,
           phase as 'work' | 'rest',
-          activeSteps
+          activeSteps,
         )
 
         setCurrentStepIndex(next.stepIndex)
@@ -495,15 +476,7 @@ export function StopwatchInterval({
     return () => {
       if (intTimerRef.current) clearInterval(intTimerRef.current)
     }
-  }, [
-    intRunning,
-    phase,
-    currentStepIndex,
-    currentCycle,
-    currentSet,
-    activeSteps,
-    playBeep,
-  ])
+  }, [intRunning, phase, currentStepIndex, currentCycle, currentSet, activeSteps, playBeep])
 
   // ─── Header Stats Injection ───
   const renderHeader = useCallback(() => {
@@ -523,7 +496,7 @@ export function StopwatchInterval({
           ]}
           onReset={laps.length > 0 ? resetSw : undefined}
           resetAriaLabel={t.resetStopwatchAria}
-        />
+        />,
       )
     } else {
       setHeader(
@@ -536,31 +509,16 @@ export function StopwatchInterval({
             },
             {
               key: 'phase',
-              label:
-                phase === 'work'
-                  ? t.phaseWork
-                  : phase === 'rest'
-                  ? t.phaseRest
-                  : t.phaseReady,
-              value:
-                phase === 'finished' ? '—' : formatTimerSeconds(timeRemaining),
+              label: phase === 'work' ? t.phaseWork : phase === 'rest' ? t.phaseRest : t.phaseReady,
+              value: phase === 'finished' ? '—' : formatTimerSeconds(timeRemaining),
             },
           ]}
           onReset={resetInterval}
           resetAriaLabel={t.resetIntervalsAria}
-        />
+        />,
       )
     }
-  }, [
-    setHeader,
-    activeMode,
-    laps,
-    t,
-    cumulativeSet,
-    totalWorkoutSets,
-    phase,
-    timeRemaining,
-  ])
+  }, [setHeader, activeMode, laps, t, cumulativeSet, totalWorkoutSets, phase, timeRemaining])
 
   useEffect(() => {
     renderHeader()
@@ -592,31 +550,29 @@ export function StopwatchInterval({
         hud={
           <div className="stopwatch-status">
             <div className="stopwatch-status-text">
-              {activeMode === 'stopwatch' ? (
-                swRunning
+              {activeMode === 'stopwatch'
+                ? swRunning
                   ? t.timingInProgress
                   : elapsedMs > 0
-                  ? t.paused
-                  : t.readyToStart
-              ) : (
-                `${
-                  phase === 'work'
-                    ? t.workPhase
-                    : phase === 'rest'
-                    ? t.restPhase
-                    : phase === 'finished'
-                    ? t.workoutCompleted
-                    : t.intervalTraining
-                } · ${
-                  activeSteps.length > 1 || (activeSteps[0]?.cycles ?? 1) > 1
-                    ? `${activeSteps.length > 1 ? `${t.step} ${currentStepIndex + 1}/${activeSteps.length} · ` : ''}${
-                        (currentStep.cycles || 1) > 1
-                          ? `${(t as any).cycle || (t as any).loop || 'Loop'} ${currentCycle}/${currentStep.cycles || 1} · `
-                          : ''
-                      }${t.set} ${currentSet}/${currentStep.sets}`
-                    : t.setOf(currentSet, totalWorkoutSets)
-                }`
-              )}
+                    ? t.paused
+                    : t.readyToStart
+                : `${
+                    phase === 'work'
+                      ? t.workPhase
+                      : phase === 'rest'
+                        ? t.restPhase
+                        : phase === 'finished'
+                          ? t.workoutCompleted
+                          : t.intervalTraining
+                  } · ${
+                    activeSteps.length > 1 || (activeSteps[0]?.cycles ?? 1) > 1
+                      ? `${activeSteps.length > 1 ? `${t.step} ${currentStepIndex + 1}/${activeSteps.length} · ` : ''}${
+                          (currentStep.cycles || 1) > 1
+                            ? `${(t as any).cycle || (t as any).loop || 'Loop'} ${currentCycle}/${currentStep.cycles || 1} · `
+                            : ''
+                        }${t.set} ${currentSet}/${currentStep.sets}`
+                      : t.setOf(currentSet, totalWorkoutSets)
+                  }`}
             </div>
           </div>
         }
@@ -653,12 +609,8 @@ export function StopwatchInterval({
                             <span className="stopwatch-lap-col-id">
                               #{lap.id} {isBest ? '★' : ''}
                             </span>
-                            <span className="stopwatch-lap-col-time">
-                              {formatStopwatchTime(lap.lapTime)}
-                            </span>
-                            <span className="stopwatch-lap-col-total">
-                              {formatStopwatchTime(lap.totalTime)}
-                            </span>
+                            <span className="stopwatch-lap-col-time">{formatStopwatchTime(lap.lapTime)}</span>
+                            <span className="stopwatch-lap-col-total">{formatStopwatchTime(lap.totalTime)}</span>
                           </div>
                         )
                       })}
@@ -680,35 +632,17 @@ export function StopwatchInterval({
                       {elapsedMs > 0 ? t.reset : t.lap}
                     </Button>
                   ) : (
-                    <Button
-                      variant="secondary"
-                      size="xl"
-                      shape="circle"
-                      onClick={recordLap}
-                      aria-label={t.lap}
-                    >
+                    <Button variant="secondary" size="xl" shape="circle" onClick={recordLap} aria-label={t.lap}>
                       {t.lap}
                     </Button>
                   )}
 
                   {!swRunning ? (
-                    <Button
-                      variant="success"
-                      size="xl"
-                      shape="circle"
-                      onClick={startSw}
-                      aria-label={t.start}
-                    >
+                    <Button variant="success" size="xl" shape="circle" onClick={startSw} aria-label={t.start}>
                       {t.start}
                     </Button>
                   ) : (
-                    <Button
-                      variant="danger"
-                      size="xl"
-                      shape="circle"
-                      onClick={pauseSw}
-                      aria-label={t.pause}
-                    >
+                    <Button variant="danger" size="xl" shape="circle" onClick={pauseSw} aria-label={t.pause}>
                       {t.pause}
                     </Button>
                   )}
@@ -737,33 +671,24 @@ export function StopwatchInterval({
                           phase === 'work'
                             ? 'var(--all-success, #34d399)'
                             : phase === 'rest'
-                            ? 'var(--all-warning, #fbbf24)'
-                            : 'var(--all-text, #efefef)'
+                              ? 'var(--all-warning, #fbbf24)'
+                              : 'var(--all-text, #efefef)'
                         }
                         strokeWidth="5"
                         strokeDasharray={CIRCLE_CIRCUMFERENCE}
                         strokeDashoffset={dashOffset}
                         strokeLinecap="round"
                         style={{
-                          transition:
-                            intRunning && !isEink
-                              ? 'stroke-dashoffset 80ms linear'
-                              : 'none',
+                          transition: intRunning && !isEink ? 'stroke-dashoffset 80ms linear' : 'none',
                         }}
                       />
                     </svg>
 
                     <div className="interval-ring-center">
                       <span className="interval-phase-label">
-                        {phase === 'work'
-                          ? t.work
-                          : phase === 'rest'
-                          ? t.rest
-                          : t.ready}
+                        {phase === 'work' ? t.work : phase === 'rest' ? t.rest : t.ready}
                       </span>
-                      <span className="interval-time-digits">
-                        {formatTimerSeconds(timeRemaining)}
-                      </span>
+                      <span className="interval-time-digits">{formatTimerSeconds(timeRemaining)}</span>
                       <span className="interval-set-badge">
                         {activeSteps.length > 1 || (activeSteps[0]?.cycles ?? 1) > 1
                           ? `${t.stepNumber(currentStepIndex + 1)} · ${t.setLabel} ${currentSet}/${currentStep.sets}`
@@ -777,17 +702,10 @@ export function StopwatchInterval({
                 <div className="interval-summary-card">
                   <span>
                     {preset === 'custom' && activeSteps.length > 1
-                      ? activeSteps
-                          .map((s) => `${s.cycles}×${s.sets} (${s.workSec}s/${s.restSec}s)`)
-                          .join(' + ')
+                      ? activeSteps.map((s) => `${s.cycles}×${s.sets} (${s.workSec}s/${s.restSec}s)`).join(' + ')
                       : `${activeSteps[0]?.workSec ?? 30}s ${t.work} · ${activeSteps[0]?.restSec ?? 15}s ${t.rest} · ${totalWorkoutSets} ${t.round}`}
                   </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="interval-edit-btn"
-                    onClick={openCustomDialog}
-                  >
+                  <Button variant="outline" size="sm" className="interval-edit-btn" onClick={openCustomDialog}>
                     {t.editCustom}
                   </Button>
                 </div>
@@ -806,23 +724,11 @@ export function StopwatchInterval({
                   </Button>
 
                   {!intRunning ? (
-                    <Button
-                      variant="success"
-                      size="xl"
-                      shape="circle"
-                      onClick={startInterval}
-                      aria-label={t.start}
-                    >
+                    <Button variant="success" size="xl" shape="circle" onClick={startInterval} aria-label={t.start}>
                       {t.start}
                     </Button>
                   ) : (
-                    <Button
-                      variant="danger"
-                      size="xl"
-                      shape="circle"
-                      onClick={pauseInterval}
-                      aria-label={t.pause}
-                    >
+                    <Button variant="danger" size="xl" shape="circle" onClick={pauseInterval} aria-label={t.pause}>
                       {t.pause}
                     </Button>
                   )}
@@ -836,23 +742,13 @@ export function StopwatchInterval({
             {/* Secondary actions & presets row (above nav) */}
             {activeMode === 'interval' && (
               <div className="stopwatch-controls-row">
-                <PillGroup
-                  options={presetOptions}
-                  value={preset}
-                  onChange={applyPreset}
-                  size="sm"
-                />
+                <PillGroup options={presetOptions} value={preset} onChange={applyPreset} size="sm" />
               </div>
             )}
 
             {/* Bottom-most row: Mode nav switcher (always the last item) */}
             <div className="stopwatch-controls-nav">
-              <PillGroup
-                options={modeOptions}
-                value={activeMode}
-                onChange={setActiveMode}
-                size="sm"
-              />
+              <PillGroup options={modeOptions} value={activeMode} onChange={setActiveMode} size="sm" />
             </div>
           </ControlsBar>
         }
@@ -951,20 +847,10 @@ export function StopwatchInterval({
               marginTop: '0.5rem',
             }}
           >
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={() => setIsCustomDialogOpen(false)}
-            >
+            <Button type="button" variant="secondary" size="sm" onClick={() => setIsCustomDialogOpen(false)}>
               {t.cancel}
             </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              size="sm"
-              onClick={handleSaveCustom}
-            >
+            <Button type="submit" variant="primary" size="sm" onClick={handleSaveCustom}>
               {t.save}
             </Button>
           </div>

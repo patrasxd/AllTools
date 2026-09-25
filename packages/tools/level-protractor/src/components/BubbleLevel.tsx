@@ -73,12 +73,10 @@ export const BubbleLevel: React.FC<BubbleLevelProps> = ({
   const bubbleX = 90 + normalizedX * bubbleRadius
   const bubbleY = 90 + normalizedY * bubbleRadius
 
-  const transitionStyle = isEink
-    ? undefined
-    : { transition: 'cx 70ms ease-out, cy 70ms ease-out' }
+  const transitionStyle = isEink ? undefined : { transition: 'cx 70ms ease-out, cy 70ms ease-out' }
 
   // Show manual sliders on desktop without sensor or when explicit
-  const shouldShowSliders = showSimulationSliders ?? (hasOrientationSensor === false)
+  const shouldShowSliders = showSimulationSliders ?? hasOrientationSensor === false
 
   return (
     <div className={`level-view-wrapper ${isEink ? 'level-view-wrapper--eink' : ''}`}>
@@ -88,18 +86,11 @@ export const BubbleLevel: React.FC<BubbleLevelProps> = ({
           <span className="level-degree-num">{Math.abs(tilt.roll).toFixed(1)}°</span>
           <span className="level-degree-separator">×</span>
           <span className="level-degree-num">{Math.abs(tilt.pitch).toFixed(1)}°</span>
-          <Badge
-            variant={tilt.isLevel ? 'success' : 'warning'}
-            dot
-            size="md"
-            className="level-status-pill-badge"
-          >
+          <Badge variant={tilt.isLevel ? 'success' : 'warning'} dot size="md" className="level-status-pill-badge">
             {tilt.isLevel ? t.headers.levelStatus : t.headers.tiltStatus}
           </Badge>
         </div>
-        <span className="level-sub-desc">
-          {tilt.isLevel ? t.status.perfectLevel : t.status.tiltDetected}
-        </span>
+        <span className="level-sub-desc">{tilt.isLevel ? t.status.perfectLevel : t.status.tiltDetected}</span>
       </div>
 
       {/* Bullseye SVG Dial */}

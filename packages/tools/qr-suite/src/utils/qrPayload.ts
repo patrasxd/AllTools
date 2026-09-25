@@ -45,11 +45,7 @@ export function generatePayload(type: PayloadType, data: PayloadData): string {
 /**
  * Format camera device name using readable heuristics
  */
-export function formatCameraName(
-  dev: { label?: string },
-  index: number,
-  labels: CameraLabels
-): string {
+export function formatCameraName(dev: { label?: string }, index: number, labels: CameraLabels): string {
   const label = (dev.label || '').toLowerCase()
   if (
     label.includes('front') ||
@@ -59,19 +55,10 @@ export function formatCameraName(
   ) {
     return labels.frontCamera
   }
-  if (
-    label.includes('ultra') ||
-    label.includes('0.5') ||
-    label.includes('szerok')
-  ) {
+  if (label.includes('ultra') || label.includes('0.5') || label.includes('szerok')) {
     return labels.ultraWide
   }
-  if (
-    label.includes('tele') ||
-    label.includes('2x') ||
-    label.includes('3x') ||
-    label.includes('zoom')
-  ) {
+  if (label.includes('tele') || label.includes('2x') || label.includes('3x') || label.includes('zoom')) {
     return labels.telephoto
   }
   if (
@@ -105,9 +92,5 @@ export function clampZoom(zoom: number, min: number, max: number): number {
 export function isWebUrl(text: string): boolean {
   if (!text) return false
   const trimmed = text.trim()
-  return (
-    trimmed.startsWith('http://') ||
-    trimmed.startsWith('https://') ||
-    trimmed.startsWith('ftp://')
-  )
+  return trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('ftp://')
 }

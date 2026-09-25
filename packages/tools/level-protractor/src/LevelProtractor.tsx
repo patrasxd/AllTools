@@ -36,12 +36,7 @@ import type {
 } from './types'
 import './styles/level-protractor.css'
 
-export function LevelProtractor({
-  locale = 'en',
-  setHeader,
-  isEink = false,
-  theme,
-}: ToolComponentProps) {
+export function LevelProtractor({ locale = 'en', setHeader, isEink = false, theme }: ToolComponentProps) {
   const t = levelTranslations[locale] || levelTranslations.en
 
   const [activeTab, setActiveTab] = useState<LevelProtractorTab>(() => {
@@ -92,8 +87,6 @@ export function LevelProtractor({
     return 'surface'
   })
 
-
-
   const [pitch, setPitch] = useState<number>(0)
   const [roll, setRoll] = useState<number>(0)
   const [calibratedPitch, setCalibratedPitch] = useState<number>(() => {
@@ -117,7 +110,7 @@ export function LevelProtractor({
     try {
       localStorage.setItem(
         'alltools:level:calibration',
-        JSON.stringify({ pitch: calibratedPitch, roll: calibratedRoll })
+        JSON.stringify({ pitch: calibratedPitch, roll: calibratedRoll }),
       )
     } catch {}
   }, [calibratedPitch, calibratedRoll])
@@ -151,7 +144,7 @@ export function LevelProtractor({
         orientation: stats.orientation,
       })
     },
-    [pitch, roll, calibratedPitch, calibratedRoll, levelViewMode]
+    [pitch, roll, calibratedPitch, calibratedRoll, levelViewMode],
   )
 
   const handleSurfaceStatsChange = useCallback(
@@ -168,7 +161,7 @@ export function LevelProtractor({
         isTargetMatch: stats.isLevel,
       })
     },
-    [levelViewMode]
+    [levelViewMode],
   )
 
   // ─── Protractor State ───
@@ -295,7 +288,7 @@ export function LevelProtractor({
       { value: 'protractor' as const, label: t.tabs.protractor, id: 'tab-protractor' },
       { value: 'compass' as const, label: t.tabs.compass, id: 'tab-compass' },
     ],
-    [t.tabs]
+    [t.tabs],
   )
 
   const viewModeOptions = useMemo(
@@ -303,7 +296,7 @@ export function LevelProtractor({
       { value: 'surface' as const, label: t.edge.surface2d, id: 'vmode-surface' },
       { value: 'edge' as const, label: t.edge.edgeRuler, id: 'vmode-edge' },
     ],
-    [t.edge]
+    [t.edge],
   )
 
   const toleranceOptions = useMemo(
@@ -312,7 +305,7 @@ export function LevelProtractor({
       { value: '0.5', label: t.settings.toleranceNormal, id: 'tol-05' },
       { value: '1.0', label: t.settings.toleranceCoarse, id: 'tol-10' },
     ],
-    [t.settings]
+    [t.settings],
   )
 
   const calibrateLevel = () => {
@@ -391,9 +384,8 @@ export function LevelProtractor({
                   isEink={isEink}
                   isFrozen={isFrozen}
                   sensorPermissionGranted={sensorPermissionGranted}
-                  onHeadingChange={(heading, direction) =>
-                    setCompassStats({ heading, direction })
-                  }
+                  onPermissionGranted={() => setSensorPermissionGranted(true)}
+                  onHeadingChange={(heading, direction) => setCompassStats({ heading, direction })}
                 />
               )}
             </Card>
@@ -405,12 +397,7 @@ export function LevelProtractor({
             <div className="level-controls-row">
               {activeTab === 'level' ? (
                 <>
-                  <Button
-                    id="level-calibrate-btn"
-                    variant="secondary"
-                    size="sm"
-                    onClick={calibrateLevel}
-                  >
+                  <Button id="level-calibrate-btn" variant="secondary" size="sm" onClick={calibrateLevel}>
                     {t.controls.calibrate}
                   </Button>
                   {(calibratedPitch !== 0 || calibratedRoll !== 0) && (
@@ -491,12 +478,7 @@ export function LevelProtractor({
       />
 
       {/* Sensor & Tool Settings Dialog */}
-      <Dialog
-        open={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        title={t.settings.title}
-        maxWidth="sm"
-      >
+      <Dialog open={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} title={t.settings.title} maxWidth="sm">
         <div className="level-dialog-content">
           {/* Level Sensitivity / Tolerance */}
           <SettingsGroup label={`${t.settings.sensitivity} (${tolerance}°)`}>
@@ -532,19 +514,14 @@ export function LevelProtractor({
             {tolerance <= 0.2
               ? t.settings.tolerancePrecisionHelp
               : tolerance <= 0.5
-              ? t.settings.toleranceNormalHelp
-              : t.settings.toleranceCoarseHelp}
+                ? t.settings.toleranceNormalHelp
+                : t.settings.toleranceCoarseHelp}
           </p>
 
           {/* Zero Level Calibration */}
           <SettingsGroup label={t.settings.calibration}>
             <div style={{ display: 'flex', gap: 'var(--all-space-2, 0.5rem)', width: '100%' }}>
-              <Button
-                variant="secondary"
-                size="sm"
-                fullWidth
-                onClick={calibrateLevel}
-              >
+              <Button variant="secondary" size="sm" fullWidth onClick={calibrateLevel}>
                 {t.controls.calibrate}
               </Button>
               <Button
@@ -583,9 +560,7 @@ export function LevelProtractor({
                       }
                     }}
                   >
-                    {sensorPermissionGranted
-                      ? '✓ ' + t.permission.grantButton
-                      : t.permission.grantButton}
+                    {sensorPermissionGranted ? '✓ ' + t.permission.grantButton : t.permission.grantButton}
                   </Button>
                 </div>
               </SettingsGroup>
@@ -604,17 +579,12 @@ export function LevelProtractor({
             >
               {t.settings.resetDefaults}
             </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => setIsSettingsOpen(false)}
-            >
+            <Button variant="primary" size="sm" onClick={() => setIsSettingsOpen(false)}>
               {t.settings.close}
             </Button>
           </div>
         </div>
       </Dialog>
-
     </div>
   )
 }

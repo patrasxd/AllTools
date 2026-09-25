@@ -16,7 +16,8 @@ export const translations = {
     themeEink: 'E-ink (E-Reader)',
     language: 'Language',
     about: 'About AllTools',
-    aboutText: 'AllTools is an open-source, privacy-first, zero-tracking collection of offline utilities crafted with ink & sketch aesthetics. All calculations and storage remain 100% on your device.',
+    aboutText:
+      'AllTools is an open-source, privacy-first, zero-tracking collection of offline utilities crafted with ink & sketch aesthetics. All calculations and storage remain 100% on your device.',
     installPwa: 'Install App (PWA)',
     noToolsFound: 'No tools match your search query.',
     clearSearch: 'Clear search',
@@ -41,7 +42,8 @@ export const translations = {
     themeEink: 'E-ink (Czytnik)',
     language: 'Język',
     about: 'O AllTools',
-    aboutText: 'AllTools to otwarta, prywatna i pozbawiona śledzenia kolekcja narzędzi w estetyce tuszu i szkicu. Wszystkie obliczenia i dane pozostają w 100% na Twoim urządzeniu.',
+    aboutText:
+      'AllTools to otwarta, prywatna i pozbawiona śledzenia kolekcja narzędzi w estetyce tuszu i szkicu. Wszystkie obliczenia i dane pozostają w 100% na Twoim urządzeniu.',
     installPwa: 'Zainstaluj aplikację (PWA)',
     noToolsFound: 'Brak narzędzi pasujących do wyszukiwania.',
     clearSearch: 'Wyczyść filtr',

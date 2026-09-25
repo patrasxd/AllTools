@@ -97,7 +97,9 @@
   border: var(--all-border-width-sm, 1px) solid var(--all-border);
   border-radius: var(--all-radius-sm, 4px);
   color: var(--all-text);
-  transition: border-color var(--all-duration-fast, 150ms) ease, background-color var(--all-duration-fast, 150ms) ease;
+  transition:
+    border-color var(--all-duration-fast, 150ms) ease,
+    background-color var(--all-duration-fast, 150ms) ease;
   box-sizing: border-box;
   text-align: center;
 }
@@ -160,7 +162,9 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: border-color var(--all-duration-fast, 150ms) ease, background-color var(--all-duration-fast, 150ms) ease;
+  transition:
+    border-color var(--all-duration-fast, 150ms) ease,
+    background-color var(--all-duration-fast, 150ms) ease;
   box-sizing: border-box;
 }
 
@@ -190,10 +194,26 @@
   border-style: solid;
 }
 
-.qr-reticle-tl { top: 0; left: 0; border-width: 2px 0 0 2px; }
-.qr-reticle-tr { top: 0; right: 0; border-width: 2px 2px 0 0; }
-.qr-reticle-bl { bottom: 0; left: 0; border-width: 0 0 2px 2px; }
-.qr-reticle-br { bottom: 0; right: 0; border-width: 0 2px 2px 0; }
+.qr-reticle-tl {
+  top: 0;
+  left: 0;
+  border-width: 2px 0 0 2px;
+}
+.qr-reticle-tr {
+  top: 0;
+  right: 0;
+  border-width: 2px 2px 0 0;
+}
+.qr-reticle-bl {
+  bottom: 0;
+  left: 0;
+  border-width: 0 0 2px 2px;
+}
+.qr-reticle-br {
+  bottom: 0;
+  right: 0;
+  border-width: 0 2px 2px 0;
+}
 
 /* Laser scan animation */
 .qr-scan-laser {
@@ -208,8 +228,12 @@
 }
 
 @keyframes qrLaserScan {
-  0% { top: 20px; }
-  100% { top: calc(100% - 20px); }
+  0% {
+    top: 20px;
+  }
+  100% {
+    top: calc(100% - 20px);
+  }
 }
 
 [data-eink='true'] .qr-scan-laser,
@@ -247,7 +271,9 @@
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   cursor: pointer;
-  transition: background var(--all-duration-fast, 150ms) ease, border-color var(--all-duration-fast, 150ms) ease;
+  transition:
+    background var(--all-duration-fast, 150ms) ease,
+    border-color var(--all-duration-fast, 150ms) ease;
   max-width: 160px;
   white-space: nowrap;
   overflow: hidden;

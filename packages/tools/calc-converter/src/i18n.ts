@@ -22,6 +22,8 @@ export const calcConverterTranslations = {
     convertedValue: 'Converted Value',
     equivalentInOtherUnits: 'All Equivalent Units in Category',
     clickToSetFrom: 'Click to set as input unit',
+    clickToSetTo: 'Click to select as target unit',
+    unit: 'Unit',
     keyboardShortcuts: 'Keyboard Shortcuts',
     keys: {
       digits: '0 – 9 : Enter digits',
@@ -74,6 +76,8 @@ export const calcConverterTranslations = {
     convertedValue: 'Wynik przeliczenia',
     equivalentInOtherUnits: 'Wszystkie jednostki w tej kategorii',
     clickToSetFrom: 'Kliknij, aby wybrać jako jednostkę wejściową',
+    clickToSetTo: 'Kliknij, aby wybrać jako jednostkę docelową',
+    unit: 'Jednostka',
     keyboardShortcuts: 'Skróty klawiszowe',
     keys: {
       digits: '0 – 9 : Wprowadzanie cyfr',

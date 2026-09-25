@@ -25,11 +25,7 @@ import {
 import { quickNotesTranslations } from './i18n'
 import './styles/quick-notes.css'
 
-export function QuickNotes({
-  locale = 'en',
-  isEink = false,
-  setHeader,
-}: ToolComponentProps) {
+export function QuickNotes({ locale = 'en', isEink = false, setHeader }: ToolComponentProps) {
   const t = quickNotesTranslations[locale] || quickNotesTranslations.en
 
   const [lists, setLists] = useState<NoteList[]>(() => {
@@ -45,8 +41,7 @@ export function QuickNotes({
   const [newItemText, setNewItemText] = useState<string>('')
   const [copied, setCopied] = useState<boolean>(false)
 
-  const activeList =
-    lists.find((l) => l.category === activeCategoryId) || lists[0]
+  const activeList = lists.find((l) => l.category === activeCategoryId) || lists[0]
 
   // Persist
   useEffect(() => {
@@ -77,7 +72,7 @@ export function QuickNotes({
             value: activeList ? activeList.category.toUpperCase() : '—',
           },
         ]}
-      />
+      />,
     )
   }, [setHeader, completedCount, totalCount, activeList, t])
 
@@ -123,11 +118,7 @@ export function QuickNotes({
   ]
 
   const categoryTitle =
-    activeCategoryId === 'shopping'
-      ? t.shoppingList
-      : activeCategoryId === 'todos'
-      ? t.todoChecklist
-      : t.quickIdeas
+    activeCategoryId === 'shopping' ? t.shoppingList : activeCategoryId === 'todos' ? t.todoChecklist : t.quickIdeas
 
   return (
     <div className={`notes-root ${isEink ? 'notes-root--eink' : ''}`}>
@@ -141,8 +132,8 @@ export function QuickNotes({
               {totalCount === 0
                 ? t.noItemsYet
                 : completedCount === totalCount
-                ? t.allDone
-                : t.completedOf(completedCount, totalCount)}
+                  ? t.allDone
+                  : t.completedOf(completedCount, totalCount)}
             </div>
           </div>
         }
@@ -170,12 +161,7 @@ export function QuickNotes({
             <div className="notes-list-container">
               {activeList && activeList.items.length > 0 ? (
                 activeList.items.map((item) => (
-                  <div
-                    key={item.id}
-                    className={`notes-item ${
-                      item.completed ? 'notes-item--completed' : ''
-                    }`}
-                  >
+                  <div key={item.id} className={`notes-item ${item.completed ? 'notes-item--completed' : ''}`}>
                     <label className="notes-item-label">
                       <input
                         type="checkbox"
@@ -183,11 +169,7 @@ export function QuickNotes({
                         onChange={() => handleToggleItem(item.id)}
                         className="notes-item-checkbox"
                       />
-                      <span
-                        className={`notes-item-text ${
-                          item.completed ? 'notes-item-text--completed' : ''
-                        }`}
-                      >
+                      <span className={`notes-item-text ${item.completed ? 'notes-item-text--completed' : ''}`}>
                         {item.text}
                       </span>
                     </label>
@@ -211,11 +193,7 @@ export function QuickNotes({
         controls={
           <ControlsBar className="notes-controls">
             {completedCount > 0 && (
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleClearCompleted}
-              >
+              <Button variant="secondary" size="sm" onClick={handleClearCompleted}>
                 {t.clearDone}
               </Button>
             )}
@@ -224,22 +202,11 @@ export function QuickNotes({
               size="sm"
               onClick={handleCopyList}
               disabled={!activeList || activeList.items.length === 0}
-              icon={
-                copied ? (
-                  <CheckIcon width="14" height="14" />
-                ) : (
-                  <CopyIcon width="14" height="14" />
-                )
-              }
+              icon={copied ? <CheckIcon width="14" height="14" /> : <CopyIcon width="14" height="14" />}
             >
               {copied ? t.copied : t.copy}
             </Button>
-            <PillGroup
-              options={categoryOptions}
-              value={activeCategoryId}
-              onChange={setActiveCategoryId}
-              size="sm"
-            />
+            <PillGroup options={categoryOptions} value={activeCategoryId} onChange={setActiveCategoryId} size="sm" />
           </ControlsBar>
         }
       />

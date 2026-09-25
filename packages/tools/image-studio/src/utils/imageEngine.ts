@@ -4,15 +4,10 @@ import type { ImageFormat, ResizeConfig, WatermarkConfig } from '../types'
 /**
  * Loads a File into an HTMLImageElement, automatically decoding HEIC/HEIF if needed.
  */
-export async function loadFileToImage(
-  file: File
-): Promise<{ image: HTMLImageElement; file: File; sizeBytes: number }> {
+export async function loadFileToImage(file: File): Promise<{ image: HTMLImageElement; file: File; sizeBytes: number }> {
   let workingBlob: Blob = file
 
-  const isHeic =
-    file.type === 'image/heic' ||
-    file.type === 'image/heif' ||
-    /\.(heic|heif)$/i.test(file.name)
+  const isHeic = file.type === 'image/heic' || file.type === 'image/heif' || /\.(heic|heif)$/i.test(file.name)
 
   if (isHeic) {
     try {
@@ -52,7 +47,7 @@ export async function loadFileToImage(
 export function calculateDimensions(
   origW: number,
   origH: number,
-  resize: ResizeConfig
+  resize: ResizeConfig,
 ): { targetW: number; targetH: number; srcX: number; srcY: number; srcW: number; srcH: number } {
   const crop = resize.crop || { offsetX: 0, offsetY: 0, zoom: 1, showPassportGuide: false }
   const zoom = Math.max(1, Math.min(4, crop.zoom || 1))
@@ -135,13 +130,9 @@ export function calculateDimensions(
 export function renderProcessedCanvas(
   img: HTMLImageElement,
   resize: ResizeConfig,
-  watermark: WatermarkConfig
+  watermark: WatermarkConfig,
 ): HTMLCanvasElement {
-  const { targetW, targetH, srcX, srcY, srcW, srcH } = calculateDimensions(
-    img.naturalWidth,
-    img.naturalHeight,
-    resize
-  )
+  const { targetW, targetH, srcX, srcY, srcW, srcH } = calculateDimensions(img.naturalWidth, img.naturalHeight, resize)
 
   const canvas = document.createElement('canvas')
   canvas.width = Math.max(1, targetW)
@@ -164,9 +155,7 @@ export function renderProcessedCanvas(
     ctx.strokeStyle = '#000000'
     ctx.lineWidth = Math.max(1, Math.round(watermark.fontSize / 14))
 
-    const scaledFontSize = Math.round(
-      (watermark.fontSize / 400) * Math.min(targetW, targetH) + 14
-    )
+    const scaledFontSize = Math.round((watermark.fontSize / 400) * Math.min(targetW, targetH) + 14)
     ctx.font = `bold ${scaledFontSize}px sans-serif`
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
@@ -214,7 +203,7 @@ export async function exportCompressedBlob(
   canvas: HTMLCanvasElement,
   format: ImageFormat,
   qualityPercent: number,
-  targetMaxKb: number | null
+  targetMaxKb: number | null,
 ): Promise<{ blob: Blob; sizeBytes: number; dataUrl: string }> {
   const normalizedQuality = Math.max(0.01, Math.min(1, qualityPercent / 100))
 
@@ -226,7 +215,7 @@ export async function exportCompressedBlob(
           else reject(new Error('Canvas export failed'))
         },
         format,
-        format === 'image/png' ? undefined : q
+        format === 'image/png' ? undefined : q,
       )
     })
 

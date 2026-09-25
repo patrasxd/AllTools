@@ -2,12 +2,12 @@ export type ImageFormat = 'image/jpeg' | 'image/png' | 'image/webp' | 'image/avi
 
 export type AspectRatioPreset =
   | 'original'
-  | 'id-photo'     // 35x45 mm (7:9) - Dowód / Paszport / Legitymacja
-  | '1:1'          // Kwadrat / Avatar
-  | '4:3'          // Standard foto
-  | '16:9'         // Ekran / Krajobraz
-  | '3:2'          // Aparat DSLR
-  | '9:16'         // Social Story / Rolka
+  | 'id-photo' // 35x45 mm (7:9) - Dowód / Paszport / Legitymacja
+  | '1:1' // Kwadrat / Avatar
+  | '4:3' // Standard foto
+  | '16:9' // Ekran / Krajobraz
+  | '3:2' // Aparat DSLR
+  | '9:16' // Social Story / Rolka
   | 'custom'
 
 export type WatermarkMode = 'diagonal-single' | 'diagonal-repeat' | 'bottom-right'

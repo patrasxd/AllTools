@@ -13,10 +13,7 @@ import {
 } from '@all/ui'
 import type { SoundWeighting } from './types'
 import { soundMeterTranslations } from './i18n'
-import {
-  DecibelMeterEngine,
-  getSoundReference,
-} from './utils/audioEngine'
+import { DecibelMeterEngine, getSoundReference } from './utils/audioEngine'
 import './styles/sound-meter.css'
 
 export interface ToolComponentProps {
@@ -34,8 +31,8 @@ export function SoundMeter({ locale = 'en', setHeader, isEink = false, theme }: 
   const isDark = theme
     ? theme === 'dark' || theme === 'e-ink-dark'
     : typeof document !== 'undefined'
-    ? (document.documentElement.getAttribute('data-theme')?.includes('dark') ?? true)
-    : true
+      ? (document.documentElement.getAttribute('data-theme')?.includes('dark') ?? true)
+      : true
 
   const [isActive, setIsActive] = useState<boolean>(false)
   const [permissionDenied, setPermissionDenied] = useState<boolean>(false)
@@ -183,8 +180,12 @@ export function SoundMeter({ locale = 'en', setHeader, isEink = false, theme }: 
     const fgColor = isDark ? '#ffffff' : '#000000'
     const mutedColor = isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
     const gridColor = isEink
-      ? (isDark ? 'rgba(255, 255, 255, 0.35)' : 'rgba(0, 0, 0, 0.35)')
-      : (isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)')
+      ? isDark
+        ? 'rgba(255, 255, 255, 0.35)'
+        : 'rgba(0, 0, 0, 0.35)'
+      : isDark
+        ? 'rgba(255, 255, 255, 0.12)'
+        : 'rgba(0, 0, 0, 0.12)'
 
     // Decibel Horizontal Grid lines (30dB, 60dB, 90dB, 120dB)
     ctx.strokeStyle = gridColor
@@ -278,22 +279,16 @@ export function SoundMeter({ locale = 'en', setHeader, isEink = false, theme }: 
               <div className="sound-instrument">
                 {/* Acoustic Classification Tag */}
                 <div className="sound-badge-row">
-                  <span className="sound-status-badge">
-                    {isActive ? reference.label : t.startMicrophone}
-                  </span>
+                  <span className="sound-status-badge">{isActive ? reference.label : t.startMicrophone}</span>
                 </div>
 
                 {/* Digital Decibel Gauge Display */}
                 <div className="sound-gauge">
                   <div className="sound-db-value-row">
-                    <span className="sound-db-number">
-                      {isActive ? currentDb.toFixed(1) : '--.-'}
-                    </span>
+                    <span className="sound-db-number">{isActive ? currentDb.toFixed(1) : '--.-'}</span>
                     <span className="sound-db-unit">{weighting}</span>
                   </div>
-                  <div className="sound-reference-tag">
-                    {isActive ? reference.label : t.readyToMeasure}
-                  </div>
+                  <div className="sound-reference-tag">{isActive ? reference.label : t.readyToMeasure}</div>
                   <div className="sound-level-track">
                     <div
                       className="sound-level-fill"
@@ -374,12 +369,7 @@ export function SoundMeter({ locale = 'en', setHeader, isEink = false, theme }: 
       />
 
       {/* Calibration & Settings Dialog Modal */}
-      <Dialog
-        open={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        title={t.settings}
-        maxWidth="sm"
-      >
+      <Dialog open={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} title={t.settings} maxWidth="sm">
         <div className="sound-dialog-content">
           <div className="sound-dialog-group">
             <label className="sound-dialog-label">{t.frequencyWeighting}</label>
@@ -399,9 +389,7 @@ export function SoundMeter({ locale = 'en', setHeader, isEink = false, theme }: 
               <label htmlFor={calSliderId} className="sound-dialog-label">
                 {t.offsetCalibration}
               </label>
-              <span className="sound-dialog-badge">
-                {calibration > 0 ? `+${calibration}` : calibration} dB
-              </span>
+              <span className="sound-dialog-badge">{calibration > 0 ? `+${calibration}` : calibration} dB</span>
             </div>
             <input
               id={calSliderId}
@@ -414,11 +402,7 @@ export function SoundMeter({ locale = 'en', setHeader, isEink = false, theme }: 
             />
             <div className="sound-slider-hints">
               <span>-20 dB</span>
-              <button
-                type="button"
-                className="sound-reset-cal-link"
-                onClick={() => setCalibration(0)}
-              >
+              <button type="button" className="sound-reset-cal-link" onClick={() => setCalibration(0)}>
                 0 dB (Default)
               </button>
               <span>+20 dB</span>
@@ -426,12 +410,7 @@ export function SoundMeter({ locale = 'en', setHeader, isEink = false, theme }: 
           </div>
 
           <div className="sound-dialog-footer">
-            <Button
-              id="sound-dialog-close-btn"
-              variant="primary"
-              size="sm"
-              onClick={() => setIsSettingsOpen(false)}
-            >
+            <Button id="sound-dialog-close-btn" variant="primary" size="sm" onClick={() => setIsSettingsOpen(false)}>
               {t.close}
             </Button>
           </div>

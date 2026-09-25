@@ -29,17 +29,12 @@ import type { ToolComponentProps, NoiseGateLevel } from './types'
 import { tunerTranslations } from './i18n'
 import './styles/tuner.css'
 
-export function GuitarTuner({
-  setHeader,
-  locale = 'en',
-  isEink = false,
-  theme,
-}: ToolComponentProps) {
+export function GuitarTuner({ setHeader, locale = 'en', isEink = false, theme }: ToolComponentProps) {
   const isDark = theme
     ? theme.includes('dark')
     : typeof document !== 'undefined'
-    ? (document.documentElement.getAttribute('data-theme')?.includes('dark') ?? true)
-    : true
+      ? (document.documentElement.getAttribute('data-theme')?.includes('dark') ?? true)
+      : true
 
   const t = tunerTranslations[locale] || tunerTranslations.en
   const a4SliderId = useId()
@@ -151,7 +146,7 @@ export function GuitarTuner({
               : '0',
           },
         ]}
-      />
+      />,
     )
   }, [setHeader, detectedPitch, t.statsLabel, t.cents])
 
@@ -201,8 +196,7 @@ export function GuitarTuner({
       mediaStreamRef.current = stream
 
       const AudioContextClass =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+        window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
       const ctx = new AudioContextClass()
       audioCtxRef.current = ctx
 
@@ -227,8 +221,7 @@ export function GuitarTuner({
         if (freq !== -1 && freq >= 30 && freq <= 2200) {
           pitchHistoryRef.current.push(freq)
           if (pitchHistoryRef.current.length > 5) pitchHistoryRef.current.shift()
-          const smoothedFreq =
-            pitchHistoryRef.current.reduce((a, b) => a + b, 0) / pitchHistoryRef.current.length
+          const smoothedFreq = pitchHistoryRef.current.reduce((a, b) => a + b, 0) / pitchHistoryRef.current.length
           const noteInfo = freqToNote(smoothedFreq, a4Calibration)
           setDetectedPitch({
             note: noteInfo.note,
@@ -279,7 +272,7 @@ export function GuitarTuner({
       { value: 'ukulele', label: t.presets.ukulele, id: 'tuner-preset-ukulele' },
       { value: 'chromatic', label: t.presets.chromatic, id: 'tuner-preset-chromatic' },
     ],
-    [t.presets]
+    [t.presets],
   )
 
   const sensitivityPills = useMemo(
@@ -288,7 +281,7 @@ export function GuitarTuner({
       { value: 'medium' as NoiseGateLevel, label: t.sensitivityMedium, id: 'gate-medium' },
       { value: 'high' as NoiseGateLevel, label: t.sensitivityHigh, id: 'gate-high' },
     ],
-    [t.sensitivityLow, t.sensitivityMedium, t.sensitivityHigh]
+    [t.sensitivityLow, t.sensitivityMedium, t.sensitivityHigh],
   )
 
   return (
@@ -310,18 +303,16 @@ export function GuitarTuner({
             <div className="tuner-note-display" aria-live="polite">
               <div className="tuner-note-text">
                 {detectedPitch.hasAudio ? detectedPitch.note : '-'}
-                {detectedPitch.hasAudio && (
-                  <span className="tuner-note-octave">{detectedPitch.octave}</span>
-                )}
+                {detectedPitch.hasAudio && <span className="tuner-note-octave">{detectedPitch.octave}</span>}
               </div>
               <div className="tuner-note-sub">
                 {detectedPitch.hasAudio
                   ? `${Math.round(detectedPitch.freq)} Hz · ${t.target} ${Math.round(
-                      detectedPitch.targetFreq
+                      detectedPitch.targetFreq,
                     )} Hz (${a4Calibration} Hz A4)`
                   : isListening
-                  ? t.listeningNoSignal
-                  : t.readyToTune}
+                    ? t.listeningNoSignal
+                    : t.readyToTune}
               </div>
             </div>
 
@@ -339,20 +330,14 @@ export function GuitarTuner({
 
             {/* String Reference Buttons */}
             {calibratedStrings.length > 0 && (
-              <div
-                className="tuner-strings-container"
-                role="group"
-                aria-label={t.referenceTone}
-              >
+              <div className="tuner-strings-container" role="group" aria-label={t.referenceTone}>
                 {calibratedStrings.map((str, idx) => {
                   const isPlaying = playingToneFreq === str.freq
                   return (
                     <button
                       key={idx}
                       type="button"
-                      className={`tuner-string-btn ${
-                        isPlaying ? 'tuner-string-btn--playing' : ''
-                      }`}
+                      className={`tuner-string-btn ${isPlaying ? 'tuner-string-btn--playing' : ''}`}
                       onClick={() => toggleTone(str.freq)}
                       title={`${t.referenceTone}: ${str.note}${str.octave} (${str.freq} Hz)`}
                       aria-pressed={isPlaying}
@@ -410,12 +395,7 @@ export function GuitarTuner({
       />
 
       {/* Tuner Calibration & Settings Modal */}
-      <Dialog
-        open={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        title={t.settings}
-        maxWidth="sm"
-      >
+      <Dialog open={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} title={t.settings} maxWidth="sm">
         <div className="tuner-dialog-content">
           {/* Reference Pitch (A4) Calibration */}
           <SettingsGroup label={`${t.calibrationA4} (${a4Calibration} Hz)`}>
@@ -482,12 +462,7 @@ export function GuitarTuner({
             >
               {t.resetDefaults}
             </Button>
-            <Button
-              id="tuner-dialog-close-btn"
-              variant="primary"
-              size="sm"
-              onClick={() => setIsSettingsOpen(false)}
-            >
+            <Button id="tuner-dialog-close-btn" variant="primary" size="sm" onClick={() => setIsSettingsOpen(false)}>
               {t.close}
             </Button>
           </div>

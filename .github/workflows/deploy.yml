@@ -23,10 +23,22 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: TypeScript check
+        run: npm run typecheck
+
+      - name: Run tests
+        run: npm test
 
       - name: Build project
         run: npm run build
+
+      - name: Copy index.html to 404.html for SPA routing
+        run: cp apps/shell/dist/index.html apps/shell/dist/404.html
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4

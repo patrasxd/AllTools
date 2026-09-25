@@ -46,7 +46,7 @@ export function Layout({ children }: LayoutProps) {
   }, [location.pathname])
 
   const slug = location.pathname.match(/^\/tools\/([^/]+)/)?.[1]
-  const tool = slug ? TOOLS_METADATA.find(item => item.slug === slug) : undefined
+  const tool = slug ? TOOLS_METADATA.find((item) => item.slug === slug) : undefined
   const toolTitle = tool ? getLocalizedText(tool.name, locale) : ''
   const isToolPage = Boolean(tool)
 
@@ -72,10 +72,7 @@ export function Layout({ children }: LayoutProps) {
         menu={<HeaderMenu />}
       />
 
-      <main className="app-main">
-        {children}
-      </main>
+      <main className="app-main">{children}</main>
     </ToolHeaderContext.Provider>
   )
 }
-

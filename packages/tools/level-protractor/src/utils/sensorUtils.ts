@@ -25,8 +25,10 @@ export const CARDINALS = [
 export function requiresOrientationPermission(): boolean {
   return (
     typeof window !== 'undefined' &&
-    typeof (window as unknown as { DeviceOrientationEvent?: { requestPermission?: unknown } }).DeviceOrientationEvent !== 'undefined' &&
-    typeof (window as unknown as { DeviceOrientationEvent: { requestPermission?: unknown } }).DeviceOrientationEvent.requestPermission === 'function'
+    typeof (window as unknown as { DeviceOrientationEvent?: { requestPermission?: unknown } })
+      .DeviceOrientationEvent !== 'undefined' &&
+    typeof (window as unknown as { DeviceOrientationEvent: { requestPermission?: unknown } }).DeviceOrientationEvent
+      .requestPermission === 'function'
   )
 }
 
@@ -34,7 +36,8 @@ export function requiresOrientationPermission(): boolean {
 export async function requestOrientationPermission(): Promise<'granted' | 'denied' | 'unsupported'> {
   if (typeof window === 'undefined') return 'unsupported'
 
-  const devOrient = (window as unknown as { DeviceOrientationEvent?: { requestPermission?: () => Promise<string> } }).DeviceOrientationEvent
+  const devOrient = (window as unknown as { DeviceOrientationEvent?: { requestPermission?: () => Promise<string> } })
+    .DeviceOrientationEvent
   if (devOrient && typeof devOrient.requestPermission === 'function') {
     try {
       const state = await devOrient.requestPermission()
@@ -54,7 +57,7 @@ export function calculateCalibratedTilt(
   roll: number,
   calibratedPitch: number,
   calibratedRoll: number,
-  tolerance: number = 0.5
+  tolerance: number = 0.5,
 ): TiltResult {
   const effectivePitch = pitch - calibratedPitch
   const effectiveRoll = roll - calibratedRoll
@@ -158,7 +161,7 @@ export function calculateEdgeLevel(
   calibratedRoll: number = 0,
   tolerance: number = 0.5,
   targetAngle: number = 0,
-  forcedOrientation?: PhoneOrientation
+  forcedOrientation?: PhoneOrientation,
 ): EdgeLevelResult {
   const effectivePitch = pitch - calibratedPitch
   const effectiveRoll = roll - calibratedRoll
@@ -203,4 +206,3 @@ export function calculateEdgeLevel(
     isTargetMatch,
   }
 }
-

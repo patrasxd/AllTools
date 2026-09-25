@@ -49,7 +49,7 @@ export function warpPerspective(
   corners: [Point2D, Point2D, Point2D, Point2D],
   srcWidth: number,
   srcHeight: number,
-  maxDim: number = 2400
+  maxDim: number = 2400,
 ): HTMLCanvasElement {
   // Pixel coordinates in source image
   const p0 = { x: corners[0].x * srcWidth, y: corners[0].y * srcHeight }
@@ -176,10 +176,7 @@ export function warpPerspective(
 
       const dstIdx = rowOffset + u * 4
       dstPixels[dstIdx] =
-        w00 * srcPixels[idx00] +
-        w10 * srcPixels[idx10] +
-        w01 * srcPixels[idx01] +
-        w11 * srcPixels[idx11]
+        w00 * srcPixels[idx00] + w10 * srcPixels[idx10] + w01 * srcPixels[idx01] + w11 * srcPixels[idx11]
       dstPixels[dstIdx + 1] =
         w00 * srcPixels[idx00 + 1] +
         w10 * srcPixels[idx10 + 1] +
@@ -201,10 +198,7 @@ export function warpPerspective(
 /**
  * Applies document enhancement filters (grayscale, B&W scan thresholding, contrast).
  */
-export function applyDocumentFilter(
-  canvas: HTMLCanvasElement,
-  filter: DocumentFilter
-): HTMLCanvasElement {
+export function applyDocumentFilter(canvas: HTMLCanvasElement, filter: DocumentFilter): HTMLCanvasElement {
   if (filter === 'original') return canvas
 
   const ctx = canvas.getContext('2d')
@@ -250,10 +244,7 @@ export function applyDocumentFilter(
 /**
  * Rotates a canvas by 0, 90, 180, or 270 degrees.
  */
-export function rotateCanvas(
-  canvas: HTMLCanvasElement,
-  rotationDegrees: number
-): HTMLCanvasElement {
+export function rotateCanvas(canvas: HTMLCanvasElement, rotationDegrees: number): HTMLCanvasElement {
   const normDeg = ((rotationDegrees % 360) + 360) % 360
   if (normDeg === 0) return canvas
 
@@ -276,10 +267,7 @@ export function rotateCanvas(
  * Processes an editable image item through the complete pipeline:
  * Perspective warp -> Rotation -> Filter -> Output as JPEG Blob.
  */
-export async function processEditableImage(
-  item: EditableImageItem,
-  maxDim: number = 2400
-): Promise<Blob> {
+export async function processEditableImage(item: EditableImageItem, maxDim: number = 2400): Promise<Blob> {
   const img = await loadImageElement(item.originalUrl)
   const warped = warpPerspective(img, item.corners, item.width, item.height, maxDim)
   const rotated = rotateCanvas(warped, item.rotation)
@@ -292,7 +280,7 @@ export async function processEditableImage(
         else reject(new Error('Failed to encode image to blob'))
       },
       'image/jpeg',
-      0.92
+      0.92,
     )
   })
 }

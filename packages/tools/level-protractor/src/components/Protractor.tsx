@@ -57,7 +57,7 @@ export const Protractor: React.FC<ProtractorProps> = ({
         setArm2Angle(Math.round(deg))
       }
     },
-    [activeArm, isFrozen, setArm1Angle, setArm2Angle]
+    [activeArm, isFrozen, setArm1Angle, setArm2Angle],
   )
 
   const handlePointerUp = useCallback(() => {
@@ -66,7 +66,7 @@ export const Protractor: React.FC<ProtractorProps> = ({
 
   const adjustAngle = (delta: number) => {
     if (isFrozen) return
-    setArm2Angle((prev) => ((prev + delta) % 360 + 360) % 360)
+    setArm2Angle((prev) => (((prev + delta) % 360) + 360) % 360)
   }
 
   const cx = 130
@@ -106,11 +106,7 @@ export const Protractor: React.FC<ProtractorProps> = ({
   }
 
   const angleClassification =
-    angleResult.angle < 90
-      ? t.status.acuteAngle
-      : angleResult.angle === 90
-      ? t.status.rightAngle
-      : t.status.obtuseAngle
+    angleResult.angle < 90 ? t.status.acuteAngle : angleResult.angle === 90 ? t.status.rightAngle : t.status.obtuseAngle
 
   return (
     <div className={`protractor-view-wrapper ${isEink ? 'protractor-view-wrapper--eink' : ''}`}>
@@ -118,11 +114,7 @@ export const Protractor: React.FC<ProtractorProps> = ({
       <div className="protractor-digital-readout">
         <div className="protractor-angle-row">
           <span className="protractor-angle-number">{angleResult.angle.toFixed(1)}°</span>
-          <Badge
-            variant={isFrozen ? 'warning' : 'accent'}
-            size="md"
-            className="protractor-status-badge"
-          >
+          <Badge variant={isFrozen ? 'warning' : 'accent'} size="md" className="protractor-status-badge">
             {isFrozen ? t.status.angleLocked : angleClassification}
           </Badge>
         </div>
@@ -132,11 +124,7 @@ export const Protractor: React.FC<ProtractorProps> = ({
       </div>
 
       {/* SVG Protractor */}
-      <div
-        className="protractor-dial-card"
-        role="region"
-        aria-label={`Protractor: ${angleResult.angle} degrees`}
-      >
+      <div className="protractor-dial-card" role="region" aria-label={`Protractor: ${angleResult.angle} degrees`}>
         <svg
           ref={svgRef}
           viewBox="0 0 260 260"
@@ -261,40 +249,16 @@ export const Protractor: React.FC<ProtractorProps> = ({
 
       {/* Fine-Tuning Degrees Row */}
       <div className="protractor-fine-tune-row" role="group" aria-label="Angle fine-tuning">
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => adjustAngle(-5)}
-          disabled={isFrozen}
-          title="-5 degrees"
-        >
+        <Button variant="secondary" size="sm" onClick={() => adjustAngle(-5)} disabled={isFrozen} title="-5 degrees">
           -5°
         </Button>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => adjustAngle(-1)}
-          disabled={isFrozen}
-          title="-1 degree"
-        >
+        <Button variant="secondary" size="sm" onClick={() => adjustAngle(-1)} disabled={isFrozen} title="-1 degree">
           -1°
         </Button>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => adjustAngle(1)}
-          disabled={isFrozen}
-          title="+1 degree"
-        >
+        <Button variant="secondary" size="sm" onClick={() => adjustAngle(1)} disabled={isFrozen} title="+1 degree">
           +1°
         </Button>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => adjustAngle(5)}
-          disabled={isFrozen}
-          title="+5 degrees"
-        >
+        <Button variant="secondary" size="sm" onClick={() => adjustAngle(5)} disabled={isFrozen} title="+5 degrees">
           +5°
         </Button>
       </div>

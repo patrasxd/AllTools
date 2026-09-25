@@ -3,8 +3,7 @@ import { motion } from 'framer-motion'
 import { useI18n } from '../i18n'
 import { getLocalizedText, getLocalizedTags } from '../types/tool'
 import type { ToolMetadata } from '../types/tool'
-import { Badge } from '@alltools/ui'
-import { setLastActiveCardId } from '@all/ui'
+import { Badge, setLastActiveCardId } from '@all/ui'
 
 interface ToolCardProps {
   metadata: ToolMetadata
@@ -96,12 +95,7 @@ export function ToolCard({ metadata, index, isReturning }: ToolCardProps) {
         viewBox="0 0 300 220" matches the rendered card proportions.
         Perimeter = 2*(298+218) = 1032 — used as stroke-dasharray.
       */}
-      <svg
-        className="tool-card-sketch-border"
-        viewBox="0 0 300 220"
-        preserveAspectRatio="none"
-        aria-hidden="true"
-      >
+      <svg className="tool-card-sketch-border" viewBox="0 0 300 220" preserveAspectRatio="none" aria-hidden="true">
         <rect x="1" y="1" width="298" height="218" rx="3" />
       </svg>
 
@@ -115,13 +109,24 @@ export function ToolCard({ metadata, index, isReturning }: ToolCardProps) {
 
       <div className="tool-card-footer">
         <div className="tool-card-tags" aria-label={t.toolTagsAria}>
-          {visibleTags.map(tag => (
-            <Badge key={tag} size="sm">{tag}</Badge>
+          {visibleTags.map((tag) => (
+            <Badge key={tag} size="sm">
+              {tag}
+            </Badge>
           ))}
         </div>
         <span className="tool-card-play" aria-hidden="true">
           {t.open}
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 12 12"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <path d="M2 6h8M6 2l4 4-4 4" />
           </svg>
         </span>

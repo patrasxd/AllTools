@@ -1,11 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { PDFDocument } from 'pdf-lib'
-import {
-  mergePdfs,
-  extractAndRotatePages,
-  imagesToPdf,
-  signPdf,
-} from '../utils/pdfEngine'
+import { mergePdfs, extractAndRotatePages, imagesToPdf, signPdf } from '../utils/pdfEngine'
 
 // Helper to create a minimal in-memory PDF Document for testing
 async function createMockPdf(pageCount: number = 1, text: string = 'Test'): Promise<File> {
@@ -59,7 +54,8 @@ describe('PDF Suite pdfEngine', () => {
   describe('imagesToPdf', () => {
     it('converts PNG image files to pages in a new PDF document', async () => {
       // 1x1 PNG bytes
-      const base64Png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
+      const base64Png =
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
       const binaryString = atob(base64Png)
       const bytes = new Uint8Array(binaryString.length)
       for (let i = 0; i < binaryString.length; i++) {
@@ -87,13 +83,7 @@ describe('PDF Suite pdfEngine', () => {
 
     it('embeds signature PNG with custom manual percentage coordinates', async () => {
       const sourcePdf = await createMockPdf(3, 'MultiPageContract')
-      const signedBlob = await signPdf(
-        sourcePdf,
-        MOCK_PNG_DATA_URL,
-        2,
-        'custom',
-        { xPercent: 42, yPercent: 65 }
-      )
+      const signedBlob = await signPdf(sourcePdf, MOCK_PNG_DATA_URL, 2, 'custom', { xPercent: 42, yPercent: 65 })
 
       expect(signedBlob).toBeInstanceOf(Blob)
       const buffer = await signedBlob.arrayBuffer()
@@ -109,7 +99,7 @@ describe('PDF Suite pdfEngine', () => {
         0,
         'custom',
         { xPercent: 50, yPercent: 50, widthPercent: 40, heightPercent: 15 },
-        1.2
+        1.2,
       )
 
       expect(signedBlob).toBeInstanceOf(Blob)

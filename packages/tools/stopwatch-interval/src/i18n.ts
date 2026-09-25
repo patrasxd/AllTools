@@ -64,9 +64,11 @@ export const stopwatchTranslations = {
     loops: 'Loops (e.g. 2×)',
     setsPerLoop: 'Sets per loop',
     stepNumber: (n: number) => `Step ${n}`,
-    stepSummary: (cycles: number, sets: number, total: number) => `${cycles} loop${cycles > 1 ? 's' : ''} × ${sets} sets = ${total} sets`,
+    stepSummary: (cycles: number, sets: number, total: number) =>
+      `${cycles} loop${cycles > 1 ? 's' : ''} × ${sets} sets = ${total} sets`,
     totalRoutine: 'Total routine:',
-    routineSets: (stepCount: number, totalSets: number) => `${stepCount} step${stepCount > 1 ? 's' : ''} · ${totalSets} total sets`,
+    routineSets: (stepCount: number, totalSets: number) =>
+      `${stepCount} step${stepCount > 1 ? 's' : ''} · ${totalSets} total sets`,
   },
   pl: {
     stopwatch: 'Stoper',
@@ -133,7 +135,8 @@ export const stopwatchTranslations = {
     loops: 'Pętle (np. 2×)',
     setsPerLoop: 'Serie na pętlę',
     stepNumber: (n: number) => `Krok ${n}`,
-    stepSummary: (cycles: number, sets: number, total: number) => `${cycles} pętl${cycles === 1 ? 'a' : cycles < 5 ? 'e' : 'i'} × ${sets} serii = ${total} serii`,
+    stepSummary: (cycles: number, sets: number, total: number) =>
+      `${cycles} pętl${cycles === 1 ? 'a' : cycles < 5 ? 'e' : 'i'} × ${sets} serii = ${total} serii`,
     totalRoutine: 'Łącznie w planie:',
     routineSets: (stepCount: number, totalSets: number) => `${stepCount} krok(ów) · ${totalSets} wszystkich serii`,
   },

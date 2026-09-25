@@ -1,17 +1,11 @@
-import type {
-  CaliperPosition,
-  WorkspaceDimensions,
-  MeasurementResult,
-  MeasurementUnit,
-  TickMark,
-} from '../types'
+import type { CaliperPosition, WorkspaceDimensions, MeasurementResult, MeasurementUnit, TickMark } from '../types'
 
 // ISO/IEC 7810 ID-1 standard dimensions in millimeters
-export const CARD_LONG_MM = 85.60
+export const CARD_LONG_MM = 85.6
 export const CARD_SHORT_MM = 53.98
 
 export const DEFAULT_PPM_DESKTOP = 3.78 // ~96 DPI standard CSS pixel
-export const DEFAULT_PPM_MOBILE = 5.5   // ~140 DPI mobile viewport approximation
+export const DEFAULT_PPM_MOBILE = 5.5 // ~140 DPI mobile viewport approximation
 
 export const RULER_STORAGE_KEY_PPM = 'alltools:ruler:ppm'
 export const RULER_STORAGE_KEY_CALIBRATED = 'alltools:ruler:calibrated'
@@ -47,11 +41,7 @@ export function calculatePpm(cardWidthPx: number, targetWidthMm: number): number
 /**
  * Calculate proportional card height in pixels given card width and aspect ratio.
  */
-export function calculateCardHeightPx(
-  cardWidthPx: number,
-  targetWidthMm: number,
-  targetHeightMm: number
-): number {
+export function calculateCardHeightPx(cardWidthPx: number, targetWidthMm: number, targetHeightMm: number): number {
   if (targetWidthMm <= 0 || cardWidthPx <= 0) return 0
   return Math.round(cardWidthPx * (targetHeightMm / targetWidthMm))
 }
@@ -67,10 +57,7 @@ export function calculateDpi(ppm: number): number {
 /**
  * Compute all 2D measurement readouts given caliper position and PPM.
  */
-export function calculateMeasurements(
-  caliperPx: CaliperPosition,
-  ppm: number
-): MeasurementResult {
+export function calculateMeasurements(caliperPx: CaliperPosition, ppm: number): MeasurementResult {
   const safePpm = ppm > 0 ? ppm : DEFAULT_PPM_DESKTOP
 
   const mmX = safePpm > 0 ? Math.max(0, caliperPx.x) / safePpm : 0
@@ -116,7 +103,7 @@ export function formatMeasurement(value: number, unit: MeasurementUnit): string 
 export function clampPointer(
   clientX: number,
   clientY: number,
-  rect: { width: number; height: number; right: number; bottom: number }
+  rect: { width: number; height: number; right: number; bottom: number },
 ): CaliperPosition {
   const distRight = Math.max(0, Math.min(rect.width, rect.right - clientX))
   const distBottom = Math.max(0, Math.min(rect.height, rect.bottom - clientY))
@@ -129,7 +116,7 @@ export function clampPointer(
 export function clampLaser(
   caliperPx: CaliperPosition,
   dims: WorkspaceDimensions,
-  rulerSize: number
+  rulerSize: number,
 ): { laserX: number; laserY: number } {
   const laserX = Math.max(0, Math.min(dims.width - rulerSize, dims.width - caliperPx.x))
   const laserY = Math.max(0, Math.min(dims.height - rulerSize, dims.height - caliperPx.y))
@@ -139,12 +126,7 @@ export function clampLaser(
 /**
  * Generates ruler tick graduation marks along an axis.
  */
-export function generateTickMarks(
-  maxMm: number,
-  currentPpm: number,
-  rulerSize: number,
-  totalSpan: number
-): TickMark[] {
+export function generateTickMarks(maxMm: number, currentPpm: number, rulerSize: number, totalSpan: number): TickMark[] {
   if (maxMm <= 0 || currentPpm <= 0) return []
 
   const ticks: TickMark[] = []
