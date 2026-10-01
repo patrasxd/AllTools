@@ -15,6 +15,7 @@ export interface ToolComponentProps {
 
 export type SketchTool =
   | 'select'
+  | 'hand'
   | 'pencil'
   | 'brush'
   | 'eraser'

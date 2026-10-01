@@ -85,6 +85,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
   // Canvas refs
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const previewCanvasRef = useRef<HTMLCanvasElement | null>(null)
+  const canvasViewportRef = useRef<HTMLElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const colorPickerRef = useRef<HTMLInputElement | null>(null)
   const textInputRef = useRef<HTMLInputElement | null>(null)
@@ -242,6 +243,8 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
 
   // Drawing state refs (avoid React re-renders during high-frequency mouse moves)
   const isDrawingRef = useRef(false)
+  const isPanningRef = useRef(false)
+  const panStartRef = useRef({ clientX: 0, clientY: 0, scrollLeft: 0, scrollTop: 0 })
   const startPointRef = useRef<Point>({ x: 0, y: 0 })
   const lastPointRef = useRef<Point>({ x: 0, y: 0 })
 
@@ -890,6 +893,21 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
 
   // Pointer Down (Start Drawing / Tool Action)
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (currentTool === 'hand') {
+      const viewport = canvasViewportRef.current
+      if (!viewport) return
+      e.preventDefault()
+      isPanningRef.current = true
+      panStartRef.current = {
+        clientX: e.clientX,
+        clientY: e.clientY,
+        scrollLeft: viewport.scrollLeft,
+        scrollTop: viewport.scrollTop,
+      }
+      e.currentTarget.setPointerCapture?.(e.pointerId)
+      return
+    }
+
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d', { willReadFrequently: true })
@@ -977,6 +995,14 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
 
   // Pointer Move (Continue Freehand or Update Shape Preview)
   const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (isPanningRef.current) {
+      const viewport = canvasViewportRef.current
+      if (!viewport) return
+      viewport.scrollLeft = panStartRef.current.scrollLeft - (e.clientX - panStartRef.current.clientX)
+      viewport.scrollTop = panStartRef.current.scrollTop - (e.clientY - panStartRef.current.clientY)
+      return
+    }
+
     const canvas = canvasRef.current
     const previewCanvas = previewCanvasRef.current
     if (!canvas || !previewCanvas) return
@@ -1039,6 +1065,10 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
 
   // Pointer Up (Commit Shapes and Push History)
   const handlePointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (isPanningRef.current) {
+      isPanningRef.current = false
+      return
+    }
     if (!isDrawingRef.current) return
     isDrawingRef.current = false
 
@@ -1210,6 +1240,16 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                     aria-label={t.tools.select}
                   >
                     <IconSelect size={18} />
+                  </button>
+                  <button
+                    className={`paint-btn ${currentTool === 'hand' ? 'active' : ''}`}
+                    onClick={() => setCurrentTool('hand')}
+                    title={t.tools.hand}
+                    aria-label={t.tools.hand}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M8 11V5a2 2 0 0 1 4 0v6-8a2 2 0 0 1 4 0v8-5a2 2 0 0 1 4 0v8a7 7 0 0 1-7 7h-1a7 7 0 0 1-6-3.5l-2-3a2 2 0 0 1 3.5-2L8 14" />
+                    </svg>
                   </button>
                   <button
                     className={`paint-btn ${currentTool === 'pencil' ? 'active' : ''}`}
@@ -1808,6 +1848,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
 
         {/* ─── Canvas Viewport (Center) ─── */}
         <main
+          ref={canvasViewportRef}
           className="paint-canvas-viewport"
           onDragOver={(e) => e.preventDefault()}
           onDrop={handleDrop}
@@ -1821,7 +1862,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
           >
             <canvas
               ref={canvasRef}
-              className="paint-canvas"
+              className={`paint-canvas ${currentTool === 'hand' ? 'paint-canvas--hand' : ''}`}
               style={{
                 width: canvasDim.width * zoom,
                 height: canvasDim.height * zoom,

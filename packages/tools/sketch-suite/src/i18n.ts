@@ -13,6 +13,7 @@ export const translations = {
     },
     tools: {
       select: 'Select (Rectangle)',
+      hand: 'Hand Tool',
       pencil: 'Pencil (1px)',
       brush: 'Brush',
       eraser: 'Eraser',
@@ -131,6 +132,7 @@ export const translations = {
     },
     tools: {
       select: 'Zaznacz (Prostokąt)',
+      hand: 'Rączka (przesuń płótno)',
       pencil: 'Ołówek (1px)',
       brush: 'Pędzel',
       eraser: 'Gumka',

@@ -173,6 +173,23 @@ describe('SketchSuite UI Component', () => {
     expect(container.querySelector('.paint-select-info-box')).toBeDefined()
   })
 
+  it('pans the canvas viewport with the hand tool', () => {
+    const { container } = render(<SketchSuite locale="en" />)
+    const viewport = container.querySelector('.paint-canvas-viewport') as HTMLElement
+    const canvas = container.querySelector('canvas.paint-canvas') as HTMLCanvasElement
+    viewport.scrollLeft = 60
+    viewport.scrollTop = 40
+
+    fireEvent.click(screen.getByRole('button', { name: 'Hand Tool' }))
+    fireEvent.pointerDown(canvas, { clientX: 100, clientY: 100, pointerId: 1 })
+    fireEvent.pointerMove(canvas, { clientX: 70, clientY: 75, pointerId: 1 })
+
+    expect(viewport.scrollLeft).toBe(90)
+    expect(viewport.scrollTop).toBe(65)
+
+    fireEvent.pointerUp(canvas, { pointerId: 1 })
+  })
+
   it('renders MS Paint-style inline on-canvas text box with repositioning drag handle', () => {
     const { container } = render(<SketchSuite locale="en" />)
     
