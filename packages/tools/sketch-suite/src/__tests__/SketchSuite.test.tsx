@@ -115,6 +115,42 @@ describe('SketchSuite UI Component', () => {
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 
+  it('opens Resize Canvas dialog with AllUI Button presets and AllUI Input fields', () => {
+    render(<SketchSuite locale="en" />)
+    const fileBtn = screen.getByRole('button', { name: /file/i })
+    fireEvent.click(fileBtn)
+
+    const resizeOption = screen.getByText('Resize Canvas...')
+    fireEvent.click(resizeOption)
+
+    // Dialog should be open
+    const resizeDialog = screen.getByRole('dialog')
+    expect(resizeDialog).toBeDefined()
+    expect(resizeDialog.querySelector('.all-dialog__title')?.textContent).toBe('Resize Canvas')
+
+    // Presets should be rendered using @all/ui Button
+    const presetButtons = resizeDialog.querySelectorAll('.paint-presets-grid button')
+    expect(presetButtons.length).toBeGreaterThan(0)
+    presetButtons.forEach((btn) => {
+      expect(btn.classList.contains('all-btn')).toBe(true)
+    })
+
+    // Input fields should use @all/ui Input with all-input-field
+    const inputs = resizeDialog.querySelectorAll('.all-input-field')
+    expect(inputs.length).toBe(2)
+
+    // Actions should use @all/ui Button in paint-dialog-actions without ugly footer cut-off
+    const actions = resizeDialog.querySelector('.paint-dialog-actions')
+    expect(actions).not.toBeNull()
+    const applyBtn = screen.getByRole('button', { name: 'Apply Dimensions' })
+    expect(applyBtn.classList.contains('all-btn')).toBe(true)
+    expect(applyBtn.classList.contains('all-btn--primary')).toBe(true)
+
+    // Clicking Apply Dimensions closes dialog
+    fireEvent.click(applyBtn)
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
   it('opens Custom Color Popover when custom color button is clicked and unifies layout with size popover', () => {
     const { container } = render(<SketchSuite locale="en" />)
     const customColorBtn = screen.getByRole('button', { name: /custom\.\.\./i })
@@ -230,4 +266,154 @@ describe('SketchSuite UI Component', () => {
     // Text box closes after committing onto canvas
     expect(container.querySelector('.paint-canvas-text-box')).toBeNull()
   })
+
+  it('opens interactive placed image overlay with resize handles on paste (Ctrl+V) and allows commit/cancel', async () => {
+    // Mock Image & FileReader for jsdom
+    const originalImage = window.Image
+    const originalFileReader = window.FileReader
+
+    class MockImage {
+      onload: (() => void) | null = null
+      width = 1200
+      height = 800
+      naturalWidth = 1200
+      naturalHeight = 800
+      _src = ''
+      set src(val: string) {
+        this._src = val
+        setTimeout(() => {
+          this.onload?.()
+        }, 10)
+      }
+      get src() {
+        return this._src
+      }
+    }
+
+    class MockFileReader {
+      onload: ((e: { target: { result: string } }) => void) | null = null
+      readAsDataURL() {
+        setTimeout(() => {
+          this.onload?.({ target: { result: 'data:image/png;base64,sample' } })
+        }, 5)
+      }
+    }
+
+    // @ts-expect-error mock
+    window.Image = MockImage
+    // @ts-expect-error mock
+    globalThis.Image = MockImage
+    // @ts-expect-error mock
+    window.FileReader = MockFileReader
+    // @ts-expect-error mock
+    globalThis.FileReader = MockFileReader
+
+    try {
+      const { container } = render(<SketchSuite locale="pl" />)
+
+      // Paste image
+      fireEvent.paste(window, {
+        clipboardData: {
+          items: [
+            {
+              type: 'image/png',
+              getAsFile: () => new File(['img'], 'test.png', { type: 'image/png' }),
+            },
+          ],
+        },
+      })
+
+      // Wait for image overlay to appear
+      const img = await screen.findByRole('img', { name: /pasted content/i })
+      const overlay = img.closest('.paint-placed-image-overlay')
+      expect(overlay).not.toBeNull()
+
+      // Should have placed image box with resize handles
+      const box = overlay?.querySelector('.paint-placed-image-box')
+      expect(box).not.toBeNull()
+
+      const handles = overlay?.querySelectorAll('.paint-placed-image-handle')
+      expect(handles?.length).toBe(8) // 4 corners + 4 edges
+
+      // Toolbar should have action buttons
+      const fitBtn = overlay?.querySelector('button[aria-label="Dopasuj do płótna"]')
+      expect(fitBtn).toBeDefined()
+
+      const originalSizeBtn = overlay?.querySelector('button[aria-label="Oryginalny rozmiar (100%)"]')
+      expect(originalSizeBtn).toBeDefined()
+
+      const commitBtn = overlay?.querySelector('button.paint-placed-image-btn--commit') as HTMLButtonElement
+      expect(commitBtn).toBeDefined()
+
+      const cancelBtn = overlay?.querySelector('button.paint-placed-image-btn--cancel') as HTMLButtonElement
+      expect(cancelBtn).toBeDefined()
+
+      // Test commit button
+      fireEvent.click(commitBtn)
+
+      // Overlay should close after committing
+      expect(container.querySelector('.paint-placed-image-overlay')).toBeNull()
+
+      // Paste again to test escape key cancel
+      fireEvent.paste(window, {
+        clipboardData: {
+          items: [
+            {
+              type: 'image/png',
+              getAsFile: () => new File(['img'], 'test2.png', { type: 'image/png' }),
+            },
+          ],
+        },
+      })
+
+      const img2 = await screen.findByRole('img', { name: /pasted content/i })
+      expect(img2.closest('.paint-placed-image-overlay')).not.toBeNull()
+
+      // Press Escape to cancel
+      fireEvent.keyDown(window, { key: 'Escape' })
+      expect(screen.queryByRole('img', { name: /pasted content/i })).toBeNull()
+    } finally {
+      window.Image = originalImage
+      window.FileReader = originalFileReader
+    }
+  })
+
+  it('renders Hand tool dynamic section and title when hand tool is active', () => {
+    const { container } = render(<SketchSuite locale="pl" />)
+    const handBtn = screen.getByRole('button', { name: /rączka/i })
+    fireEvent.click(handBtn)
+
+    // Dynamic box for hand tool should be rendered
+    const handBox = container.querySelector('.paint-dynamic-box--hand')
+    expect(handBox).not.toBeNull()
+
+    // Title should be Hand title, NOT shape outline
+    const dynamicSection = handBox?.closest('.paint-section')
+    const title = dynamicSection?.querySelector('.paint-section-title')
+    expect(title?.textContent).toBe('Rączka: Przesuwanie i nawigacja')
+  })
+
+  it('renders Export dialog without separate footer shelf and with proper action buttons', () => {
+    render(<SketchSuite locale="pl" />)
+    const fileBtn = screen.getByRole('button', { name: /plik/i })
+    fireEvent.click(fileBtn)
+
+    const exportOption = screen.getByText(/eksportuj \/ zapisz jako/i)
+    fireEvent.click(exportOption)
+
+    const dialog = screen.getByRole('dialog')
+    expect(dialog).toBeDefined()
+    expect(dialog.querySelector('.all-dialog__title')?.textContent).toBe('Eksportuj obraz')
+
+    // Should NOT have .all-dialog__footer
+    expect(dialog.querySelector('.all-dialog__footer')).toBeNull()
+
+    // Should have paint-dialog-actions with Download, Copy, and Cancel buttons
+    const actions = dialog.querySelector('.paint-dialog-actions')
+    expect(actions).not.toBeNull()
+    expect(screen.getByRole('button', { name: 'Pobierz' })).toBeDefined()
+    expect(screen.getByRole('button', { name: 'Kopiuj' })).toBeDefined()
+    expect(screen.getByRole('button', { name: 'Anuluj' })).toBeDefined()
+  })
 })
+

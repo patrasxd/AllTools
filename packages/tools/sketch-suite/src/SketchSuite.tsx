@@ -22,7 +22,7 @@ import {
   IconMaximize2,
   IconZoomIn,
 } from '@alltools/ui'
-import { ToolComponentProps, SketchTool, ShapeFillMode, Point, SelectionRect } from './types'
+import { ToolComponentProps, SketchTool, ShapeFillMode, Point, SelectionRect, PlacedImageOverlay } from './types'
 import { translations } from './i18n'
 import {
   hexToRgba,
@@ -111,6 +111,57 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
   const [activeColorSlot, setActiveColorSlot] = useState<1 | 2>(1)
   const [shapeFillMode, setShapeFillMode] = useState<ShapeFillMode>('outline')
   const [selectionRect, setSelectionRect] = useState<SelectionRect | null>(null)
+  const [activePlacedImage, setActivePlacedImage] = useState<PlacedImageOverlay | null>(null)
+  const activePlacedImageRef = useRef<PlacedImageOverlay | null>(null)
+  const isDraggingPlacedImageRef = useRef(false)
+  const isResizingPlacedImageRef = useRef(false)
+  const [isDraggingPlacedImage, setIsDraggingPlacedImage] = useState(false)
+  const [isResizingPlacedImage, setIsResizingPlacedImage] = useState(false)
+
+  const placedImageDragStartRef = useRef<{
+    clientX: number
+    clientY: number
+    startX: number
+    startY: number
+  }>({ clientX: 0, clientY: 0, startX: 0, startY: 0 })
+
+  const placedImageResizeStartRef = useRef<{
+    handle: 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w'
+    clientX: number
+    clientY: number
+    startX: number
+    startY: number
+    startWidth: number
+    startHeight: number
+    aspectRatio: number
+  }>({
+    handle: 'se',
+    clientX: 0,
+    clientY: 0,
+    startX: 0,
+    startY: 0,
+    startWidth: 0,
+    startHeight: 0,
+    aspectRatio: 1,
+  })
+
+  // Synchronous updater for activePlacedImage to prevent stale ref
+  const setPlacedImageState = useCallback(
+    (
+      val:
+        | PlacedImageOverlay
+        | null
+        | ((prev: PlacedImageOverlay | null) => PlacedImageOverlay | null)
+    ) => {
+      setActivePlacedImage((prev) => {
+        const next = typeof val === 'function' ? val(prev) : val
+        activePlacedImageRef.current = next
+        return next
+      })
+    },
+    []
+  )
+
 
   // UI Menus & Modals
   const [isFileDialogOpen, setIsFileDialogOpen] = useState(false)
@@ -276,6 +327,10 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
 
   // Restore history step
   const undo = useCallback(() => {
+    if (activePlacedImageRef.current) {
+      setPlacedImageState(null)
+      return
+    }
     if (historyIndexRef.current <= 0) return
     const canvas = canvasRef.current
     if (!canvas) return
@@ -289,7 +344,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
     }
     setCanUndo(historyIndexRef.current > 0)
     setCanRedo(historyIndexRef.current < historyRef.current.length - 1)
-  }, [])
+  }, [setPlacedImageState])
 
   const redo = useCallback(() => {
     if (historyIndexRef.current >= historyRef.current.length - 1) return
@@ -327,12 +382,16 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
   }, [])
 
   // Show transient status toast
-  const showNotice = (msg: string) => {
+  const noticeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const showNotice = useCallback((msg: string) => {
+    if (noticeTimerRef.current) {
+      clearTimeout(noticeTimerRef.current)
+    }
     setStatusMessage(msg)
-    setTimeout(() => {
+    noticeTimerRef.current = setTimeout(() => {
       setStatusMessage(null)
     }, 3000)
-  }
+  }, [])
 
   // Draw or clear dashed marquee on preview canvas
   const drawMarquee = useCallback((rect: SelectionRect | null) => {
@@ -371,66 +430,547 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
     }
   }, [selectionRect])
 
-  // Draw image onto canvas (paste, drop, open)
-  const drawImageOntoCanvas = useCallback(
-    (img: HTMLImageElement) => {
-      const canvas = canvasRef.current
-      const previewCanvas = previewCanvasRef.current
-      if (!canvas || !previewCanvas) return
-      const ctx = canvas.getContext('2d', { willReadFrequently: true })
-      if (!ctx) return
+  // ─── Interactive On-Canvas Text Overlay Handlers ───
+  const isDraggingTextRef = useRef(false)
+  const dragStartPosRef = useRef<{ clientX: number; clientY: number; startX: number; startY: number }>({
+    clientX: 0,
+    clientY: 0,
+    startX: 0,
+    startY: 0,
+  })
 
-      if (img.width > canvas.width || img.height > canvas.height) {
-        const newW = Math.max(canvas.width, img.width)
-        const newH = Math.max(canvas.height, img.height)
-        setCanvasDim({ width: newW, height: newH })
-        canvas.width = newW
-        canvas.height = newH
-        previewCanvas.width = newW
-        previewCanvas.height = newH
+  const handleTextDragStart = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!activeTextOverlay) return
+    isDraggingTextRef.current = true
+    dragStartPosRef.current = {
+      clientX: e.clientX,
+      clientY: e.clientY,
+      startX: activeTextOverlay.x,
+      startY: activeTextOverlay.y,
+    }
+
+    const handlePointerMove = (moveEvt: PointerEvent) => {
+      if (!isDraggingTextRef.current) return
+      const deltaX = (moveEvt.clientX - dragStartPosRef.current.clientX) / zoom
+      const deltaY = (moveEvt.clientY - dragStartPosRef.current.clientY) / zoom
+      const newX = Math.round(
+        Math.max(0, Math.min(canvasDim.width - 20, dragStartPosRef.current.startX + deltaX))
+      )
+      const newY = Math.round(
+        Math.max(0, Math.min(canvasDim.height - 20, dragStartPosRef.current.startY + deltaY))
+      )
+      setActiveTextOverlay((prev) => (prev ? { ...prev, x: newX, y: newY } : null))
+    }
+
+    const handlePointerUp = () => {
+      isDraggingTextRef.current = false
+      window.removeEventListener('pointermove', handlePointerMove)
+      window.removeEventListener('pointerup', handlePointerUp)
+    }
+
+    window.addEventListener('pointermove', handlePointerMove)
+    window.addEventListener('pointerup', handlePointerUp)
+  }
+
+  // Commit Inline Text to Canvas
+  const handleCommitText = useCallback(() => {
+    if (!activeTextOverlay || !activeTextOverlay.text.trim()) {
+      setActiveTextOverlay(null)
+      return
+    }
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d', { willReadFrequently: true })
+    if (!ctx) return
+
+    const fontStyle = isItalic ? 'italic' : 'normal'
+    const fontWeight = isBold ? 'bold' : 'normal'
+    const fontStr = `${fontStyle} ${fontWeight} ${fontSize}px ${fontFamily}`
+
+    ctx.save()
+    ctx.font = fontStr
+    ctx.textBaseline = 'top'
+
+    const lines = activeTextOverlay.text.split('\n')
+    const lineHeight = fontSize * 1.25
+
+    let maxWidth = 0
+    lines.forEach((line) => {
+      const w = ctx.measureText(line).width
+      if (w > maxWidth) maxWidth = w
+    })
+    const totalHeight = lines.length * lineHeight
+
+    if (isSolidBg) {
+      ctx.fillStyle = color2
+      ctx.fillRect(activeTextOverlay.x - 4, activeTextOverlay.y - 2, maxWidth + 8, totalHeight + 4)
+    }
+
+    lines.forEach((line, i) => {
+      const lineY = activeTextOverlay.y + i * lineHeight
+      ctx.fillStyle = color1
+      ctx.fillText(line, activeTextOverlay.x, lineY)
+
+      if (isUnderline) {
+        const lineWidth = ctx.measureText(line).width
+        ctx.strokeStyle = color1
+        ctx.lineWidth = Math.max(1, fontSize / 14)
+        ctx.beginPath()
+        ctx.moveTo(activeTextOverlay.x, lineY + fontSize)
+        ctx.lineTo(activeTextOverlay.x + lineWidth, lineY + fontSize)
+        ctx.stroke()
+      }
+    })
+
+    ctx.restore()
+    pushHistory()
+    setActiveTextOverlay(null)
+  }, [
+    activeTextOverlay,
+    isItalic,
+    isBold,
+    fontSize,
+    fontFamily,
+    isSolidBg,
+    color2,
+    color1,
+    isUnderline,
+    pushHistory,
+  ])
+
+  // Automatically commit text when switching away from text tool
+  useEffect(() => {
+    if (currentTool !== 'text' && activeTextOverlay) {
+      if (activeTextOverlay.text.trim()) {
+        handleCommitText()
+      } else {
+        setActiveTextOverlay(null)
+      }
+    }
+  }, [currentTool, activeTextOverlay, handleCommitText])
+
+  // ─── Placed Image Handlers (MS Paint & PDF Suite signature style) ───
+  // Commit Placed Image onto Canvas
+  const handleCommitPlacedImage = useCallback(() => {
+    const placed = activePlacedImageRef.current
+    if (!placed) return
+
+    const canvas = canvasRef.current
+    if (!canvas) {
+      setPlacedImageState(null)
+      return
+    }
+    const ctx = canvas.getContext('2d', { willReadFrequently: true })
+    if (!ctx) {
+      setPlacedImageState(null)
+      return
+    }
+
+    ctx.drawImage(placed.img, placed.x, placed.y, placed.width, placed.height)
+    pushHistory()
+    setPlacedImageState(null)
+    showNotice(t.placedImage.committedNotice)
+  }, [pushHistory, t.placedImage.committedNotice, showNotice, setPlacedImageState])
+
+  // Cancel / Delete Placed Image
+  const handleCancelPlacedImage = useCallback(() => {
+    setPlacedImageState(null)
+    showNotice(t.placedImage.cancelledNotice)
+  }, [t.placedImage.cancelledNotice, showNotice, setPlacedImageState])
+
+  // Fit Placed Image to Canvas Boundaries (maintaining aspect ratio)
+  const handleFitPlacedImage = useCallback(() => {
+    setPlacedImageState((prev) => {
+      if (!prev) return null
+      const maxW = Math.max(100, Math.floor(canvasDim.width * 0.9))
+      const maxH = Math.max(100, Math.floor(canvasDim.height * 0.9))
+      const ratio = Math.min(maxW / prev.naturalWidth, maxH / prev.naturalHeight, 1)
+      const newW = Math.max(20, Math.round(prev.naturalWidth * ratio))
+      const newH = Math.max(20, Math.round(prev.naturalHeight * ratio))
+      const newX = Math.max(0, Math.round((canvasDim.width - newW) / 2))
+      const newY = Math.max(0, Math.round((canvasDim.height - newH) / 2))
+      return {
+        ...prev,
+        x: newX,
+        y: newY,
+        width: newW,
+        height: newH,
+      }
+    })
+    showNotice(locale === 'pl' ? 'Dopasowano do płótna' : 'Fitted to canvas')
+  }, [canvasDim.width, canvasDim.height, locale, showNotice, setPlacedImageState])
+
+  // Restore 1:1 Original Size
+  const handleOriginalSizePlacedImage = useCallback(() => {
+    setPlacedImageState((prev) => {
+      if (!prev) return null
+      return {
+        ...prev,
+        width: prev.naturalWidth,
+        height: prev.naturalHeight,
+      }
+    })
+    showNotice(locale === 'pl' ? 'Ustawiono rozmiar 1:1 (oryginalny)' : 'Reset to 1:1 original size')
+  }, [locale, showNotice, setPlacedImageState])
+
+  // Expand Canvas to Fit the Placed Image (preserving existing canvas contents)
+  const handleExpandCanvasToImage = useCallback(() => {
+    const placed = activePlacedImageRef.current
+    const canvas = canvasRef.current
+    if (!placed || !canvas) return
+
+    const neededW = Math.max(canvasDim.width, placed.x + placed.width, placed.naturalWidth)
+    const neededH = Math.max(canvasDim.height, placed.y + placed.height, placed.naturalHeight)
+
+    if (neededW <= canvasDim.width && neededH <= canvasDim.height) {
+      showNotice(locale === 'pl' ? 'Płótno jest już wystarczająco duże' : 'Canvas is already large enough')
+      return
+    }
+
+    const snapshot = canvas.toDataURL()
+    const tempImg = new Image()
+    tempImg.onload = () => {
+      setCanvasDim({ width: neededW, height: neededH })
+      canvas.width = neededW
+      canvas.height = neededH
+      if (previewCanvasRef.current) {
+        previewCanvasRef.current.width = neededW
+        previewCanvasRef.current.height = neededH
+      }
+      const ctx = canvas.getContext('2d', { willReadFrequently: true })
+      if (ctx) {
         ctx.fillStyle = '#ffffff'
-        ctx.fillRect(0, 0, newW, newH)
+        ctx.fillRect(0, 0, neededW, neededH)
+        ctx.drawImage(tempImg, 0, 0)
+      }
+      setPlacedImageState((prev) =>
+        prev
+          ? {
+              ...prev,
+              width: prev.naturalWidth,
+              height: prev.naturalHeight,
+            }
+          : null
+      )
+      pushHistory()
+      showNotice(
+        locale === 'pl'
+          ? `Rozszerzono płótno do ${neededW}×${neededH} px!`
+          : `Expanded canvas to ${neededW}×${neededH} px!`
+      )
+    }
+    tempImg.src = snapshot
+  }, [canvasDim.width, canvasDim.height, locale, pushHistory, showNotice, setPlacedImageState])
+
+  // Initiate Placement of an Image onto Canvas with Selection & Resize Handles
+  const initiateImagePlacement = useCallback(
+    (img: HTMLImageElement) => {
+      if (activeTextOverlay && activeTextOverlay.text.trim()) {
+        handleCommitText()
+      } else {
+        setActiveTextOverlay(null)
+      }
+      if (activePlacedImageRef.current) {
+        handleCommitPlacedImage()
+      }
+      clearSelection()
+
+      const canvas = canvasRef.current
+      if (!canvas) return
+
+      const natW = img.naturalWidth || img.width || 400
+      const natH = img.naturalHeight || img.height || 300
+
+      let initialW = natW
+      let initialH = natH
+      let wasFitted = false
+
+      const maxW = Math.max(100, Math.floor(canvasDim.width * 0.85))
+      const maxH = Math.max(100, Math.floor(canvasDim.height * 0.85))
+
+      if (natW > maxW || natH > maxH) {
+        const ratio = Math.min(maxW / natW, maxH / natH)
+        initialW = Math.max(20, Math.round(natW * ratio))
+        initialH = Math.max(20, Math.round(natH * ratio))
+        wasFitted = true
       }
 
-      ctx.drawImage(img, 0, 0)
-      pushHistory()
-      showNotice(locale === 'pl' ? 'Obraz wstawiony na płótno!' : 'Image inserted onto canvas!')
+      const initialX = Math.max(0, Math.round((canvasDim.width - initialW) / 2))
+      const initialY = Math.max(0, Math.round((canvasDim.height - initialH) / 2))
+
+      setPlacedImageState({
+        img,
+        src: img.src,
+        x: initialX,
+        y: initialY,
+        width: initialW,
+        height: initialH,
+        naturalWidth: natW,
+        naturalHeight: natH,
+      })
+
+      if (wasFitted) {
+        showNotice(t.placedImage.fittedNotice)
+      } else {
+        showNotice(t.placedImage.pastedNotice)
+      }
     },
-    [pushHistory, locale]
+    [
+      activeTextOverlay,
+      handleCommitText,
+      handleCommitPlacedImage,
+      clearSelection,
+      canvasDim.width,
+      canvasDim.height,
+      t.placedImage.fittedNotice,
+      t.placedImage.pastedNotice,
+      showNotice,
+      setPlacedImageState,
+    ]
+  )
+
+  // Draw/Place image onto canvas (paste, drop, open)
+  const drawImageOntoCanvas = useCallback(
+    (img: HTMLImageElement) => {
+      initiateImagePlacement(img)
+    },
+    [initiateImagePlacement]
   )
 
   // Handle image paste from clipboard (Ctrl+V)
   const handleImagePaste = useCallback(
     (event: ClipboardEvent) => {
       const items = event.clipboardData?.items
-      if (!items) return
+      const files = event.clipboardData?.files
 
-      for (let i = 0; i < items.length; i++) {
-        if (items[i].type.indexOf('image') !== -1) {
-          const blob = items[i].getAsFile()
-          if (!blob) continue
+      let fileBlob: Blob | null = null
 
-          const reader = new FileReader()
-          reader.onload = (e) => {
-            const img = new Image()
-            img.onload = () => drawImageOntoCanvas(img)
-            img.src = e.target?.result as string
+      if (items) {
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i]
+          if (item.type.startsWith('image/')) {
+            fileBlob = item.getAsFile()
+            if (fileBlob) break
           }
-          reader.readAsDataURL(blob)
-          event.preventDefault()
-          break
         }
       }
+
+      if (!fileBlob && files && files.length > 0) {
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i]
+          if (file.type.startsWith('image/') || /\.(png|jpe?g|webp|bmp|gif|svg)$/i.test(file.name)) {
+            fileBlob = file
+            break
+          }
+        }
+      }
+
+      if (fileBlob) {
+        event.preventDefault()
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          const img = new Image()
+          img.onload = () => initiateImagePlacement(img)
+          img.src = e.target?.result as string
+        }
+        reader.readAsDataURL(fileBlob)
+      }
     },
-    [drawImageOntoCanvas]
+    [initiateImagePlacement]
   )
 
-  // Register global paste event listener
+  // Toolbar Paste button action
+  const handleToolbarPaste = useCallback(async () => {
+    try {
+      if (navigator.clipboard?.read) {
+        const clipboardItems = await navigator.clipboard.read()
+        for (const item of clipboardItems) {
+          const imgType = item.types.find((type) => type.startsWith('image/'))
+          if (imgType) {
+            const blob = await item.getType(imgType)
+            const reader = new FileReader()
+            reader.onload = (e) => {
+              const img = new Image()
+              img.onload = () => initiateImagePlacement(img)
+              img.src = e.target?.result as string
+            }
+            reader.readAsDataURL(blob)
+            return
+          }
+        }
+      }
+      showNotice(t.status.pasteHint)
+    } catch {
+      showNotice(t.status.pasteHint)
+    }
+  }, [initiateImagePlacement, showNotice, t.status.pasteHint])
+
+  // Register global paste event listener (on both window and document)
   useEffect(() => {
     const onPaste = (e: ClipboardEvent) => handleImagePaste(e)
     window.addEventListener('paste', onPaste)
-    return () => window.removeEventListener('paste', onPaste)
+    document.addEventListener('paste', onPaste)
+    return () => {
+      window.removeEventListener('paste', onPaste)
+      document.removeEventListener('paste', onPaste)
+    }
   }, [handleImagePaste])
+
+  // Placed Image Dragging
+  const handlePlacedImageDragStart = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return
+    e.preventDefault()
+    e.stopPropagation()
+    const placed = activePlacedImageRef.current
+    if (!placed) return
+
+    isDraggingPlacedImageRef.current = true
+    setIsDraggingPlacedImage(true)
+    placedImageDragStartRef.current = {
+      clientX: e.clientX,
+      clientY: e.clientY,
+      startX: placed.x,
+      startY: placed.y,
+    }
+
+    const handlePointerMove = (moveEvt: PointerEvent) => {
+      if (!isDraggingPlacedImageRef.current) return
+      const deltaX = (moveEvt.clientX - placedImageDragStartRef.current.clientX) / zoom
+      const deltaY = (moveEvt.clientY - placedImageDragStartRef.current.clientY) / zoom
+
+      const newX = Math.round(placedImageDragStartRef.current.startX + deltaX)
+      const newY = Math.round(placedImageDragStartRef.current.startY + deltaY)
+
+      setPlacedImageState((prev) => (prev ? { ...prev, x: newX, y: newY } : null))
+    }
+
+    const handlePointerUp = () => {
+      isDraggingPlacedImageRef.current = false
+      setIsDraggingPlacedImage(false)
+      window.removeEventListener('pointermove', handlePointerMove)
+      window.removeEventListener('pointerup', handlePointerUp)
+    }
+
+    window.addEventListener('pointermove', handlePointerMove)
+    window.addEventListener('pointerup', handlePointerUp)
+  }
+
+  // Placed Image Resizing (4 corners maintaining aspect ratio + 4 edges)
+  const handlePlacedImageResizeStart = (
+    e: React.PointerEvent<HTMLDivElement>,
+    handle: 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w'
+  ) => {
+    if (e.button !== 0) return
+    e.preventDefault()
+    e.stopPropagation()
+    const placed = activePlacedImageRef.current
+    if (!placed) return
+
+    isResizingPlacedImageRef.current = true
+    setIsResizingPlacedImage(true)
+    const aspect =
+      placed.naturalWidth && placed.naturalHeight
+        ? placed.naturalWidth / placed.naturalHeight
+        : placed.width / placed.height
+
+    placedImageResizeStartRef.current = {
+      handle,
+      clientX: e.clientX,
+      clientY: e.clientY,
+      startX: placed.x,
+      startY: placed.y,
+      startWidth: placed.width,
+      startHeight: placed.height,
+      aspectRatio: aspect || 1,
+    }
+
+    const handlePointerMove = (moveEvt: PointerEvent) => {
+      if (!isResizingPlacedImageRef.current) return
+      const {
+        handle: h,
+        clientX: initClientX,
+        clientY: initClientY,
+        startX,
+        startY,
+        startWidth,
+        startHeight,
+        aspectRatio,
+      } = placedImageResizeStartRef.current
+
+      const deltaX = (moveEvt.clientX - initClientX) / zoom
+      const deltaY = (moveEvt.clientY - initClientY) / zoom
+      const isCorner = h === 'nw' || h === 'ne' || h === 'sw' || h === 'se'
+      const keepAspect = isCorner ? !moveEvt.shiftKey : false
+
+      let newX = startX
+      let newY = startY
+      let newW = startWidth
+      let newH = startHeight
+
+      if (h === 'se') {
+        newW = Math.max(20, startWidth + deltaX)
+        newH = keepAspect ? Math.max(20, Math.round(newW / aspectRatio)) : Math.max(20, startHeight + deltaY)
+      } else if (h === 'sw') {
+        newW = Math.max(20, startWidth - deltaX)
+        newH = keepAspect ? Math.max(20, Math.round(newW / aspectRatio)) : Math.max(20, startHeight + deltaY)
+        newX = startX + (startWidth - newW)
+      } else if (h === 'ne') {
+        newW = Math.max(20, startWidth + deltaX)
+        newH = keepAspect ? Math.max(20, Math.round(newW / aspectRatio)) : Math.max(20, startHeight - deltaY)
+        newY = startY + (startHeight - newH)
+      } else if (h === 'nw') {
+        newW = Math.max(20, startWidth - deltaX)
+        newH = keepAspect ? Math.max(20, Math.round(newW / aspectRatio)) : Math.max(20, startHeight - deltaY)
+        newX = startX + (startWidth - newW)
+        newY = startY + (startHeight - newH)
+      } else if (h === 'e') {
+        newW = Math.max(20, startWidth + deltaX)
+      } else if (h === 'w') {
+        newW = Math.max(20, startWidth - deltaX)
+        newX = startX + (startWidth - newW)
+      } else if (h === 's') {
+        newH = Math.max(20, startHeight + deltaY)
+      } else if (h === 'n') {
+        newH = Math.max(20, startHeight - deltaY)
+        newY = startY + (startHeight - newH)
+      }
+
+      setPlacedImageState((prev) =>
+        prev
+          ? {
+              ...prev,
+              x: Math.round(newX),
+              y: Math.round(newY),
+              width: Math.round(newW),
+              height: Math.round(newH),
+            }
+          : null
+      )
+    }
+
+    const handlePointerUp = () => {
+      isResizingPlacedImageRef.current = false
+      setIsResizingPlacedImage(false)
+      window.removeEventListener('pointermove', handlePointerMove)
+      window.removeEventListener('pointerup', handlePointerUp)
+    }
+
+    window.addEventListener('pointermove', handlePointerMove)
+    window.addEventListener('pointerup', handlePointerUp)
+  }
+
+  // Automatically commit placed image ONLY when switching tools
+  const prevToolRef = useRef(currentTool)
+  useEffect(() => {
+    if (prevToolRef.current !== currentTool) {
+      prevToolRef.current = currentTool
+      if (activePlacedImageRef.current) {
+        handleCommitPlacedImage()
+      }
+    }
+  }, [currentTool, handleCommitPlacedImage])
 
   // Dynamic size stepper functions
   const increaseToolSize = useCallback(() => {
@@ -600,6 +1140,19 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
           activeEl.getAttribute('contenteditable') === 'true')
       if (isInputActive) return
 
+      if (activePlacedImageRef.current) {
+        if (e.key === 'Enter') {
+          e.preventDefault()
+          handleCommitPlacedImage()
+          return
+        }
+        if (e.key === 'Escape' || e.key === 'Delete' || e.key === 'Backspace') {
+          e.preventDefault()
+          handleCancelPlacedImage()
+          return
+        }
+      }
+
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
         if (e.shiftKey) {
           redo()
@@ -663,6 +1216,8 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
     handleDeleteSelection,
     clearSelection,
     selectionRect,
+    handleCommitPlacedImage,
+    handleCancelPlacedImage,
   ])
 
   // File input change
@@ -779,120 +1334,14 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
     setIsExportDialogOpen(false)
   }
 
-  // Text overlay dragging state (repositioning text selection box directly on canvas)
-  const isDraggingTextRef = useRef(false)
-  const dragStartPosRef = useRef<{ clientX: number; clientY: number; startX: number; startY: number }>({
-    clientX: 0,
-    clientY: 0,
-    startX: 0,
-    startY: 0,
-  })
-
-  const handleTextDragStart = (e: React.PointerEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    e.stopPropagation()
-    if (!activeTextOverlay) return
-    isDraggingTextRef.current = true
-    dragStartPosRef.current = {
-      clientX: e.clientX,
-      clientY: e.clientY,
-      startX: activeTextOverlay.x,
-      startY: activeTextOverlay.y,
-    }
-
-    const handlePointerMove = (moveEvt: PointerEvent) => {
-      if (!isDraggingTextRef.current) return
-      const deltaX = (moveEvt.clientX - dragStartPosRef.current.clientX) / zoom
-      const deltaY = (moveEvt.clientY - dragStartPosRef.current.clientY) / zoom
-      const newX = Math.round(
-        Math.max(0, Math.min(canvasDim.width - 20, dragStartPosRef.current.startX + deltaX))
-      )
-      const newY = Math.round(
-        Math.max(0, Math.min(canvasDim.height - 20, dragStartPosRef.current.startY + deltaY))
-      )
-      setActiveTextOverlay((prev) => (prev ? { ...prev, x: newX, y: newY } : null))
-    }
-
-    const handlePointerUp = () => {
-      isDraggingTextRef.current = false
-      window.removeEventListener('pointermove', handlePointerMove)
-      window.removeEventListener('pointerup', handlePointerUp)
-    }
-
-    window.addEventListener('pointermove', handlePointerMove)
-    window.addEventListener('pointerup', handlePointerUp)
-  }
-
-  // Commit Inline Text to Canvas
-  const handleCommitText = useCallback(() => {
-    if (!activeTextOverlay || !activeTextOverlay.text.trim()) {
-      setActiveTextOverlay(null)
-      return
-    }
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d', { willReadFrequently: true })
-    if (!ctx) return
-
-    const fontStyle = isItalic ? 'italic' : 'normal'
-    const fontWeight = isBold ? 'bold' : 'normal'
-    const fontStr = `${fontStyle} ${fontWeight} ${fontSize}px ${fontFamily}`
-
-    ctx.save()
-    ctx.font = fontStr
-    ctx.textBaseline = 'top'
-
-    const lines = activeTextOverlay.text.split('\n')
-    const lineHeight = fontSize * 1.25
-
-    let maxWidth = 0
-    lines.forEach((line) => {
-      const w = ctx.measureText(line).width
-      if (w > maxWidth) maxWidth = w
-    })
-    const totalHeight = lines.length * lineHeight
-
-    // Draw Solid Background if enabled
-    if (isSolidBg) {
-      ctx.fillStyle = color2
-      ctx.fillRect(activeTextOverlay.x - 4, activeTextOverlay.y - 2, maxWidth + 8, totalHeight + 4)
-    }
-
-    // Draw Text lines
-    lines.forEach((line, i) => {
-      const lineY = activeTextOverlay.y + i * lineHeight
-      ctx.fillStyle = color1
-      ctx.fillText(line, activeTextOverlay.x, lineY)
-
-      if (isUnderline) {
-        const lineWidth = ctx.measureText(line).width
-        ctx.strokeStyle = color1
-        ctx.lineWidth = Math.max(1, fontSize / 14)
-        ctx.beginPath()
-        ctx.moveTo(activeTextOverlay.x, lineY + fontSize)
-        ctx.lineTo(activeTextOverlay.x + lineWidth, lineY + fontSize)
-        ctx.stroke()
-      }
-    })
-
-    ctx.restore()
-    pushHistory()
-    setActiveTextOverlay(null)
-  }, [activeTextOverlay, isItalic, isBold, fontSize, fontFamily, isSolidBg, color2, color1, isUnderline, pushHistory])
-
-  // Automatically commit text when switching away from text tool
-  useEffect(() => {
-    if (currentTool !== 'text' && activeTextOverlay) {
-      if (activeTextOverlay.text.trim()) {
-        handleCommitText()
-      } else {
-        setActiveTextOverlay(null)
-      }
-    }
-  }, [currentTool, activeTextOverlay, handleCommitText])
-
   // Pointer Down (Start Drawing / Tool Action)
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    // If placing an image, clicking canvas outside commits the placed image
+    if (activePlacedImageRef.current) {
+      handleCommitPlacedImage()
+      return
+    }
+
     if (currentTool === 'hand') {
       const viewport = canvasViewportRef.current
       if (!viewport) return
@@ -1172,30 +1621,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
               <div className="paint-section-content">
                 <button
                   className="paint-btn paint-btn-large"
-                  onClick={() => {
-                    navigator.clipboard
-                      ?.read()
-                      .then((items) => {
-                        for (const item of items) {
-                          const imgType = item.types.find((type) => type.startsWith('image/'))
-                          if (imgType) {
-                            item.getType(imgType).then((blob) => {
-                              const reader = new FileReader()
-                              reader.onload = (e) => {
-                                const img = new Image()
-                                img.onload = () => drawImageOntoCanvas(img)
-                                img.src = e.target?.result as string
-                              }
-                              reader.readAsDataURL(blob)
-                            })
-                            break
-                          }
-                        }
-                      })
-                      .catch(() => {
-                        alert(t.status.pasteHint)
-                      })
-                  }}
+                  onClick={handleToolbarPaste}
                   title={t.actions.paste}
                 >
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1754,10 +2180,29 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                     </span>
                   </div>
                 )}
+
+                {/* Case 8: Hand tool */}
+                {currentTool === 'hand' && (
+                  <div className="paint-dynamic-box paint-dynamic-box--hand">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M8 11V5a2 2 0 0 1 4 0v6-8a2 2 0 0 1 4 0v8-5a2 2 0 0 1 4 0v8a7 7 0 0 1-7 7h-1a7 7 0 0 1-6-3.5l-2-3a2 2 0 0 1 3.5-2L8 14" />
+                      </svg>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--all-text)' }}>
+                        {t.tools.hand}
+                      </span>
+                    </div>
+                    <span style={{ fontSize: 10, color: 'var(--all-text-muted)', lineHeight: 1.25, textAlign: 'center', maxWidth: 150 }}>
+                      {t.dynamicProps.handHint}
+                    </span>
+                  </div>
+                )}
               </div>
               <span className="paint-section-title">
                 {currentTool === 'select'
                   ? t.dynamicProps.selectTitle
+                  : currentTool === 'hand'
+                  ? t.dynamicProps.handTitle
                   : currentTool === 'brush'
                   ? t.dynamicProps.brushTitle
                   : currentTool === 'eraser'
@@ -1976,6 +2421,174 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                 />
               </div>
             )}
+
+            {/* Interactive MS Paint-style On-Canvas Placed Image Box (with resizing handles & dragging) */}
+            {activePlacedImage && (
+              <div
+                className="paint-placed-image-overlay"
+                style={{
+                  position: 'absolute',
+                  left: `${activePlacedImage.x * zoom}px`,
+                  top: `${activePlacedImage.y * zoom}px`,
+                  width: `${activePlacedImage.width * zoom}px`,
+                  height: `${activePlacedImage.height * zoom}px`,
+                  zIndex: 55,
+                }}
+              >
+                {/* Floating Action Bar */}
+                <div
+                  className={`paint-placed-image-toolbar ${activePlacedImage.y * zoom < 40 ? 'paint-placed-image-toolbar--flipped' : ''}`}
+                  onPointerDown={(e) => e.stopPropagation()}
+                >
+                  <div className="paint-placed-image-info">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                      <circle cx="9" cy="5" r="1.5" fill="currentColor" />
+                      <circle cx="9" cy="12" r="1.5" fill="currentColor" />
+                      <circle cx="9" cy="19" r="1.5" fill="currentColor" />
+                      <circle cx="15" cy="5" r="1.5" fill="currentColor" />
+                      <circle cx="15" cy="12" r="1.5" fill="currentColor" />
+                      <circle cx="15" cy="19" r="1.5" fill="currentColor" />
+                    </svg>
+                    <span>
+                      {Math.round(activePlacedImage.width)} × {Math.round(activePlacedImage.height)}
+                    </span>
+                  </div>
+
+                  {/* Fit to canvas */}
+                  <button
+                    type="button"
+                    className="paint-placed-image-btn"
+                    onClick={handleFitPlacedImage}
+                    title={t.placedImage.fitToCanvas}
+                    aria-label={t.placedImage.fitToCanvas}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                      <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+                    </svg>
+                    <span>{locale === 'pl' ? 'Dopasuj' : 'Fit'}</span>
+                  </button>
+
+                  {/* 100% / Original size */}
+                  <button
+                    type="button"
+                    className="paint-placed-image-btn"
+                    onClick={handleOriginalSizePlacedImage}
+                    title={t.placedImage.originalSize}
+                    aria-label={t.placedImage.originalSize}
+                  >
+                    <span>1:1</span>
+                  </button>
+
+                  {/* Expand canvas to image if image exceeds or could exceed */}
+                  {(activePlacedImage.naturalWidth > canvasDim.width ||
+                    activePlacedImage.naturalHeight > canvasDim.height ||
+                    activePlacedImage.x + activePlacedImage.width > canvasDim.width ||
+                    activePlacedImage.y + activePlacedImage.height > canvasDim.height) && (
+                    <button
+                      type="button"
+                      className="paint-placed-image-btn paint-placed-image-btn--expand"
+                      onClick={handleExpandCanvasToImage}
+                      title={t.placedImage.expandCanvas}
+                      aria-label={t.placedImage.expandCanvas}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                        <polyline points="15 3 21 3 21 9" />
+                        <polyline points="9 21 3 21 3 15" />
+                        <line x1="21" y1="3" x2="14" y2="10" />
+                        <line x1="3" y1="21" x2="10" y2="14" />
+                      </svg>
+                      <span>{locale === 'pl' ? 'Rozszerz płótno' : 'Expand canvas'}</span>
+                    </button>
+                  )}
+
+                  {/* Commit button */}
+                  <button
+                    type="button"
+                    className="paint-placed-image-btn paint-placed-image-btn--commit"
+                    onClick={handleCommitPlacedImage}
+                    title={t.placedImage.commit}
+                    aria-label={t.placedImage.commit}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden="true">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <span>{locale === 'pl' ? 'Wstaw' : 'Place'}</span>
+                  </button>
+
+                  {/* Cancel button */}
+                  <button
+                    type="button"
+                    className="paint-placed-image-btn paint-placed-image-btn--cancel"
+                    onClick={handleCancelPlacedImage}
+                    title={t.placedImage.cancel}
+                    aria-label={t.placedImage.cancel}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Main Draggable Box with Image Preview */}
+                <div
+                  className={`paint-placed-image-box ${isDraggingPlacedImage ? 'is-dragging' : ''} ${isResizingPlacedImage ? 'is-resizing' : ''}`}
+                  onPointerDown={handlePlacedImageDragStart}
+                  title={t.placedImage.dragHint}
+                >
+                  <img
+                    src={activePlacedImage.src}
+                    alt="Pasted content"
+                    className="paint-placed-image-preview"
+                    draggable={false}
+                  />
+
+                  {/* Corner Resize Handles */}
+                  <div
+                    className="paint-placed-image-handle paint-handle--nw"
+                    title={t.placedImage.dragHint}
+                    onPointerDown={(e) => handlePlacedImageResizeStart(e, 'nw')}
+                  />
+                  <div
+                    className="paint-placed-image-handle paint-handle--ne"
+                    title={t.placedImage.dragHint}
+                    onPointerDown={(e) => handlePlacedImageResizeStart(e, 'ne')}
+                  />
+                  <div
+                    className="paint-placed-image-handle paint-handle--sw"
+                    title={t.placedImage.dragHint}
+                    onPointerDown={(e) => handlePlacedImageResizeStart(e, 'sw')}
+                  />
+                  <div
+                    className="paint-placed-image-handle paint-handle--se"
+                    title={t.placedImage.dragHint}
+                    onPointerDown={(e) => handlePlacedImageResizeStart(e, 'se')}
+                  />
+
+                  {/* Side Resize Handles */}
+                  <div
+                    className="paint-placed-image-handle paint-handle--n"
+                    title={t.placedImage.dragHint}
+                    onPointerDown={(e) => handlePlacedImageResizeStart(e, 'n')}
+                  />
+                  <div
+                    className="paint-placed-image-handle paint-handle--s"
+                    title={t.placedImage.dragHint}
+                    onPointerDown={(e) => handlePlacedImageResizeStart(e, 's')}
+                  />
+                  <div
+                    className="paint-placed-image-handle paint-handle--w"
+                    title={t.placedImage.dragHint}
+                    onPointerDown={(e) => handlePlacedImageResizeStart(e, 'w')}
+                  />
+                  <div
+                    className="paint-placed-image-handle paint-handle--e"
+                    title={t.placedImage.dragHint}
+                    onPointerDown={(e) => handlePlacedImageResizeStart(e, 'e')}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </main>
 
@@ -2179,52 +2792,52 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
           onClose={() => setIsNewCanvasDialogOpen(false)}
           title={t.dialogs.newCanvasTitle}
           description={t.dialogs.newCanvasDesc}
+          maxWidth="md"
         >
           <div className="paint-dialog-body">
             <span style={{ fontSize: 12, fontWeight: 600 }}>{t.dialogs.presets}:</span>
             <div className="paint-presets-grid">
-              {PRESET_RESOLUTIONS.map((preset) => (
-                <button
-                  key={preset.label}
-                  className="paint-preset-btn"
-                  onClick={() => {
-                    setTempWidth(preset.width)
-                    setTempHeight(preset.height)
-                  }}
-                >
-                  <strong>{preset.width} × {preset.height}</strong>
-                  <span>{preset.label.split(' ')[0]}</span>
-                </button>
-              ))}
+              {PRESET_RESOLUTIONS.map((preset) => {
+                const isSelected = tempWidth === preset.width && tempHeight === preset.height
+                return (
+                  <Button
+                    key={preset.label}
+                    variant={isSelected ? 'primary' : 'secondary'}
+                    size="sm"
+                    onClick={() => {
+                      setTempWidth(preset.width)
+                      setTempHeight(preset.height)
+                    }}
+                  >
+                    {preset.width} × {preset.height}
+                  </Button>
+                )
+              })}
             </div>
 
             <div className="paint-dialog-row">
-              <div className="paint-dialog-field">
-                <label>{t.dialogs.width}</label>
-                <input
-                  type="number"
-                  className="paint-dialog-input"
-                  value={tempWidth}
-                  min={100}
-                  max={4096}
-                  onChange={(e) => setTempWidth(Math.max(100, Math.min(4096, Number(e.target.value))))}
-                />
-              </div>
-              <div className="paint-dialog-field">
-                <label>{t.dialogs.height}</label>
-                <input
-                  type="number"
-                  className="paint-dialog-input"
-                  value={tempHeight}
-                  min={100}
-                  max={4096}
-                  onChange={(e) => setTempHeight(Math.max(100, Math.min(4096, Number(e.target.value))))}
-                />
-              </div>
+              <Input
+                label={t.dialogs.width}
+                type="number"
+                value={tempWidth}
+                min={100}
+                max={4096}
+                onChange={(e) => setTempWidth(Math.max(100, Math.min(4096, Number(e.target.value))))}
+                fullWidth
+              />
+              <Input
+                label={t.dialogs.height}
+                type="number"
+                value={tempHeight}
+                min={100}
+                max={4096}
+                onChange={(e) => setTempHeight(Math.max(100, Math.min(4096, Number(e.target.value))))}
+                fullWidth
+              />
             </div>
 
-            <div className="paint-dialog-footer">
-              <Button variant="ghost" onClick={() => setIsNewCanvasDialogOpen(false)}>
+            <div className="paint-dialog-actions">
+              <Button variant="secondary" onClick={() => setIsNewCanvasDialogOpen(false)}>
                 {t.dialogs.cancelBtn}
               </Button>
               <Button variant="primary" onClick={handleCreateNewCanvas}>
@@ -2240,52 +2853,52 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
           onClose={() => setIsResizeDialogOpen(false)}
           title={t.dialogs.resizeTitle}
           description={t.dialogs.resizeDesc}
+          maxWidth="md"
         >
           <div className="paint-dialog-body">
             <span style={{ fontSize: 12, fontWeight: 600 }}>{t.dialogs.presets}:</span>
             <div className="paint-presets-grid">
-              {PRESET_RESOLUTIONS.map((preset) => (
-                <button
-                  key={preset.label}
-                  className="paint-preset-btn"
-                  onClick={() => {
-                    setTempWidth(preset.width)
-                    setTempHeight(preset.height)
-                  }}
-                >
-                  <strong>{preset.width} × {preset.height}</strong>
-                  <span>{preset.label.split(' ')[0]}</span>
-                </button>
-              ))}
+              {PRESET_RESOLUTIONS.map((preset) => {
+                const isSelected = tempWidth === preset.width && tempHeight === preset.height
+                return (
+                  <Button
+                    key={preset.label}
+                    variant={isSelected ? 'primary' : 'secondary'}
+                    size="sm"
+                    onClick={() => {
+                      setTempWidth(preset.width)
+                      setTempHeight(preset.height)
+                    }}
+                  >
+                    {preset.width} × {preset.height}
+                  </Button>
+                )
+              })}
             </div>
 
             <div className="paint-dialog-row">
-              <div className="paint-dialog-field">
-                <label>{t.dialogs.width}</label>
-                <input
-                  type="number"
-                  className="paint-dialog-input"
-                  value={tempWidth}
-                  min={100}
-                  max={4096}
-                  onChange={(e) => setTempWidth(Math.max(100, Math.min(4096, Number(e.target.value))))}
-                />
-              </div>
-              <div className="paint-dialog-field">
-                <label>{t.dialogs.height}</label>
-                <input
-                  type="number"
-                  className="paint-dialog-input"
-                  value={tempHeight}
-                  min={100}
-                  max={4096}
-                  onChange={(e) => setTempHeight(Math.max(100, Math.min(4096, Number(e.target.value))))}
-                />
-              </div>
+              <Input
+                label={t.dialogs.width}
+                type="number"
+                value={tempWidth}
+                min={100}
+                max={4096}
+                onChange={(e) => setTempWidth(Math.max(100, Math.min(4096, Number(e.target.value))))}
+                fullWidth
+              />
+              <Input
+                label={t.dialogs.height}
+                type="number"
+                value={tempHeight}
+                min={100}
+                max={4096}
+                onChange={(e) => setTempHeight(Math.max(100, Math.min(4096, Number(e.target.value))))}
+                fullWidth
+              />
             </div>
 
-            <div className="paint-dialog-footer">
-              <Button variant="ghost" onClick={() => setIsResizeDialogOpen(false)}>
+            <div className="paint-dialog-actions">
+              <Button variant="secondary" onClick={() => setIsResizeDialogOpen(false)}>
                 {t.dialogs.cancelBtn}
               </Button>
               <Button variant="primary" onClick={handleApplyResize}>
@@ -2301,43 +2914,65 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
           onClose={() => setIsExportDialogOpen(false)}
           title={t.dialogs.exportTitle}
           description={t.dialogs.exportDesc}
+          maxWidth="md"
         >
           <div className="paint-dialog-body">
-            <div className="paint-dialog-row">
-              <div className="paint-dialog-field">
-                <label>{t.dialogs.format}</label>
-                <select
-                  className="paint-dialog-input"
-                  value={exportFormat}
-                  onChange={(e) => setExportFormat(e.target.value as any)}
-                >
-                  <option value="image/png">PNG (Lossless)</option>
-                  <option value="image/jpeg">JPG (Compressed)</option>
-                  <option value="image/webp">WebP (Modern Web)</option>
-                </select>
+            <div className="paint-dialog-field">
+              <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--all-text-muted)' }}>
+                {t.dialogs.format}
+              </label>
+              <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                {(['image/png', 'image/jpeg', 'image/webp'] as const).map((fmt) => (
+                  <Button
+                    key={fmt}
+                    variant={exportFormat === fmt ? 'primary' : 'secondary'}
+                    onClick={() => setExportFormat(fmt)}
+                  >
+                    {fmt === 'image/png' ? 'PNG' : fmt === 'image/jpeg' ? 'JPG' : 'WebP'}
+                  </Button>
+                ))}
               </div>
-
-              {exportFormat === 'image/jpeg' && (
-                <div className="paint-dialog-field">
-                  <label>{t.dialogs.quality}: {exportQuality}%</label>
-                  <input
-                    type="range"
-                    min={40}
-                    max={100}
-                    value={exportQuality}
-                    onChange={(e) => setExportQuality(Number(e.target.value))}
-                  />
-                </div>
-              )}
             </div>
 
-            <div style={{ fontSize: 12, color: 'var(--all-text-muted)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <IconMaximize2 size={14} aria-hidden="true" />
-              {canvasDim.width} × {canvasDim.height} px
+            {exportFormat === 'image/jpeg' && (
+              <div className="paint-dialog-field" style={{ marginTop: 4 }}>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--all-text-muted)' }}>
+                  {t.dialogs.quality}: {exportQuality}%
+                </label>
+                <Slider
+                  min={40}
+                  max={100}
+                  step={1}
+                  value={exportQuality}
+                  onChange={(val) => setExportQuality(val)}
+                />
+              </div>
+            )}
+
+            <div
+              style={{
+                fontSize: 12,
+                color: 'var(--all-text-muted)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '10px 14px',
+                background: 'var(--all-surface-2)',
+                border: '1px solid var(--all-border)',
+                borderRadius: 'var(--all-radius, 6px)',
+              }}
+            >
+              <IconMaximize2 size={16} aria-hidden="true" />
+              <span>
+                {locale === 'pl' ? 'Wymiary płótna' : 'Canvas dimensions'}:{' '}
+                <strong style={{ color: 'var(--all-text)' }}>
+                  {canvasDim.width} × {canvasDim.height} px
+                </strong>
+              </span>
             </div>
 
-            <div className="paint-dialog-footer">
-              <Button variant="ghost" onClick={() => setIsExportDialogOpen(false)}>
+            <div className="paint-dialog-actions">
+              <Button variant="secondary" onClick={() => setIsExportDialogOpen(false)}>
                 {t.dialogs.cancelBtn}
               </Button>
               <Button variant="secondary" onClick={handleCopy} icon={<IconCopy size={16} />}>

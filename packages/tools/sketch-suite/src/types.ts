@@ -53,3 +53,15 @@ export interface HistoryStep {
   width: number
   height: number
 }
+
+export interface PlacedImageOverlay {
+  img: HTMLImageElement
+  src: string
+  x: number
+  y: number
+  width: number
+  height: number
+  naturalWidth: number
+  naturalHeight: number
+}
+

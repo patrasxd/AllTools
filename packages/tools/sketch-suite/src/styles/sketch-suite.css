@@ -1184,77 +1184,241 @@
   background: transparent;
 }
 
+/* ─── Placed Image Floating Selection Box (MS Paint & PDF Suite style) ─── */
+.paint-placed-image-overlay {
+  position: absolute;
+  box-sizing: border-box;
+  z-index: 55;
+  user-select: none;
+  touch-action: none;
+  line-height: normal;
+}
+
+.paint-placed-image-box {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  border: 2px dashed var(--all-accent, #3b82f6);
+  background: rgba(59, 130, 246, 0.08);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.4), 0 4px 16px rgba(0, 0, 0, 0.25);
+  cursor: move;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.paint-placed-image-box.is-dragging {
+  cursor: grabbing;
+  border-color: #60a5fa;
+  background: rgba(59, 130, 246, 0.16);
+  box-shadow: 0 0 16px rgba(59, 130, 246, 0.4);
+}
+
+.paint-placed-image-box.is-resizing {
+  border-color: #2563eb;
+  background: rgba(37, 99, 235, 0.14);
+}
+
+[data-theme='light'] .paint-placed-image-box {
+  border: 2px dashed #0284c7;
+  background: rgba(2, 132, 199, 0.08);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15), 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+[data-eink='true'] .paint-placed-image-box,
+[data-theme^='e-ink'] .paint-placed-image-box {
+  box-shadow: none !important;
+  border: 2px dashed #000000 !important;
+  background: transparent !important;
+}
+
+[data-theme='e-ink-dark'] .paint-placed-image-box {
+  border: 2px dashed #ffffff !important;
+}
+
+.paint-placed-image-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  pointer-events: none;
+  display: block;
+}
+
+/* Floating Toolbar for Placed Image */
+.paint-placed-image-toolbar {
+  position: absolute;
+  top: -34px;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--all-surface-2, #27272a);
+  border: 1px solid var(--all-border, #383842);
+  border-radius: 4px;
+  padding: 2px 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  white-space: nowrap;
+  z-index: 60;
+  font-size: 11px;
+}
+
+.paint-placed-image-toolbar--flipped {
+  top: auto;
+  bottom: -34px;
+}
+
+[data-theme='light'] .paint-placed-image-toolbar {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+
+[data-eink='true'] .paint-placed-image-toolbar,
+[data-theme^='e-ink'] .paint-placed-image-toolbar {
+  background: #ffffff !important;
+  border: 1.5px solid #000000 !important;
+  box-shadow: none !important;
+}
+
+[data-theme='e-ink-dark'] .paint-placed-image-toolbar {
+  background: #000000 !important;
+  border: 1.5px solid #ffffff !important;
+}
+
+.paint-placed-image-info {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--all-text-muted, #71717a);
+  font-size: 10px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  padding-right: 4px;
+  border-right: 1px solid var(--all-border, #383842);
+}
+
+.paint-placed-image-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--all-text, #ffffff);
+  font-size: 11px;
+  font-weight: 500;
+  transition: all 0.1s ease;
+}
+
+[data-theme='light'] .paint-placed-image-btn {
+  color: #1e293b;
+}
+
+.paint-placed-image-btn:hover {
+  background: var(--all-surface, #18181b);
+  border-color: var(--all-border, #383842);
+}
+
+[data-theme='light'] .paint-placed-image-btn:hover {
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+}
+
+.paint-placed-image-btn--commit {
+  color: var(--all-success, #22c55e);
+  font-weight: 600;
+}
+
+.paint-placed-image-btn--commit:hover {
+  background: rgba(34, 197, 94, 0.15);
+  border-color: var(--all-success, #22c55e);
+  color: var(--all-success, #22c55e);
+}
+
+.paint-placed-image-btn--cancel {
+  color: var(--all-danger, #ef4444);
+}
+
+.paint-placed-image-btn--cancel:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: var(--all-danger, #ef4444);
+  color: var(--all-danger, #ef4444);
+}
+
+.paint-placed-image-btn--expand {
+  color: var(--all-accent, #3b82f6);
+}
+
+.paint-placed-image-btn--expand:hover {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: var(--all-accent, #3b82f6);
+}
+
+/* Resize Handles (inspired by PDF Suite signature handles) */
+.paint-placed-image-handle {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: var(--all-accent, #3b82f6);
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  box-sizing: border-box;
+  z-index: 60;
+  transition: transform 100ms ease, background-color 100ms ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+}
+
+.paint-placed-image-handle:hover,
+.paint-placed-image-handle:active {
+  transform: scale(1.35);
+  background: #1d4ed8;
+}
+
+.paint-handle--nw { top: -7px; left: -7px; cursor: nwse-resize; }
+.paint-handle--ne { top: -7px; right: -7px; cursor: nesw-resize; }
+.paint-handle--sw { bottom: -7px; left: -7px; cursor: nesw-resize; }
+.paint-handle--se { bottom: -7px; right: -7px; cursor: nwse-resize; }
+.paint-handle--n  { top: -7px; left: calc(50% - 7px); cursor: ns-resize; border-radius: 3px; }
+.paint-handle--s  { bottom: -7px; left: calc(50% - 7px); cursor: ns-resize; border-radius: 3px; }
+.paint-handle--w  { top: calc(50% - 7px); left: -7px; cursor: ew-resize; border-radius: 3px; }
+.paint-handle--e  { top: calc(50% - 7px); right: -7px; cursor: ew-resize; border-radius: 3px; }
+
 /* ─── Dialogs Styling (New Canvas, Resize, Export) ─── */
 .paint-dialog-body {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 8px 0;
+  padding: 4px 0 0;
 }
 
 .paint-presets-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-  gap: 6px;
-}
-
-.paint-preset-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 8px 6px;
-  background: var(--all-surface-2);
-  border: 1px solid var(--all-border);
-  border-radius: var(--all-radius, 4px);
-  color: var(--all-text);
-  cursor: pointer;
-  font-size: 11px;
-}
-
-.paint-preset-btn strong {
-  font-size: 12px;
-  margin-bottom: 2px;
-}
-
-.paint-preset-btn:hover {
-  border-color: var(--all-accent);
-  background: var(--all-surface);
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
 }
 
 .paint-dialog-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
 }
 
 .paint-dialog-field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   flex: 1;
 }
 
-.paint-dialog-field label {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--all-text-muted);
-}
-
-.paint-dialog-input {
-  padding: 8px 10px;
-  background: var(--all-surface);
-  border: 1px solid var(--all-border);
-  border-radius: var(--all-radius, 4px);
-  color: var(--all-text);
-  font-size: 14px;
-}
-
-.paint-dialog-footer {
+.paint-dialog-actions {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
   gap: 8px;
-  padding-top: 12px;
-  border-top: 1px solid var(--all-border);
+  margin-top: 12px;
 }
 
 /* ─── Bottom Status Bar ─── */
