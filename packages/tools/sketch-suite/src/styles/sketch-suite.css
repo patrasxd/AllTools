@@ -1206,6 +1206,7 @@
   background: var(--all-surface-2);
   border: 1px solid var(--all-border);
   border-radius: var(--all-radius, 4px);
+  color: var(--all-text);
   cursor: pointer;
   font-size: 11px;
 }
