@@ -28,6 +28,7 @@
       "@alltools/quick-notes": ["../../packages/tools/quick-notes/src"],
       "@alltools/screen-ruler": ["../../packages/tools/screen-ruler/src"],
       "@alltools/sound-meter": ["../../packages/tools/sound-meter/src"],
+      "@alltools/sketch-suite": ["../../packages/tools/sketch-suite/src"],
       "@alltools/*/metadata": ["../../packages/tools/*/src/metadata.tsx"]
     }
   },

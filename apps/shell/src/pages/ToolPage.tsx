@@ -139,7 +139,7 @@ export function ToolPage() {
           <div id="tool-page-top-actions" className="tool-page-top-actions" />
         </div>
 
-        <div className={`tool-page-content ${slug === 'screen-ruler' ? 'tool-page-content--fullbleed' : ''}`.trim()}>
+        <div className={`tool-page-content ${slug === 'screen-ruler' || slug === 'sketch-suite' ? 'tool-page-content--fullbleed' : ''}`.trim()}>
           {loading ? (
             <ToolFallback />
           ) : ToolComp ? (

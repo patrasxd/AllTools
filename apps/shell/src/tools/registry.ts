@@ -11,19 +11,21 @@ import { metadata as stopwatchIntervalMeta } from '@alltools/stopwatch-interval/
 import { metadata as quickNotesMeta } from '@alltools/quick-notes/metadata'
 import { metadata as screenRulerMeta } from '@alltools/screen-ruler/metadata'
 import { metadata as soundMeterMeta } from '@alltools/sound-meter/metadata'
+import { metadata as sketchSuiteMeta } from '@alltools/sketch-suite/metadata'
 
 export const TOOLS_METADATA: ToolMetadata[] = [
-  soundMeterMeta,
-  devVaultMeta,
-  pdfSuiteMeta,
-  imageStudioMeta,
   calcConverterMeta,
+  devVaultMeta,
   guitarTunerMeta,
+  imageStudioMeta,
   levelProtractorMeta,
-  screenRulerMeta,
+  pdfSuiteMeta,
   qrSuiteMeta,
-  stopwatchIntervalMeta,
   quickNotesMeta,
+  screenRulerMeta,
+  sketchSuiteMeta,
+  soundMeterMeta,
+  stopwatchIntervalMeta,
 ]
 
 // Dynamic lazy component loaders
@@ -39,6 +41,7 @@ const loaders: Record<string, () => Promise<{ ToolComponent: React.ComponentType
   'qr-suite': () => import('@alltools/qr-suite'),
   'stopwatch-interval': () => import('@alltools/stopwatch-interval'),
   'quick-notes': () => import('@alltools/quick-notes'),
+  'sketch-suite': () => import('@alltools/sketch-suite'),
 }
 
 export async function loadToolComponent(slug: string): Promise<React.ComponentType<any> | null> {

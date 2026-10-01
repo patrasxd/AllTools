@@ -5,7 +5,7 @@ import { AppFooter, useCardScrollRestoration, isReturningFromCard } from '@all/u
 import { TOOLS_METADATA } from '../tools/registry'
 import { ToolCard } from '../components/ToolCard'
 import { useI18n } from '../i18n'
-import { getLocalizedTags } from '../types/tool'
+import { getLocalizedTags, getLocalizedText } from '../types/tool'
 
 const heroVariants = {
   hidden: {},
@@ -52,13 +52,19 @@ export function HomePage() {
       .map(([tag]) => tag)
   }, [locale])
 
-  // Filter tools based on selected tag
+  // Filter and sort tools alphabetically based on localized name
   const filteredTools = useMemo(() => {
-    if (!selectedTag) return TOOLS_METADATA
-    const normalizedSelected = selectedTag.trim().toLowerCase()
-    return TOOLS_METADATA.filter((tool) => {
-      const tags = getLocalizedTags(tool.tags, locale).map((tg) => tg.trim().toLowerCase())
-      return tags.includes(normalizedSelected)
+    const list = !selectedTag
+      ? [...TOOLS_METADATA]
+      : TOOLS_METADATA.filter((tool) => {
+          const tags = getLocalizedTags(tool.tags, locale).map((tg) => tg.trim().toLowerCase())
+          return tags.includes(selectedTag.trim().toLowerCase())
+        })
+
+    return list.sort((a, b) => {
+      const nameA = getLocalizedText(a.name, locale)
+      const nameB = getLocalizedText(b.name, locale)
+      return nameA.localeCompare(nameB, locale, { sensitivity: 'base' })
     })
   }, [selectedTag, locale])
 

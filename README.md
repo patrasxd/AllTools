@@ -55,7 +55,7 @@ Packaged as an npm workspaces monorepo and styled with a tactile ink-and-paper a
 
 ## Tools Catalog
 
-AllTools currently provides **11 high-utility tools**:
+AllTools currently provides **12 high-utility tools**:
 
 | Tool                     | Slug                 | Category         | Template                | Key Capabilities                                                                                                                                     |
 | :----------------------- | :------------------- | :--------------- | :---------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -70,6 +70,7 @@ AllTools currently provides **11 high-utility tools**:
 | **QR Suite**             | `qr-suite`           | Utility          | `SplitWorkspaceLayout`  | Offline QR Code generator (URL, text, WiFi credentials, vCard) with custom sizing and error correction, paired with live camera & file QR scanner.   |
 | **Stopwatch & Interval** | `stopwatch-interval` | Time             | `CenteredUtilityLayout` | Precision stopwatch with millisecond timing, lap recordings, split differences, and customizable interval HIIT workout timer with audio beeps.       |
 | **Quick Notes**          | `quick-notes`        | Productivity     | `SplitWorkspaceLayout`  | Minimalist offline scratchpad and checklist with markdown support, color tags, live text search, and automatic local persistence.                    |
+| **Sketch Suite**         | `sketch-suite`       | Media / Graphics | `FullBleedLayout`       | Retro sketch & drawing suite with shapes, flood fill bucket, image clipboard paste (Ctrl+V) & editing, and custom palettes.                         |
 
 ---
 
@@ -82,7 +83,7 @@ graph TD
     SharedUI["@all/ui (Shared Design System & Templates)"]
     Shell["apps/shell (Host Application)"]
     ToolsUI["packages/ui (@alltools/ui Primitives)"]
-    Tools["packages/tools/* (11 Autonomous Tool Packages)"]
+    Tools["packages/tools/* (12 Autonomous Tool Packages)"]
 
     SharedUI --> Shell
     SharedUI --> ToolsUI
@@ -116,7 +117,7 @@ AllTools/
 │
 ├── packages/
 │   ├── ui/                        # Tool-specific UI wrappers (@alltools/ui)
-│   └── tools/                     # 11 Standalone Tool Packages
+│   └── tools/                     # 12 Standalone Tool Packages
 │       ├── calc-converter/
 │       ├── dev-vault/
 │       ├── guitar-tuner/
@@ -126,6 +127,7 @@ AllTools/
 │       ├── qr-suite/
 │       ├── quick-notes/
 │       ├── screen-ruler/
+│       ├── sketch-suite/
 │       ├── sound-meter/
 │       └── stopwatch-interval/
 │
@@ -146,7 +148,7 @@ Rather than arbitrary layout sizing, every tool in AllTools is built upon reusab
    - Used by: `calc-converter`, `image-studio`, `stopwatch-interval`.
 3. **`FullBleedLayout`**:
    - Intended for sensor-driven, canvas, or direct physical measurement interfaces requiring edge-to-edge touch allocation without page scrolling.
-   - Used by: `sound-meter`, `guitar-tuner`, `level-protractor`, `screen-ruler`.
+   - Used by: `sound-meter`, `guitar-tuner`, `level-protractor`, `screen-ruler`, `sketch-suite`.
 
 ---
 

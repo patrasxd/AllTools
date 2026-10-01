@@ -936,3 +936,330 @@ export const IconWrench: React.FC<IconProps> = ({ size = 20, className = '', ...
     <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
   </svg>
 )
+
+export const IconPaint: React.FC<IconProps> = ({ size = 20, className = '', ...props }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    {...props}
+  >
+    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c1.66 0 3-1.34 3-3 0-.78-.29-1.48-.8-2-.5-.5-.8-1.21-.8-2 0-1.66 1.34-3 3-3h1.6c3.31 0 6-2.69 6-6 0-5.52-4.48-10-10-10z" />
+    <circle cx="7.5" cy="11.5" r="1.5" fill="currentColor" />
+    <circle cx="10" cy="7.5" r="1.5" fill="currentColor" />
+    <circle cx="14" cy="7.5" r="1.5" fill="currentColor" />
+    <circle cx="16.5" cy="11.5" r="1.5" fill="currentColor" />
+  </svg>
+)
+
+export const IconPencil: React.FC<IconProps> = ({ size = 20, className = '', ...props }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    {...props}
+  >
+    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+  </svg>
+)
+
+export const IconBrush: React.FC<IconProps> = ({ size = 20, className = '', ...props }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    {...props}
+  >
+    <path d="m9.06 11.9 8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08" />
+    <path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-2.5 1.52-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z" />
+  </svg>
+)
+
+export const IconEraser: React.FC<IconProps> = ({ size = 20, className = '', ...props }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    {...props}
+  >
+    <path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21" />
+    <path d="M22 21H7" />
+    <path d="m5 11 9 9" />
+  </svg>
+)
+
+export const IconBucket: React.FC<IconProps> = ({ size = 20, className = '', ...props }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    {...props}
+  >
+    <path d="m19 11-8-8-8.6 8.6a2 2 0 0 0 0 2.8l5.2 5.2c.8.8 2 .8 2.8 0L19 11Z" />
+    <path d="m5 2 5 5" />
+    <path d="M2 13h15" />
+    <path d="M22 20a2 2 0 1 1-4 0c0-1.6 1.7-2.4 2-4 .3 1.6 2 2.4 2 4Z" />
+  </svg>
+)
+
+export const IconPipette: React.FC<IconProps> = ({ size = 20, className = '', ...props }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    {...props}
+  >
+    <path d="m14 2 4 4" />
+    <path d="m17 5 3-3a1.5 1.5 0 0 1 2 2l-3 3" />
+    <path d="m2 22 5.5-1.5L20.5 7.5a2.12 2.12 0 0 0-3-3L4.5 17.5 2 22z" />
+  </svg>
+)
+
+export const IconType: React.FC<IconProps> = ({ size = 20, className = '', ...props }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    {...props}
+  >
+    <polyline points="4 7 4 4 20 4 20 7" />
+    <line x1="9" y1="20" x2="15" y2="20" />
+    <line x1="12" y1="4" x2="12" y2="20" />
+  </svg>
+)
+
+export const IconUndo: React.FC<IconProps> = ({ size = 20, className = '', ...props }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    {...props}
+  >
+    <path d="M3 7v6h6" />
+    <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" />
+  </svg>
+)
+
+export const IconRedo: React.FC<IconProps> = ({ size = 20, className = '', ...props }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    {...props}
+  >
+    <path d="M21 7v6h-6" />
+    <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13" />
+  </svg>
+)
+
+export const IconSelect: React.FC<IconProps> = ({ size = 20, className = '', ...props }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeDasharray="3 3"
+    className={className}
+    {...props}
+  >
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+  </svg>
+)
+
+export const IconSelectAll: React.FC<IconProps> = ({ size = 20, className = '', ...props }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    {...props}
+  >
+    <rect x="3" y="3" width="18" height="18" rx="2" strokeDasharray="3 3" />
+    <path d="M8 12h8" />
+    <path d="M12 8v8" />
+  </svg>
+)
+
+export const IconScissors: React.FC<IconProps> = ({ size = 20, className = '', ...props }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    {...props}
+  >
+    <circle cx="6" cy="6" r="3" />
+    <circle cx="6" cy="18" r="3" />
+    <line x1="20" y1="4" x2="8.12" y2="15.88" />
+    <line x1="14.47" y1="14.48" x2="20" y2="20" />
+    <line x1="8.12" y1="8.12" x2="12" y2="12" />
+  </svg>
+)
+
+export const IconFile: React.FC<IconProps> = ({ size = 20, className = '', ...props }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    {...props}
+  >
+    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+    <polyline points="14 2 14 8 20 8" />
+  </svg>
+)
+
+export const IconFolderOpen: React.FC<IconProps> = ({ size = 20, className = '', ...props }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    {...props}
+  >
+    <path d="m6 14 1.45-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.55 6a2 2 0 0 1-1.94 1.5H4a2 2 0 0 1-2-2V5c0-1.1.9-2 2-2h3.93a2 2 0 0 1 1.66.9l.82 1.2a2 2 0 0 0 1.66.9H18a2 2 0 0 1 2 2v2" />
+  </svg>
+)
+
+export const IconCrosshair: React.FC<IconProps> = ({ size = 20, className = '', ...props }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    {...props}
+  >
+    <circle cx="12" cy="12" r="10" />
+    <line x1="22" y1="12" x2="18" y2="12" />
+    <line x1="6" y1="12" x2="2" y2="12" />
+    <line x1="12" y1="6" x2="12" y2="2" />
+    <line x1="12" y1="22" x2="12" y2="18" />
+  </svg>
+)
+
+export const IconMaximize2: React.FC<IconProps> = ({ size = 20, className = '', ...props }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    {...props}
+  >
+    <polyline points="15 3 21 3 21 9" />
+    <polyline points="9 21 3 21 3 15" />
+    <line x1="21" y1="3" x2="14" y2="10" />
+    <line x1="3" y1="21" x2="10" y2="14" />
+  </svg>
+)
+
+export const IconZoomIn: React.FC<IconProps> = ({ size = 20, className = '', ...props }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    {...props}
+  >
+    <circle cx="11" cy="11" r="8" />
+    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    <line x1="11" y1="8" x2="11" y2="14" />
+    <line x1="8" y1="11" x2="14" y2="11" />
+  </svg>
+)
+
+
+
+
