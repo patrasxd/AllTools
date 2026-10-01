@@ -1903,7 +1903,6 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                 {/* Direct On-Canvas Text Input */}
                 <input
                   ref={textInputRef}
-                  autoFocus
                   className="paint-text-box-input"
                   placeholder={locale === 'pl' ? 'Wpisz tekst...' : 'Type text...'}
                   value={activeTextOverlay.text}
@@ -2483,6 +2482,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                   />
                   <div className="paint-color-popover-hex-input-wrap">
                     <label
+                      htmlFor="paint-color-hex-input"
                       style={{
                         fontSize: 10,
                         fontWeight: 600,
@@ -2492,6 +2492,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                       HEX
                     </label>
                     <input
+                      id="paint-color-hex-input"
                       type="text"
                       className="paint-dialog-input"
                       value={activeColor.toUpperCase()}

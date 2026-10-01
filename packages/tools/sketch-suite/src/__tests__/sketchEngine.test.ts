@@ -117,8 +117,11 @@ describe('copyCanvasToClipboard', () => {
     const { copyCanvasToClipboard } = await import('../utils/sketchEngine')
     const canvas = document.createElement('canvas')
     const originalClipboard = navigator.clipboard
-    // @ts-ignore
-    delete (navigator as any).clipboard
+    Object.defineProperty(navigator, 'clipboard', {
+      value: undefined,
+      writable: true,
+      configurable: true,
+    })
 
     const result = await copyCanvasToClipboard(canvas)
     expect(result).toBe(false)
