@@ -58,56 +58,9 @@ export function Compass({
     if (isFrozen) return
     if (!isPermitted) return
 
-    const handleOrientation = (e: DeviceOrientationEvent) => {
-      let rawHeading: number | null = null
+    let hasReceivedAbsolute = false
 
-      // 1. iOS: webkitCompassHeading is pre-calibrated to magnetic north by iOS CoreLocation
-      const webkitHeading = (e as unknown as { webkitCompassHeading?: number }).webkitCompassHeading
-      if (typeof webkitHeading === 'number' && !isNaN(webkitHeading) && webkitHeading >= 0) {
-        rawHeading = webkitHeading
-      } else if (e.alpha !== null && !isNaN(e.alpha)) {
-        // 2. Android: DeviceOrientationEvent (specifically from deviceorientationabsolute)
-        const alpha = e.alpha
-        const beta = e.beta ?? 0
-        const gamma = e.gamma ?? 0
-
-        // If phone is tilted in hand (> 10 deg), apply 3D tilt compensation
-        if (Math.abs(beta) > 10 || Math.abs(gamma) > 10) {
-          const degToRad = Math.PI / 180
-          const a = alpha * degToRad
-          const b = beta * degToRad
-          const g = gamma * degToRad
-
-          const cA = Math.cos(a)
-          const sA = Math.sin(a)
-          const cB = Math.cos(b)
-          const sB = Math.sin(b)
-          const cG = Math.cos(g)
-          const sG = Math.sin(g)
-
-          // Vector pointing along top edge of phone projected onto horizontal Earth plane
-          const Vx = -cA * sG * sB - sA * cG
-          const Vy = -sA * sG * sB + cA * cG
-
-          let h = Math.atan2(Vx, Vy) * (180 / Math.PI)
-          if (h < 0) h += 360
-          rawHeading = h
-        } else {
-          // Flat on surface
-          rawHeading = (360 - alpha) % 360
-        }
-      }
-
-      if (rawHeading === null) return
-
-      // Adjust for screen orientation (landscape vs portrait)
-      const screenAngle =
-        typeof window !== 'undefined'
-          ? (window.screen?.orientation?.angle ?? (window as unknown as { orientation?: number }).orientation ?? 0)
-          : 0
-
-      const trueHeading = normalizeHeading(rawHeading + screenAngle)
-
+    const processHeading = (trueHeading: number) => {
       // Smooth unwrapping to avoid 359° -> 1° reverse spin
       if (!hasReceivedEventRef.current) {
         visualAngleRef.current = trueHeading
@@ -129,21 +82,91 @@ export function Compass({
       }
     }
 
-    // Register listeners: prioritize deviceorientationabsolute for Android Chrome
-    const hasAbsolute = 'ondeviceorientationabsolute' in window
-    if (hasAbsolute) {
-      window.addEventListener('deviceorientationabsolute', handleOrientation as EventListener, true)
+    const handleOrientationEvent = (e: DeviceOrientationEvent) => {
+      // 1. iOS Safari: webkitCompassHeading is calibrated to magnetic North directly by CoreLocation
+      const webkitHeading = (e as unknown as { webkitCompassHeading?: number }).webkitCompassHeading
+      if (typeof webkitHeading === 'number' && !isNaN(webkitHeading) && webkitHeading >= 0) {
+        // webkitCompassHeading is already orientation-compensated by iOS CoreLocation
+        processHeading(normalizeHeading(webkitHeading))
+        return
+      }
+
+      // 2. Android / W3C: DeviceOrientationEvent / deviceorientationabsolute
+      if (e.alpha !== null && !isNaN(e.alpha)) {
+        const screenAngle =
+          typeof window !== 'undefined'
+            ? (window.screen?.orientation?.angle ?? (window as unknown as { orientation?: number }).orientation ?? 0)
+            : 0
+
+        // In W3C specification, alpha is the rotation angle around Z (counter-clockwise from North).
+        // Clockwise compass heading is: (360 - alpha + screenAngle) % 360.
+        const trueHeading = normalizeHeading(360 - e.alpha + screenAngle)
+        processHeading(trueHeading)
+      }
     }
-    if (typeof window !== 'undefined' && window.DeviceOrientationEvent) {
-      window.addEventListener('deviceorientation', handleOrientation, true)
+
+    // Android deviceorientationabsolute listener
+    const handleAbsoluteOrientation = (e: DeviceOrientationEvent) => {
+      if (e.alpha !== null && !isNaN(e.alpha)) {
+        hasReceivedAbsolute = true
+        handleOrientationEvent(e)
+      }
+    }
+
+    // Standard deviceorientation listener (iOS or fallback)
+    const handleStandardOrientation = (e: DeviceOrientationEvent) => {
+      const webkitHeading = (e as unknown as { webkitCompassHeading?: number }).webkitCompassHeading
+      const isIos = typeof webkitHeading === 'number' && !isNaN(webkitHeading) && webkitHeading >= 0
+
+      // If we are already receiving absolute orientation on Android, ignore relative events
+      if (hasReceivedAbsolute && !isIos) {
+        return
+      }
+      handleOrientationEvent(e)
+    }
+
+    // Generic Sensor API fallback (Chrome on Android)
+    let sensorInstance: any = null
+    if (typeof window !== 'undefined' && 'AbsoluteOrientationSensor' in window) {
+      try {
+        const SensorClass = (window as unknown as { AbsoluteOrientationSensor: any }).AbsoluteOrientationSensor
+        const sensor = new SensorClass({ frequency: 60 })
+        sensorInstance = sensor
+        sensor.addEventListener('reading', () => {
+          const q = sensor.quaternion
+          if (q && q.length === 4) {
+            hasReceivedAbsolute = true
+            const [x, y, z, w] = q
+            // Yaw from quaternion
+            const siny_cosp = 2 * (w * z + x * y)
+            const cosy_cosp = 1 - 2 * (y * y + z * z)
+            const yawDeg = Math.atan2(siny_cosp, cosy_cosp) * (180 / Math.PI)
+            const screenAngle =
+              typeof window !== 'undefined'
+                ? (window.screen?.orientation?.angle ?? (window as unknown as { orientation?: number }).orientation ?? 0)
+                : 0
+            const heading = normalizeHeading(360 - yawDeg + screenAngle)
+            processHeading(heading)
+          }
+        })
+        sensor.start()
+      } catch {}
+    }
+
+    window.addEventListener('deviceorientationabsolute', handleAbsoluteOrientation as EventListener, true)
+    if (typeof window !== 'undefined') {
+      window.addEventListener('deviceorientation', handleStandardOrientation, true)
     }
 
     return () => {
-      if (hasAbsolute) {
-        window.removeEventListener('deviceorientationabsolute', handleOrientation as EventListener, true)
-      }
+      window.removeEventListener('deviceorientationabsolute', handleAbsoluteOrientation as EventListener, true)
       if (typeof window !== 'undefined') {
-        window.removeEventListener('deviceorientation', handleOrientation, true)
+        window.removeEventListener('deviceorientation', handleStandardOrientation, true)
+      }
+      if (sensorInstance) {
+        try {
+          sensorInstance.stop()
+        } catch {}
       }
     }
   }, [isFrozen, onHeadingChange, isPermitted])

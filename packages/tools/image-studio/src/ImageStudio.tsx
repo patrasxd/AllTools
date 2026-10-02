@@ -1648,15 +1648,16 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false, setIsDir
         }
         controls={
           loadedImage ? (
-            <ControlsBar>
+            <ControlsBar className="img-controls-bar">
               <PillGroup<'crop' | 'remove-bg' | 'watermark' | 'format' | 'vectorize'>
+                className="img-nav-pill-group"
                 size="sm"
                 options={[
-                  { value: 'crop', label: t.cropTab },
-                  { value: 'remove-bg', label: t.removeBgTab },
-                  { value: 'watermark', label: t.watermarkTab },
-                  { value: 'format', label: t.formatTab },
-                  { value: 'vectorize', label: t.vectorizeTab },
+                  { value: 'crop', label: t.cropTab, id: 'img-tab-crop' },
+                  { value: 'remove-bg', label: t.removeBgTab, id: 'img-tab-remove-bg' },
+                  { value: 'watermark', label: t.watermarkTab, id: 'img-tab-watermark' },
+                  { value: 'format', label: t.formatTab, id: 'img-tab-format' },
+                  { value: 'vectorize', label: t.vectorizeTab, id: 'img-tab-vectorize' },
                 ]}
                 value={activeTab}
                 onChange={setActiveTab}

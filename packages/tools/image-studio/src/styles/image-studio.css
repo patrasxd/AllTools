@@ -879,3 +879,47 @@
     transform: none !important;
   }
 }
+
+/* ─── Bottom Navigation PillGroup & Controls Bar ───────────── */
+.img-controls-bar {
+  width: 100%;
+  max-width: 100%;
+}
+
+.img-nav-pill-group {
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.img-nav-pill-group::-webkit-scrollbar {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .img-nav-pill-group {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .img-nav-pill-group .all-pill-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0 6px;
+    font-size: 0.72rem;
+    white-space: nowrap;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+@media (max-width: 380px) {
+  .img-nav-pill-group .all-pill-btn {
+    padding: 0 3px;
+    font-size: 0.68rem;
+  }
+}
+

@@ -154,8 +154,8 @@ describe('ImageStudio Component', () => {
       expect(document.getElementById('img-download-btn')).toBeDefined()
     })
 
-    // Click on Remove BG tab in PillGroup
-    const removeBgPill = screen.getByRole('button', { name: /Remove BG/i })
+    // Click on No BG tab in PillGroup
+    const removeBgPill = screen.getByRole('button', { name: /No BG/i })
     expect(removeBgPill).toBeDefined()
     fireEvent.click(removeBgPill)
 
