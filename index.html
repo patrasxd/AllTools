@@ -1,12 +1,10 @@
 <!doctype html>
 <html lang="en" style="background-color: #0a0a0a; color: #efefef">
   <head>
+    <meta http-equiv="Content-Security-Policy" content="default-src &#39;self&#39;; script-src &#39;self&#39; &#39;unsafe-eval&#39; &#39;wasm-unsafe-eval&#39;; style-src &#39;self&#39; &#39;unsafe-inline&#39;; img-src &#39;self&#39; data: blob:; media-src &#39;self&#39; blob: mediastream:; font-src &#39;self&#39; data:; connect-src &#39;self&#39; blob: data:; worker-src &#39;self&#39; blob:; manifest-src &#39;self&#39;; object-src &#39;none&#39;; base-uri &#39;self&#39;; form-action &#39;none&#39;; frame-src &#39;none&#39;">
+
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta
-      http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' blob: data:; worker-src 'self' blob:; child-src 'self' blob:; media-src 'self' blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';"
-    />
     <meta name="theme-color" content="#0a0a0a" />
     <meta
       name="description"
@@ -27,24 +25,8 @@
     <link rel="apple-touch-icon" href="./icons/favicon.svg" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <title>AllTools</title>
-    <script>
-      ;(function () {
-        try {
-          var t = localStorage.getItem('alltools:theme') || localStorage.getItem('all_theme') || 'dark'
-          document.documentElement.setAttribute('data-theme', t)
-          document.documentElement.setAttribute('data-all-theme', t)
-          var isLight = t === 'light' || t === 'e-ink-light'
-          var bg = isLight ? '#f2f1ec' : '#0a0a0a'
-          var fg = isLight ? '#111111' : '#efefef'
-          document.documentElement.style.backgroundColor = bg
-          document.documentElement.style.color = fg
-          if (t.indexOf('e-ink') !== -1) {
-            document.documentElement.setAttribute('data-eink', 'true')
-          }
-        } catch (e) {}
-      })()
-    </script>
-    <script type="module" crossorigin src="/AllTools/assets/index-B1eEpsRX.js"></script>
+    <script src="./theme-init.js"></script>
+    <script type="module" crossorigin src="/AllTools/assets/index-BVKloKM-.js"></script>
     <link rel="stylesheet" crossorigin href="/AllTools/assets/index-B60vPTmo.css">
   <link rel="manifest" href="/AllTools/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/AllTools/registerSW.js"></script></head>
   <body style="background-color: inherit; color: inherit">
