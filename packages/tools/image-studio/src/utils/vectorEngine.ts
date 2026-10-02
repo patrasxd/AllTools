@@ -96,37 +96,39 @@ export function traceImageDataToSVG(
   let pixelData = imageData.data
 
   // Curve smoothing presets mapping
-  // Default is ultra-smooth: Gaussian pre-blur to eliminate pixel staircase,
-  // low linear tolerance and relaxed quadratic tolerance to fit flowing Bezier curves (Q)
-  let ltres = 0.1
-  let qtres = 1.8
-  let blurradius = 3
-  let blurdelta = 200
-  let roundcoords = 2
+  // Low/Medium/High control straight line (ltres) and quadratic curve (qtres) tolerance.
+  // Pre-blur is kept at 0 to avoid blurring sharp edges into wide color-gradient halos,
+  // which causes ImageTracer to generate wavy, stepped "brush-painted" contour bands.
+  let ltres = 1.0
+  let qtres = 1.0
+  let blurradius = 0
+  let blurdelta = 20
+  let roundcoords = 1
 
   if (config.smoothing === 'low') {
-    // Crisp / sharp mode (pixel art, technical schematics): faithful to raw pixels
-    ltres = 0.5
-    qtres = 0.8
+    // Sharp / crisp mode (pixel art, technical schematics, logos): tight curves, faithful to geometry
+    ltres = 1.0
+    qtres = 0.5
     blurradius = 0
     blurdelta = 20
-    roundcoords = 2
-  } else if (config.smoothing === 'medium') {
-    ltres = 0.2
+    roundcoords = 1
+  } else if (config.smoothing === 'high') {
+    // High smoothing mode (organic illustrations, flowing curves): relaxed quadratic spline tolerance
+    ltres = 0.5
     qtres = 1.2
-    blurradius = 2
-    blurdelta = 160
-    roundcoords = 2
+    blurradius = 0
+    blurdelta = 20
+    roundcoords = 1
   }
 
-  const speckle = config.speckleFilter !== undefined ? config.speckleFilter : 4
+  const speckle = config.speckleFilter !== undefined ? config.speckleFilter : 8
 
   const baseOptions: ImageTracerOptions = {
     ltres,
     qtres,
     pathomit: Math.max(0, speckle),
-    rightangleenhance: Boolean(config.rightAngleEnhance),
-    linefilter: Boolean(config.lineFilter),
+    rightangleenhance: config.rightAngleEnhance !== undefined ? Boolean(config.rightAngleEnhance) : true,
+    linefilter: config.lineFilter !== undefined ? Boolean(config.lineFilter) : true,
     roundcoords,
     blurradius,
     blurdelta,
@@ -179,6 +181,7 @@ export function traceImageDataToSVG(
     baseOptions.numberofcolors = colors
     baseOptions.colorsampling = 2 // selective sampling
     baseOptions.colorquantcycles = 3
+    baseOptions.mincolorratio = 0.015 // drop anti-aliasing edge halos that create messy stepped paths
   }
 
   const rawSvg = ImageTracer.imagedataToSVG(

@@ -218,4 +218,33 @@ describe('traceImageDataToSVG', () => {
     // Must contain quadratic bezier curve segments (Q command in SVG path)
     expect(result.svg).toMatch(/Q\s+[\d.-]+/i)
   })
+
+  it('supports rightAngleEnhance and speckleFilter options cleanly', () => {
+    const width = 32
+    const height = 32
+    const data = new Uint8ClampedArray(width * height * 4).fill(255)
+
+    // Draw a sharp rectangular box with 90-degree corners
+    for (let y = 8; y < 24; y++) {
+      for (let x = 8; x < 24; x++) {
+        const idx = (y * width + x) * 4
+        data[idx] = 0
+        data[idx + 1] = 0
+        data[idx + 2] = 0
+        data[idx + 3] = 255
+      }
+    }
+
+    const config = makeVectorConfig({
+      mode: 'color',
+      numberOfColors: 2,
+      smoothing: 'medium',
+      rightAngleEnhance: true,
+      speckleFilter: 8,
+    })
+
+    const result = traceImageDataToSVG({ width, height, data }, config)
+    expect(result.svg).toContain('<path')
+    expect(result.pathsCount).toBeGreaterThan(0)
+  })
 })

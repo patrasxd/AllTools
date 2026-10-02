@@ -142,10 +142,10 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false, setIsDir
     mode: 'color',
     numberOfColors: 16,
     bwThreshold: 128,
-    speckleFilter: 4,
-    smoothing: 'high',
-    rightAngleEnhance: false,
-    lineFilter: false,
+    speckleFilter: 8,
+    smoothing: 'medium',
+    rightAngleEnhance: true,
+    lineFilter: true,
   })
   const [vectorViewMode, setVectorViewMode] = useState<'split' | 'vector' | 'original'>('split')
   const [copiedSvg, setCopiedSvg] = useState<boolean>(false)
@@ -1631,6 +1631,69 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false, setIsDir
                           )}
 
 
+
+                          {/* Curve Smoothing */}
+                          <div className="img-panel-group">
+                            <label className="img-panel-label">{t.curveSmoothing}</label>
+                            <div className="img-preset-grid">
+                              {[
+                                { value: 'low' as const, label: t.smoothLow },
+                                { value: 'medium' as const, label: t.smoothMedium },
+                                { value: 'high' as const, label: t.smoothHigh },
+                              ].map((s) => (
+                                <Button
+                                  key={s.value}
+                                  variant={(vectorConfig.smoothing || 'medium') === s.value ? 'primary' : 'secondary'}
+                                  size="sm"
+                                  onClick={() => setVectorConfig((v) => ({ ...v, smoothing: s.value }))}
+                                >
+                                  {s.label}
+                                </Button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Right Angle Corners Toggle */}
+                          <div className="img-feature-toggle-card">
+                            <div className="img-feature-toggle-info">
+                              <span className="img-feature-toggle-title">{t.rightAngles}</span>
+                            </div>
+                            <Toggle
+                              id="img-vector-right-angles"
+                              checked={vectorConfig.rightAngleEnhance ?? true}
+                              onChange={(checked) =>
+                                setVectorConfig((v) => ({ ...v, rightAngleEnhance: checked }))
+                              }
+                              aria-label={t.rightAngles}
+                            />
+                          </div>
+
+                          {/* Speckle Filter Slider */}
+                          <div className="img-panel-group">
+                            <div className="img-panel-label-row">
+                              <label htmlFor="img-vector-speckle" className="img-panel-label">
+                                {t.speckleFilter}
+                              </label>
+                              <span className="img-panel-badge">{vectorConfig.speckleFilter ?? 8}px</span>
+                            </div>
+                            <input
+                              id="img-vector-speckle"
+                              type="range"
+                              min="0"
+                              max="64"
+                              step="2"
+                              value={vectorConfig.speckleFilter ?? 8}
+                              onChange={(e) =>
+                                setVectorConfig((v) => ({ ...v, speckleFilter: Number(e.target.value) }))
+                              }
+                              className="img-slider"
+                            />
+                            <div className="img-slider-hints">
+                              <span>0px</span>
+                              <span>64px</span>
+                            </div>
+                            <p className="img-help-text">{t.speckleHint}</p>
+                          </div>
 
                           {vectorError && (
                             <div className="img-help-text" style={{ color: 'var(--all-danger, #ef4444)' }}>
