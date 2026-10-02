@@ -1,11 +1,45 @@
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
 
+const cspPlugin = (): Plugin => ({
+  name: 'production-csp',
+  apply: 'build',
+  transformIndexHtml() {
+    return [
+      {
+        tag: 'meta',
+        attrs: {
+          'http-equiv': 'Content-Security-Policy',
+          content: [
+            "default-src 'self'",
+            // 'unsafe-eval' is strictly required by heic2any (libheif Emscripten runtime creates dynamic function wrappers via new Function in embind).
+            // Zero external hosts allowed: connect-src remains strictly 'self' blob: data: with no network egress.
+            "script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval'",
+            "style-src 'self' 'unsafe-inline'",
+            "img-src 'self' data: blob:",
+            "media-src 'self' blob: mediastream:",
+            "font-src 'self' data:",
+            "connect-src 'self' blob: data:",
+            "worker-src 'self' blob:",
+            "manifest-src 'self'",
+            "object-src 'none'",
+            "base-uri 'self'",
+            "form-action 'none'",
+            "frame-src 'none'",
+          ].join('; '),
+        },
+        injectTo: 'head-prepend',
+      },
+    ]
+  },
+})
+
 export default defineConfig({
   base: '/AllTools/',
   plugins: [
+    cspPlugin(),
     react(),
     VitePWA({
       registerType: 'autoUpdate',

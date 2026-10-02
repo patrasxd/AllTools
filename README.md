@@ -296,7 +296,7 @@ All data is stored purely in client-side browser `localStorage` or `IndexedDB` u
 | `alltools:notes:*`   | `JSON Object`                                        | Quick Notes saved items and checklists |
 | `alltools:ruler:ppi` | `number`                                             | Calibrated screen pixels-per-inch      |
 
-No data, file contents, camera feeds, or audio waveforms are transmitted over the network.
+No data, file contents, camera feeds, or audio waveforms are transmitted over the network. Production builds enforce a strict Content Security Policy (`connect-src 'self'`), providing a technical guarantee that the application cannot send data to external servers. All computations, conversions, and document processing execute purely client-side within your browser.
 
 ---
 
