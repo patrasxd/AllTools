@@ -42,6 +42,59 @@ export interface CompressionConfig {
   targetMaxKb: number | null // e.g. 2048 (2MB) or 500 (500KB)
 }
 
+export type VectorizeMode = 'color' | 'bw'
+export type VectorizeSmoothing = 'low' | 'medium' | 'high'
+
+export interface VectorizeConfig {
+  mode: VectorizeMode
+  numberOfColors: number // 2 to 64 (color mode)
+  bwThreshold: number // 10 to 240 (bw mode)
+  speckleFilter?: number // 0 to 64 (corresponds to pathomit, default: 4)
+  smoothing?: VectorizeSmoothing
+  rightAngleEnhance?: boolean
+  lineFilter?: boolean
+}
+
+export interface VectorizeResult {
+  svg: string
+  sizeBytes: number
+  pathsCount: number
+  durationMs: number
+}
+
+export interface VectorizeWorkerRequest {
+  id: number
+  type: 'vectorize'
+  width: number
+  height: number
+  buffer: ArrayBuffer
+  config: VectorizeConfig
+}
+
+export interface VectorizeWorkerSuccessResponse {
+  id: number
+  type: 'success'
+  svg: string
+  pathsCount: number
+  durationMs: number
+}
+
+export interface VectorizeWorkerErrorResponse {
+  id: number
+  type: 'error'
+  error: string
+}
+
+export type VectorizeWorkerResponse = VectorizeWorkerSuccessResponse | VectorizeWorkerErrorResponse
+
+export interface BgRemovalConfig {
+  enabled: boolean
+  color: string // Hex color string, e.g. '#ffffff'
+  tolerance: number // 1 to 100 (%)
+  mode: 'contiguous' | 'all'
+  feather: number // 0 to 4 px
+}
+
 export interface ImageStudioState {
   originalFile: File | null
   originalImage: HTMLImageElement | null
@@ -52,5 +105,7 @@ export interface ImageStudioState {
   watermark: WatermarkConfig
   resize: ResizeConfig
   compression: CompressionConfig
-  activeTab: 'watermark' | 'resize' | 'format'
+  vectorize: VectorizeConfig
+  bgRemoval: BgRemovalConfig
+  activeTab: 'crop' | 'remove-bg' | 'watermark' | 'format' | 'vectorize'
 }

@@ -1,4 +1,4 @@
-import { Point, SketchTool, ShapeFillMode } from '../types'
+import { Point, SketchTool, ShapeFillMode, SelectionRect } from '../types'
 
 export interface RgbaColor {
   r: number
@@ -270,11 +270,12 @@ export function getCanvasCoordinates(
 }
 
 /**
- * Copy canvas content (or a specific bounding rect) to clipboard
+ * Copy canvas content (or a specific bounding rect with optional polygon clipping mask) to clipboard
  */
 export async function copyCanvasToClipboard(
   canvas: HTMLCanvasElement,
-  cropRect?: { x: number; y: number; width: number; height: number }
+  cropRect?: { x: number; y: number; width: number; height: number },
+  clipPoints?: Point[]
 ): Promise<boolean> {
   if (!navigator.clipboard || typeof ClipboardItem === 'undefined') {
     return false
@@ -287,17 +288,31 @@ export async function copyCanvasToClipboard(
     cropped.height = cropRect.height
     const cCtx = cropped.getContext('2d')
     if (cCtx) {
-      cCtx.drawImage(
-        canvas,
-        cropRect.x,
-        cropRect.y,
-        cropRect.width,
-        cropRect.height,
-        0,
-        0,
-        cropRect.width,
-        cropRect.height
-      )
+      if (clipPoints && clipPoints.length >= 3) {
+        cCtx.save()
+        cCtx.translate(-cropRect.x, -cropRect.y)
+        cCtx.beginPath()
+        cCtx.moveTo(clipPoints[0].x, clipPoints[0].y)
+        for (let i = 1; i < clipPoints.length; i++) {
+          cCtx.lineTo(clipPoints[i].x, clipPoints[i].y)
+        }
+        cCtx.closePath()
+        cCtx.clip()
+        cCtx.drawImage(canvas, 0, 0)
+        cCtx.restore()
+      } else {
+        cCtx.drawImage(
+          canvas,
+          cropRect.x,
+          cropRect.y,
+          cropRect.width,
+          cropRect.height,
+          0,
+          0,
+          cropRect.width,
+          cropRect.height
+        )
+      }
       sourceCanvas = cropped
     }
   }
@@ -316,3 +331,111 @@ export async function copyCanvasToClipboard(
   })
 }
 
+/**
+ * Calculates bounding box from an arbitrary array of points
+ */
+export function getBoundingBoxFromPoints(points: Point[]): SelectionRect {
+  if (!points || points.length === 0) {
+    return { x: 0, y: 0, width: 0, height: 0 }
+  }
+  let minX = points[0].x
+  let minY = points[0].y
+  let maxX = points[0].x
+  let maxY = points[0].y
+  for (let i = 1; i < points.length; i++) {
+    const p = points[i]
+    if (p.x < minX) minX = p.x
+    if (p.y < minY) minY = p.y
+    if (p.x > maxX) maxX = p.x
+    if (p.y > maxY) maxY = p.y
+  }
+  return {
+    x: Math.round(minX),
+    y: Math.round(minY),
+    width: Math.max(1, Math.round(maxX - minX)),
+    height: Math.max(1, Math.round(maxY - minY)),
+  }
+}
+
+/**
+ * Renders a realistic graphite pencil stroke segment with natural paper tooth grain & opacity
+ */
+export function drawPencilSegment(
+  ctx: CanvasRenderingContext2D,
+  from: Point,
+  to: Point,
+  color: string,
+  size: number
+): void {
+  const rgba = hexToRgba(color)
+  const dx = to.x - from.x
+  const dy = to.y - from.y
+  const dist = Math.hypot(dx, dy)
+  const steps = Math.max(1, Math.ceil(dist / Math.max(1, size / 3)))
+  const radius = Math.max(0.5, size / 2)
+
+  ctx.save()
+
+  // 1. Semi-transparent core stroke (graphite core)
+  ctx.strokeStyle = `rgba(${rgba.r}, ${rgba.g}, ${rgba.b}, ${size === 1 ? 0.75 : 0.4})`
+  ctx.lineWidth = Math.max(0.75, size * 0.7)
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  ctx.beginPath()
+  ctx.moveTo(from.x, from.y)
+  ctx.lineTo(to.x, to.y)
+  ctx.stroke()
+
+  // 2. Micro-grain graphite texture particles along the stroke path
+  const speckCountPerStep = Math.max(2, Math.min(8, Math.round(size * 1.5)))
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps
+    const cx = from.x + dx * t
+    const cy = from.y + dy * t
+
+    for (let s = 0; s < speckCountPerStep; s++) {
+      const angle = Math.random() * Math.PI * 2
+      const r = Math.pow(Math.random(), 0.7) * radius
+      const px = Math.round(cx + Math.cos(angle) * r)
+      const py = Math.round(cy + Math.sin(angle) * r)
+      const alpha = 0.15 + Math.random() * 0.45
+      ctx.fillStyle = `rgba(${rgba.r}, ${rgba.g}, ${rgba.b}, ${alpha})`
+      ctx.fillRect(px, py, 1, 1)
+    }
+  }
+
+  ctx.restore()
+}
+
+/**
+ * Renders an initial realistic graphite pencil touch dot with micro-grain dispersion
+ */
+export function drawPencilDot(
+  ctx: CanvasRenderingContext2D,
+  point: Point,
+  color: string,
+  size: number
+): void {
+  const rgba = hexToRgba(color)
+  const radius = Math.max(0.5, size / 2)
+  const specks = Math.max(4, Math.round(size * 4))
+
+  ctx.save()
+
+  ctx.fillStyle = `rgba(${rgba.r}, ${rgba.g}, ${rgba.b}, ${size === 1 ? 0.8 : 0.45})`
+  ctx.beginPath()
+  ctx.arc(point.x, point.y, Math.max(0.5, radius * 0.7), 0, Math.PI * 2)
+  ctx.fill()
+
+  for (let s = 0; s < specks; s++) {
+    const angle = Math.random() * Math.PI * 2
+    const r = Math.pow(Math.random(), 0.7) * radius
+    const px = Math.round(point.x + Math.cos(angle) * r)
+    const py = Math.round(point.y + Math.sin(angle) * r)
+    const alpha = 0.15 + Math.random() * 0.45
+    ctx.fillStyle = `rgba(${rgba.r}, ${rgba.g}, ${rgba.b}, ${alpha})`
+    ctx.fillRect(px, py, 1, 1)
+  }
+
+  ctx.restore()
+}

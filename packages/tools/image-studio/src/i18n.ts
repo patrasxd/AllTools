@@ -4,6 +4,8 @@ export interface ImageStudioTranslations {
   titleCrop: string
   titleWatermark: string
   titleFormat: string
+  titleVectorize: string
+  titleRemoveBg: string
 
   // Top Bar StatsHeader
   labelSize: string
@@ -17,7 +19,11 @@ export interface ImageStudioTranslations {
   dropTitle: string
   dropSubtitle: string
   browseFiles: string
+  fromClipboard: string
+  pasteImage: string
   demoImage: string
+  noClipboardImage: string
+  clipboardError: string
 
   // Toolbar & Common
   original: string
@@ -25,8 +31,25 @@ export interface ImageStudioTranslations {
   holdForOriginal: string
   processing: string
   cropTab: string
+  removeBgTab: string
   watermarkTab: string
   formatTab: string
+  vectorizeTab: string
+
+  // Remove BG Tab
+  removeBgEnableLabel: string
+  removeBgEnableDesc: string
+  bgColorLabel: string
+  pickFromImage: string
+  pickingColor: string
+  tolerance: string
+  bgScope: string
+  scopeContiguous: string
+  scopeAll: string
+  feather: string
+  presetWhite: string
+  presetBlack: string
+  presetGreen: string
 
   // Crop Tab
   aspectRatio: string
@@ -70,6 +93,35 @@ export interface ImageStudioTranslations {
   budgetNone: string
   budgetHint: string
 
+  // Vectorize Tab
+  vectorizeHint: string
+  vectorMode: string
+  modeColor: string
+  modeBW: string
+  colorCount: string
+  bwThreshold: string
+  speckleFilter: string
+  speckleHint: string
+  curveSmoothing: string
+  smoothLow: string
+  smoothMedium: string
+  smoothHigh: string
+  advancedSection: string
+  rightAngles: string
+  lineFilter: string
+  previewOriginal: string
+  previewVector: string
+  compareSideBySide: string
+  compareToggle: string
+  downloadSvg: string
+  copySvg: string
+  copiedSvg: string
+  vectorizing: string
+  vectorStats: string
+  pathsCount: string
+  vectorTime: string
+  vectorError: string
+
   // Bottom Controls
   download: string
   copy: string
@@ -85,6 +137,8 @@ export const imageStudioTranslations: Record<'en' | 'pl', ImageStudioTranslation
     titleCrop: 'CROP & ASPECT RATIO',
     titleWatermark: 'WATERMARK & PROTECTION',
     titleFormat: 'OUTPUT FORMAT & COMPRESSION',
+    titleVectorize: 'RASTER TO SVG VECTORIZATION',
+    titleRemoveBg: 'REMOVE BACKGROUND & TRANSPARENCY',
 
     labelSize: 'SIZE',
     labelFormat: 'FORMAT',
@@ -94,17 +148,37 @@ export const imageStudioTranslations: Record<'en' | 'pl', ImageStudioTranslation
     statusSupported: 'SUPPORTED',
 
     dropTitle: 'Drop or browse image',
-    dropSubtitle: 'JPG, PNG, WebP, AVIF & iPhone HEIC',
+    dropSubtitle: 'JPG, PNG, WebP, AVIF, HEIC or paste (Ctrl+V)',
     browseFiles: 'Browse File',
+    fromClipboard: 'From Clipboard',
+    pasteImage: 'Paste from Clipboard',
     demoImage: 'Demo Image',
+    noClipboardImage: 'No image found in clipboard. You can also press Ctrl+V to paste.',
+    clipboardError: 'Unable to access clipboard. Please grant clipboard permissions or use Ctrl+V.',
 
     original: 'Original',
     showEdited: 'Show Edited',
     holdForOriginal: 'Hold or toggle to preview original',
     processing: 'Processing…',
     cropTab: 'Crop',
+    removeBgTab: 'Remove BG',
     watermarkTab: 'Watermark',
     formatTab: 'Format & Size',
+    vectorizeTab: 'Vectorize',
+
+    removeBgEnableLabel: 'Remove Background',
+    removeBgEnableDesc: 'Erase background color and create transparent areas',
+    bgColorLabel: 'Background Color',
+    pickFromImage: 'Pick from Image',
+    pickingColor: 'Click anywhere on the image…',
+    tolerance: 'Color Tolerance',
+    bgScope: 'Removal Scope',
+    scopeContiguous: 'From Edges',
+    scopeAll: 'All Pixels',
+    feather: 'Edge Softening',
+    presetWhite: 'White',
+    presetBlack: 'Black',
+    presetGreen: 'Green',
 
     aspectRatio: 'Aspect Ratio',
     presetOriginal: 'Original',
@@ -145,6 +219,35 @@ export const imageStudioTranslations: Record<'en' | 'pl', ImageStudioTranslation
     budgetNone: 'None',
     budgetHint: 'Smart compression optimizes for highest quality fitting within budget.',
 
+    vectorizeHint:
+      'Best suited for logos, icons, drawings, and scans. Photographs will produce a posterized effect and larger file size.',
+    vectorMode: 'Trace mode',
+    modeColor: 'Color',
+    modeBW: 'Black & White',
+    colorCount: 'Colors',
+    bwThreshold: 'B&W threshold',
+    speckleFilter: 'Speckle filter',
+    speckleHint: 'Filters out noise specks smaller than this radius.',
+    curveSmoothing: 'Curve smoothing',
+    smoothLow: 'Sharp',
+    smoothMedium: 'Balanced',
+    smoothHigh: 'Smooth',
+    advancedSection: 'Advanced settings',
+    rightAngles: 'Right-angle corners',
+    lineFilter: 'Line noise filter',
+    previewOriginal: 'Original (Raster)',
+    previewVector: 'Result (SVG)',
+    compareSideBySide: 'Side by side',
+    compareToggle: 'Toggle view',
+    downloadSvg: 'Download SVG',
+    copySvg: 'Copy SVG',
+    copiedSvg: 'Copied SVG',
+    vectorizing: 'Vectorizing in worker…',
+    vectorStats: 'Vector stats',
+    pathsCount: 'Paths',
+    vectorTime: 'Render time',
+    vectorError: 'Failed to vectorize image',
+
     download: 'Download',
     copy: 'Copy',
     copied: 'Copied',
@@ -157,6 +260,8 @@ export const imageStudioTranslations: Record<'en' | 'pl', ImageStudioTranslation
     titleCrop: 'KADROWANIE I PROPORCJE',
     titleWatermark: 'ZNAK WODNY I OCHRONA',
     titleFormat: 'FORMAT WYJŚCIOWY I KOMPRESJA',
+    titleVectorize: 'WEKTORYZACJA RASTRA DO SVG',
+    titleRemoveBg: 'USUWANIE TŁA I PRZEZROCZYSTOŚĆ',
 
     labelSize: 'ROZMIAR',
     labelFormat: 'FORMAT',
@@ -166,17 +271,37 @@ export const imageStudioTranslations: Record<'en' | 'pl', ImageStudioTranslation
     statusSupported: 'OBSŁUGA',
 
     dropTitle: 'Wybierz lub upuść zdjęcie',
-    dropSubtitle: 'JPG, PNG, WebP, AVIF oraz HEIC z iPhone',
+    dropSubtitle: 'JPG, PNG, WebP, AVIF, HEIC lub wklej (Ctrl+V)',
     browseFiles: 'Wybierz plik',
+    fromClipboard: 'Ze schowka',
+    pasteImage: 'Wklej ze schowka',
     demoImage: 'Zdjęcie demo',
+    noClipboardImage: 'Brak obrazu w schowku. Możesz również użyć skrótu Ctrl+V.',
+    clipboardError: 'Brak dostępu do schowka. Zezwól na dostęp lub użyj skrótu Ctrl+V.',
 
     original: 'Oryginał',
     showEdited: 'Pokaż edycję',
     holdForOriginal: 'Przytrzymaj lub kliknij, aby podejrzeć oryginał',
     processing: 'Przetwarzanie…',
     cropTab: 'Kadr',
+    removeBgTab: 'Usuń tło',
     watermarkTab: 'Znak wodny',
     formatTab: 'Format & Waga',
+    vectorizeTab: 'Wektoryzacja',
+
+    removeBgEnableLabel: 'Usuwanie tła',
+    removeBgEnableDesc: 'Usuń wybrany kolor tła i utwórz przezroczyste piksele',
+    bgColorLabel: 'Kolor tła do usunięcia',
+    pickFromImage: 'Pobierz z obrazu',
+    pickingColor: 'Kliknij w dowolne miejsce obrazu…',
+    tolerance: 'Tolerancja koloru',
+    bgScope: 'Obszar usuwania',
+    scopeContiguous: 'Od krawędzi',
+    scopeAll: 'Cały obraz',
+    feather: 'Zmiękczenie krawędzi',
+    presetWhite: 'Biały',
+    presetBlack: 'Czarny',
+    presetGreen: 'Zielony',
 
     aspectRatio: 'Proporcje kadru',
     presetOriginal: 'Oryginał',
@@ -216,6 +341,35 @@ export const imageStudioTranslations: Record<'en' | 'pl', ImageStudioTranslation
     targetFileSize: 'Limit wagi pliku',
     budgetNone: 'Brak',
     budgetHint: 'Inteligentna kompresja dobiera najwyższą jakość mieszczącą się w limicie.',
+
+    vectorizeHint:
+      'Najlepiej działa na logo, ikonach, rysunkach i skanach. Zdjęcia dadzą efekt posteryzacji i duży plik.',
+    vectorMode: 'Tryb śledzenia',
+    modeColor: 'Kolor',
+    modeBW: 'Czarno-biały',
+    colorCount: 'Liczba kolorów',
+    bwThreshold: 'Próg czerni i bieli',
+    speckleFilter: 'Filtr drobnych plamek',
+    speckleHint: 'Ignoruje plamki i zakłócenia mniejsze niż zadana wielkość.',
+    curveSmoothing: 'Wygładzanie krzywych',
+    smoothLow: 'Ostre',
+    smoothMedium: 'Zbalansowane',
+    smoothHigh: 'Gładkie',
+    advancedSection: 'Zaawansowane opcje',
+    rightAngles: 'Kąty proste',
+    lineFilter: 'Filtr linii szumowych',
+    previewOriginal: 'Oryginał (Raster)',
+    previewVector: 'Wynik (SVG)',
+    compareSideBySide: 'Obok siebie',
+    compareToggle: 'Przełącznik',
+    downloadSvg: 'Pobierz SVG',
+    copySvg: 'Kopiuj SVG',
+    copiedSvg: 'Skopiowano SVG',
+    vectorizing: 'Wektoryzowanie w tle…',
+    vectorStats: 'Właściwości wektora',
+    pathsCount: 'Liczba ścieżek',
+    vectorTime: 'Czas generowania',
+    vectorError: 'Błąd podczas wektoryzacji grafiki',
 
     download: 'Pobierz',
     copy: 'Kopiuj',

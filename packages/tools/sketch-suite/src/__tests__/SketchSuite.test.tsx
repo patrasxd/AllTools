@@ -32,6 +32,8 @@ beforeEach(() => {
         measureText: vi.fn().mockReturnValue({ width: 50 }),
         fillText: vi.fn(),
         drawImage: vi.fn(),
+        closePath: vi.fn(),
+        clip: vi.fn(),
         setLineDash: vi.fn(),
         strokeRect: vi.fn(),
       }
@@ -252,11 +254,11 @@ describe('SketchSuite UI Component', () => {
     fireEvent.pointerMove(window, { clientX: 200, clientY: 220 })
     fireEvent.pointerUp(window)
 
-    // Text input inside the on-canvas box
-    const textInput = textBox?.querySelector('input.paint-text-box-input') as HTMLInputElement
+    // Text input inside the on-canvas box (multiline textarea)
+    const textInput = textBox?.querySelector('.paint-text-box-input') as HTMLTextAreaElement
     expect(textInput).toBeDefined()
-    fireEvent.change(textInput, { target: { value: 'Hello Paint' } })
-    expect(textInput.value).toBe('Hello Paint')
+    fireEvent.change(textInput, { target: { value: 'Hello\nPaint' } })
+    expect(textInput.value).toBe('Hello\nPaint')
 
     // Commit button inside the drag bar
     const commitBtn = textBox?.querySelector('.paint-text-box-btn--commit') as HTMLButtonElement
@@ -264,6 +266,27 @@ describe('SketchSuite UI Component', () => {
     fireEvent.click(commitBtn)
 
     // Text box closes after committing onto canvas
+    expect(container.querySelector('.paint-canvas-text-box')).toBeNull()
+  })
+
+  it('allows committing multiline text box using Ctrl+Enter shortcut', () => {
+    const { container } = render(<SketchSuite locale="en" />)
+    const textToolBtn = screen.getByTitle('Text Tool')
+    fireEvent.click(textToolBtn)
+
+    const mainCanvas = container.querySelector('canvas.paint-canvas') as HTMLCanvasElement
+    fireEvent.pointerDown(mainCanvas, { clientX: 100, clientY: 100 })
+
+    const textBox = container.querySelector('.paint-canvas-text-box')
+    const textInput = textBox?.querySelector('.paint-text-box-input') as HTMLTextAreaElement
+    fireEvent.change(textInput, { target: { value: 'Line 1\nLine 2' } })
+
+    // Plain Enter should not close the box (it allows multiline typing)
+    fireEvent.keyDown(textInput, { key: 'Enter' })
+    expect(container.querySelector('.paint-canvas-text-box')).not.toBeNull()
+
+    // Ctrl+Enter commits the box
+    fireEvent.keyDown(textInput, { key: 'Enter', ctrlKey: true })
     expect(container.querySelector('.paint-canvas-text-box')).toBeNull()
   })
 
@@ -415,5 +438,87 @@ describe('SketchSuite UI Component', () => {
     expect(screen.getByRole('button', { name: 'Kopiuj' })).toBeDefined()
     expect(screen.getByRole('button', { name: 'Anuluj' })).toBeDefined()
   })
+
+  it('renders 3 selection modes (rect, freehand, polygon) in ribbon when select tool is active', () => {
+    const { container } = render(<SketchSuite locale="en" />)
+    const selectToolBtn = screen.getByRole('button', { name: /select \(rectangle\)/i })
+    fireEvent.click(selectToolBtn)
+
+    // Select dynamic box should be visible
+    const selectBox = container.querySelector('.paint-dynamic-box--select')
+    expect(selectBox).not.toBeNull()
+
+    // Mode buttons row
+    const modesRow = selectBox?.querySelector('.paint-select-modes-row')
+    expect(modesRow).not.toBeNull()
+    const modeButtons = modesRow?.querySelectorAll('button')
+    expect(modeButtons?.length).toBe(3)
+
+    // Default active mode is Rect
+    const rectBtn = screen.getByRole('button', { name: /rectangular selection/i })
+    expect(rectBtn.classList.contains('active')).toBe(true)
+
+    // Switch to Freehand Lasso
+    const freehandBtn = screen.getByRole('button', { name: /freehand lasso/i })
+    fireEvent.click(freehandBtn)
+    expect(freehandBtn.classList.contains('active')).toBe(true)
+    expect(rectBtn.classList.contains('active')).toBe(false)
+
+    // Switch to Polygonal Lasso
+    const polygonBtn = screen.getByRole('button', { name: /polygonal lasso/i })
+    fireEvent.click(polygonBtn)
+    expect(polygonBtn.classList.contains('active')).toBe(true)
+    expect(freehandBtn.classList.contains('active')).toBe(false)
+  })
+
+  it('handles polygon lasso point placement and finalize with Enter key', () => {
+    const { container } = render(<SketchSuite locale="en" />)
+    const selectToolBtn = screen.getByRole('button', { name: /select \(rectangle\)/i })
+    fireEvent.click(selectToolBtn)
+
+    // Switch to Polygonal Lasso
+    const polygonBtn = screen.getByRole('button', { name: /polygonal lasso/i })
+    fireEvent.click(polygonBtn)
+
+    const canvas = container.querySelector('.paint-canvas') as HTMLCanvasElement
+    expect(canvas).toBeDefined()
+
+    // Click 3 points on canvas
+    fireEvent.pointerDown(canvas, { clientX: 50, clientY: 50 })
+    fireEvent.pointerDown(canvas, { clientX: 150, clientY: 50 })
+    fireEvent.pointerDown(canvas, { clientX: 100, clientY: 150 })
+
+    // Status bar should show "3 pts"
+    const statusBar = container.querySelector('.paint-status-bar')
+    expect(statusBar?.textContent).toContain('3 pts')
+
+    // Press Enter to close polygon
+    fireEvent.keyDown(window, { key: 'Enter' })
+
+    // Polygon finalized: status bar now indicates selection with dimensions
+    expect(statusBar?.textContent).toContain('Selection:')
+    expect(statusBar?.textContent).toContain('100 × 100 px')
+  })
+
+  it('applies tool-specific cursor classes to canvas element', () => {
+    const { container } = render(<SketchSuite locale="en" />)
+    const canvas = container.querySelector('.paint-canvas') as HTMLCanvasElement
+    expect(canvas).toBeDefined()
+
+    // Default brush tool
+    expect(canvas.classList.contains('paint-canvas--tool-brush')).toBe(true)
+
+    // Select eyedropper
+    const eyedropperBtn = screen.getByRole('button', { name: /color picker/i })
+    fireEvent.click(eyedropperBtn)
+    expect(canvas.classList.contains('paint-canvas--tool-eyedropper')).toBe(true)
+
+    // Select tool
+    const selectBtn = screen.getByRole('button', { name: /select \(rectangle\)/i })
+    fireEvent.click(selectBtn)
+    expect(canvas.classList.contains('paint-canvas--tool-select')).toBe(true)
+    expect(canvas.classList.contains('paint-canvas--select-rect')).toBe(true)
+  })
 })
+
 

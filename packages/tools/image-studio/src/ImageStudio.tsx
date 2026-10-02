@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useId, useMemo } from 'react'
+import React, { useState, useEffect, useRef, useId, useMemo, useCallback } from 'react'
 import {
   BoardLayout,
   Button,
@@ -9,13 +9,24 @@ import {
   Input,
   DownloadIcon,
   CopyIcon,
-  RestartIcon,
   UploadIcon,
   CheckIcon,
   PhotoIcon,
 } from '@all/ui'
-import type { ImageFormat, AspectRatioPreset, WatermarkConfig, ResizeConfig, CompressionConfig } from './types'
-import { loadFileToImage, renderProcessedCanvas, exportCompressedBlob } from './utils/imageEngine'
+import type {
+  ImageFormat,
+  AspectRatioPreset,
+  WatermarkConfig,
+  ResizeConfig,
+  CompressionConfig,
+  VectorizeConfig,
+  VectorizeMode,
+  VectorizeSmoothing,
+  BgRemovalConfig,
+} from './types'
+import { loadFileToImage, renderProcessedCanvas, exportCompressedBlob, calculateDimensions } from './utils/imageEngine'
+import { extractImageDataFromSource } from './utils/vectorEngine'
+import { useVectorizeWorker } from './utils/useVectorizeWorker'
 import { imageStudioTranslations } from './i18n'
 import './styles/image-studio.css'
 
@@ -24,7 +35,50 @@ export interface ToolComponentProps {
   setHeader?: (header: React.ReactNode) => void
   isEink?: boolean
   theme?: string
+  isDirty?: boolean
+  setIsDirty?: (dirty: boolean) => void
   onSave?: (data: unknown) => void
+}
+
+function ClipboardIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+      <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+    </svg>
+  )
+}
+
+function PipetteIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      <path d="m19 11-4-4" />
+      <path d="m2 22 5.5-1.5L21.1 6.9a2.1 2.1 0 0 0 0-3l-1-1a2.1 2.1 0 0 0-3 0L3.5 16.5 2 22" />
+      <path d="m18 8 2 2" />
+    </svg>
+  )
 }
 
 function formatBytes(bytes: number): string {
@@ -35,7 +89,7 @@ function formatBytes(bytes: number): string {
   return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`
 }
 
-export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolComponentProps) {
+export function ImageStudio({ locale = 'en', setHeader, isEink = false, setIsDirty }: ToolComponentProps) {
   const t = imageStudioTranslations[locale] || imageStudioTranslations.en
   const fileInputId = useId()
 
@@ -70,7 +124,34 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
   const [isDragging, setIsDragging] = useState<boolean>(false)
 
   // ─── Active Tool Tab ────────────────────────────────────────
-  const [activeTab, setActiveTab] = useState<'crop' | 'watermark' | 'format'>('crop')
+  const [activeTab, setActiveTab] = useState<'crop' | 'remove-bg' | 'watermark' | 'format' | 'vectorize'>('crop')
+
+  // ─── Background Removal State ───────────────────────────────
+  const [bgRemoval, setBgRemoval] = useState<BgRemovalConfig>({
+    enabled: false,
+    color: '#ffffff',
+    tolerance: 20,
+    mode: 'contiguous',
+    feather: 1,
+  })
+  const [isPickingColor, setIsPickingColor] = useState<boolean>(false)
+  const [vectorInputDataUrl, setVectorInputDataUrl] = useState<string>('')
+
+  // ─── Vectorization State ────────────────────────────────────
+  const [vectorConfig, setVectorConfig] = useState<VectorizeConfig>({
+    mode: 'color',
+    numberOfColors: 16,
+    bwThreshold: 128,
+    speckleFilter: 4,
+    smoothing: 'high',
+    rightAngleEnhance: false,
+    lineFilter: false,
+  })
+  const [vectorViewMode, setVectorViewMode] = useState<'split' | 'vector' | 'original'>('split')
+  const [copiedSvg, setCopiedSvg] = useState<boolean>(false)
+  const [vectorSvgBlobUrl, setVectorSvgBlobUrl] = useState<string>('')
+
+  const { isVectorizing, vectorResult, error: vectorError, runVectorize } = useVectorizeWorker()
 
   // ─── Configs ────────────────────────────────────────────────
   const [resize, setResize] = useState<ResizeConfig>({
@@ -131,6 +212,35 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
       }
     }
 
+    if (activeTab === 'vectorize') {
+      setHeader(
+        <StatsHeader
+          items={[
+            {
+              key: 'size',
+              label: t.labelSize,
+              value: vectorResult ? formatBytes(vectorResult.sizeBytes) : '—',
+            },
+            {
+              key: 'format',
+              label: t.labelFormat,
+              value: 'SVG',
+            },
+            {
+              key: 'dim',
+              label: t.labelDims,
+              value: `${outputDimensions.w > 0 ? outputDimensions.w : loadedImage.naturalWidth}×${
+                outputDimensions.h > 0 ? outputDimensions.h : loadedImage.naturalHeight
+              }px`,
+            },
+          ]}
+        />,
+      )
+      return () => {
+        setHeader(null)
+      }
+    }
+
     const saved =
       originalBytes > 0 && outputBytes > 0 ? Math.round(((originalBytes - outputBytes) / originalBytes) * 100) : 0
 
@@ -159,7 +269,12 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
     return () => {
       setHeader(null)
     }
-  }, [setHeader, t, loadedImage, originalBytes, outputBytes, format, outputDimensions])
+  }, [setHeader, t, loadedImage, originalBytes, outputBytes, format, outputDimensions, activeTab, vectorResult])
+
+  // ─── Track Unsaved Edits / Navigation Guard ─────────────────
+  useEffect(() => {
+    setIsDirty?.(loadedImage !== null || isLoading || isVectorizing)
+  }, [loadedImage, isLoading, isVectorizing, setIsDirty])
 
   // ─── Instant 60fps Live Preview Render ──────────────────────
   // Draws immediately to the preview canvas without triggering compression encoding or loading spinner
@@ -182,7 +297,7 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
       return
     }
 
-    const processed = renderProcessedCanvas(loadedImage, resize, watermark)
+    const processed = renderProcessedCanvas(loadedImage, resize, watermark, bgRemoval)
     if (canvas.width !== processed.width) canvas.width = processed.width
     if (canvas.height !== processed.height) canvas.height = processed.height
     const ctx = canvas.getContext('2d')
@@ -191,7 +306,7 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
       ctx.drawImage(processed, 0, 0)
     }
     setOutputDimensions({ w: processed.width, h: processed.height })
-  }, [loadedImage, resize, watermark, showOriginal])
+  }, [loadedImage, resize, watermark, bgRemoval, showOriginal, activeTab])
 
   // ─── Debounced Compression & Export Pipeline ────────────────
   // Runs in background after changes stop so dragging remains buttery smooth
@@ -219,7 +334,43 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
     }, 180)
 
     return () => clearTimeout(timer)
-  }, [loadedImage, resize, watermark, format, compression, isDragging])
+  }, [loadedImage, resize, watermark, bgRemoval, format, compression, isDragging, activeTab])
+
+  // ─── Debounced Vectorization Pipeline (Unified Single Image) ─
+  // Uses cropped, background-removed, watermarked image rather than raw source photograph
+  useEffect(() => {
+    if (!loadedImage || activeTab !== 'vectorize') return
+
+    const timer = setTimeout(() => {
+      try {
+        const processedForVector = renderProcessedCanvas(loadedImage, resize, watermark, bgRemoval)
+        setVectorInputDataUrl(processedForVector.toDataURL())
+        const sourceData = extractImageDataFromSource(processedForVector, 2000)
+        runVectorize(sourceData, vectorConfig)
+      } catch (err) {
+        console.error('Vectorization extraction error:', err)
+      }
+    }, 220)
+
+    return () => clearTimeout(timer)
+  }, [loadedImage, activeTab, vectorConfig, resize, watermark, bgRemoval, runVectorize])
+
+  // ─── Synchronize Vector SVG Blob URL for Safe Display ────────
+  useEffect(() => {
+    if (!vectorResult?.svg) {
+      setVectorSvgBlobUrl('')
+      return
+    }
+    const blob = new Blob([vectorResult.svg], { type: 'image/svg+xml' })
+    const url = URL.createObjectURL(blob)
+    setVectorSvgBlobUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev)
+      return url
+    })
+    return () => {
+      URL.revokeObjectURL(url)
+    }
+  }, [vectorResult?.svg])
 
   // ─── Natural Drag-to-Pan (Inverted Offset for 1:1 motion) ───
   const handlePointerDown = (e: React.PointerEvent) => {
@@ -291,35 +442,155 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
     })
   }
 
-  // ─── File Load Handlers ─────────────────────────────────────
-  const handleFileSelect = async (file: File) => {
-    setIsLoading(true)
-    try {
-      const baseName = file.name.replace(/\.[^/.]+$/, '')
-      setOriginalFileName(baseName)
+  // ─── Click on Canvas to Sample Background Color ────────────
+  const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!loadedImage || !previewCanvasRef.current) return
+    if (activeTab !== 'remove-bg' && !isPickingColor) return
 
-      const { image, sizeBytes } = await loadFileToImage(file)
-      setLoadedImage(image)
-      setOriginalBytes(sizeBytes)
-      setResize((r) => ({
-        ...r,
-        preset: 'original',
-        customWidth: image.naturalWidth,
-        customHeight: image.naturalHeight,
-        crop: {
-          offsetX: 0,
-          offsetY: 0,
-          zoom: 1,
-          showPassportGuide: true,
-        },
-      }))
-    } catch (err) {
-      console.error('Failed to load image:', err)
-      alert(t.loadError)
-    } finally {
-      setIsLoading(false)
+    const canvas = previewCanvasRef.current
+    const rect = canvas.getBoundingClientRect()
+    if (rect.width === 0 || rect.height === 0) return
+
+    const scaleX = canvas.width / rect.width
+    const scaleY = canvas.height / rect.height
+    const canvasX = (e.clientX - rect.left) * scaleX
+    const canvasY = (e.clientY - rect.top) * scaleY
+
+    const { srcX, srcY, srcW, srcH } = calculateDimensions(loadedImage.naturalWidth, loadedImage.naturalHeight, resize)
+    const imgX = Math.max(0, Math.min(loadedImage.naturalWidth - 1, Math.floor(srcX + (canvasX / canvas.width) * srcW)))
+    const imgY = Math.max(0, Math.min(loadedImage.naturalHeight - 1, Math.floor(srcY + (canvasY / canvas.height) * srcH)))
+
+    // Sample pristine RGB pixel from loadedImage to avoid picking already transparent pixels
+    const sampleCanvas = document.createElement('canvas')
+    sampleCanvas.width = 1
+    sampleCanvas.height = 1
+    const sCtx = sampleCanvas.getContext('2d')
+    if (sCtx) {
+      sCtx.drawImage(loadedImage, imgX, imgY, 1, 1, 0, 0, 1, 1)
+      const pixel = sCtx.getImageData(0, 0, 1, 1).data
+      const hex =
+        '#' +
+        [pixel[0], pixel[1], pixel[2]]
+          .map((c) => c.toString(16).padStart(2, '0'))
+          .join('')
+      setBgRemoval((b) => ({ ...b, color: hex, enabled: true }))
+      if (format === 'image/jpeg') {
+        setFormat('image/png')
+      }
+      setIsPickingColor(false)
     }
   }
+
+  // ─── File Load Handlers ─────────────────────────────────────
+  const handleFileSelect = useCallback(
+    async (file: File) => {
+      setIsLoading(true)
+      try {
+        const baseName = file.name.replace(/\.[^/.]+$/, '')
+        setOriginalFileName(baseName)
+
+        const { image, sizeBytes } = await loadFileToImage(file)
+        setLoadedImage(image)
+        setOriginalBytes(sizeBytes)
+        setOutputDimensions({ w: image.naturalWidth, h: image.naturalHeight })
+        setResize((r) => ({
+          ...r,
+          preset: 'original',
+          customWidth: image.naturalWidth,
+          customHeight: image.naturalHeight,
+          crop: {
+            offsetX: 0,
+            offsetY: 0,
+            zoom: 1,
+            showPassportGuide: true,
+          },
+        }))
+        setBgRemoval({
+          enabled: false,
+          color: '#ffffff',
+          tolerance: 20,
+          mode: 'contiguous',
+          feather: 1,
+        })
+        setIsPickingColor(false)
+      } catch (err) {
+        console.error('Failed to load image:', err)
+        alert(t.loadError)
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [t.loadError],
+  )
+
+  const handlePasteFromClipboard = useCallback(async () => {
+    try {
+      if (navigator.clipboard?.read) {
+        const items = await navigator.clipboard.read()
+        for (const item of items) {
+          const imgType = item.types.find((type) => type.startsWith('image/'))
+          if (imgType) {
+            const blob = await item.getType(imgType)
+            const ext = imgType.split('/')[1] || 'png'
+            const file = new File([blob], `clipboard_${Date.now()}.${ext}`, { type: imgType })
+            await handleFileSelect(file)
+            return
+          }
+        }
+      }
+      alert(t.noClipboardImage)
+    } catch (err) {
+      console.warn('Clipboard read error:', err)
+      alert(t.clipboardError)
+    }
+  }, [handleFileSelect, t.noClipboardImage, t.clipboardError])
+
+  // Global paste handler (Ctrl+V)
+  useEffect(() => {
+    const handleGlobalPaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items
+      const files = e.clipboardData?.files
+
+      let imageFile: File | null = null
+
+      if (items) {
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i]
+          if (item.type.startsWith('image/')) {
+            const blob = item.getAsFile()
+            if (blob) {
+              const ext = item.type.split('/')[1] || 'png'
+              imageFile =
+                blob instanceof File ? blob : new File([blob], `pasted_${Date.now()}.${ext}`, { type: item.type })
+              break
+            }
+          }
+        }
+      }
+
+      if (!imageFile && files && files.length > 0) {
+        for (let i = 0; i < files.length; i++) {
+          const f = files[i]
+          if (f.type.startsWith('image/') || /\.(png|jpe?g|webp|bmp|gif|svg|heic|heif)$/i.test(f.name)) {
+            imageFile = f
+            break
+          }
+        }
+      }
+
+      if (imageFile) {
+        e.preventDefault()
+        handleFileSelect(imageFile)
+      }
+    }
+
+    window.addEventListener('paste', handleGlobalPaste)
+    document.addEventListener('paste', handleGlobalPaste)
+    return () => {
+      window.removeEventListener('paste', handleGlobalPaste)
+      document.removeEventListener('paste', handleGlobalPaste)
+    }
+  }, [handleFileSelect])
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
@@ -336,6 +607,19 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
     const a = document.createElement('a')
     a.href = url
     a.download = `${originalFileName}_edited.${ext}`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
+  }
+
+  const handleDownloadSvg = () => {
+    if (!vectorResult?.svg) return
+    const blob = new Blob([vectorResult.svg], { type: 'image/svg+xml' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${originalFileName}.svg`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -369,6 +653,18 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
     } catch (err) {
       console.warn('Clipboard write error:', err)
       handleDownload()
+    }
+  }
+
+  const handleCopySvg = async () => {
+    if (!vectorResult?.svg) return
+    try {
+      await navigator.clipboard.writeText(vectorResult.svg)
+      setCopiedSvg(true)
+      setTimeout(() => setCopiedSvg(false), 2000)
+    } catch (err) {
+      console.warn('Clipboard SVG copy error:', err)
+      handleDownloadSvg()
     }
   }
 
@@ -406,26 +702,6 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
     }
   }
 
-  const resetAll = () => {
-    setWatermark({
-      enabled: false,
-      text: t.defaultWatermarkText,
-      opacity: 0.4,
-      fontSize: 32,
-      mode: 'diagonal-single',
-      color: '#ffffff',
-    })
-    setResize({
-      preset: 'original',
-      customWidth: loadedImage?.naturalWidth || 1200,
-      customHeight: loadedImage?.naturalHeight || 800,
-      lockAspect: true,
-      cropMode: 'cover',
-      crop: { offsetX: 0, offsetY: 0, zoom: 1, showPassportGuide: true },
-    })
-    setFormat('image/jpeg')
-    setCompression({ quality: 85, targetMaxKb: null })
-  }
 
   // ─── Status Title & Stats Computation ───────────────────────
   const statusTitle = useMemo(() => {
@@ -433,10 +709,14 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
     switch (activeTab) {
       case 'crop':
         return t.titleCrop
+      case 'remove-bg':
+        return t.titleRemoveBg
       case 'watermark':
         return t.titleWatermark
       case 'format':
         return t.titleFormat
+      case 'vectorize':
+        return t.titleVectorize
       default:
         return ''
     }
@@ -499,6 +779,15 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
                     >
                       {t.browseFiles}
                     </Button>
+                    <Button
+                      id="img-paste-btn"
+                      variant="secondary"
+                      size="sm"
+                      onClick={handlePasteFromClipboard}
+                      icon={<ClipboardIcon />}
+                    >
+                      {t.fromClipboard}
+                    </Button>
                     <Button id="img-demo-btn" variant="secondary" size="sm" onClick={loadDemoImage}>
                       {t.demoImage}
                     </Button>
@@ -513,31 +802,49 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
                       {originalFileName}
                     </span>
                     <div className="img-toolbar-actions">
-                      <Button
-                        id="img-original-toggle-btn"
-                        variant={showOriginal ? 'primary' : 'secondary'}
-                        size="sm"
-                        onClick={() => setShowOriginal((v) => !v)}
-                        title={showOriginal ? t.showEdited : t.holdForOriginal}
-                      >
-                        {showOriginal ? t.showEdited : t.original}
-                      </Button>
+                      {activeTab === 'vectorize' ? (
+                        <PillGroup<'vector' | 'split' | 'original'>
+                          size="sm"
+                          options={[
+                            { value: 'vector', label: t.previewVector },
+                            { value: 'split', label: t.compareSideBySide },
+                            { value: 'original', label: t.previewOriginal },
+                          ]}
+                          value={vectorViewMode}
+                          onChange={setVectorViewMode}
+                        />
+                      ) : (
+                        <Button
+                          id="img-original-toggle-btn"
+                          variant={showOriginal ? 'primary' : 'secondary'}
+                          size="sm"
+                          onClick={() => setShowOriginal((v) => !v)}
+                          title={showOriginal ? t.showEdited : t.holdForOriginal}
+                        >
+                          {showOriginal ? t.showEdited : t.original}
+                        </Button>
+                      )}
                     </div>
                   </div>
 
                   <div className="img-editor-grid">
                     {/* Left Column: Interactive Canvas Viewport */}
                     <div className="img-preview-box">
+                      {/* Raster Canvas Viewport (Crop, Remove BG, Watermark, Format) - preserved in DOM */}
                       <div
-                        className={`img-canvas-wrap${isDragging ? ' img-canvas-wrap--dragging' : ''}`}
-                        onPointerDown={handlePointerDown}
-                        onPointerMove={handlePointerMove}
-                        onPointerUp={handlePointerUp}
-                        onPointerCancel={handlePointerUp}
-                        onWheel={handleWheel}
+                        className={`img-canvas-wrap${isDragging ? ' img-canvas-wrap--dragging' : ''}${
+                          activeTab === 'remove-bg' || isPickingColor ? ' img-canvas-wrap--picking' : ''
+                        }`}
+                        style={{ display: activeTab === 'vectorize' ? 'none' : 'flex' }}
+                        onPointerDown={activeTab === 'crop' ? handlePointerDown : undefined}
+                        onPointerMove={activeTab === 'crop' ? handlePointerMove : undefined}
+                        onPointerUp={activeTab === 'crop' ? handlePointerUp : undefined}
+                        onPointerCancel={activeTab === 'crop' ? handlePointerUp : undefined}
+                        onWheel={activeTab === 'crop' ? handleWheel : undefined}
+                        onClick={handleCanvasClick}
                       >
                         <div
-                          className="img-framed-container"
+                          className="img-framed-container img-checkerboard"
                           style={{
                             aspectRatio:
                               outputDimensions.w > 0 && outputDimensions.h > 0
@@ -573,7 +880,12 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
                                 </defs>
 
                                 {/* Dim outer framing slightly to highlight biometric face area */}
-                                <rect width="350" height="450" fill="rgba(0, 0, 0, 0.15)" mask="url(#id-photo-mask)" />
+                                <rect
+                                  width="350"
+                                  height="450"
+                                  fill="rgba(0, 0, 0, 0.15)"
+                                  mask="url(#id-photo-mask)"
+                                />
 
                                 {/* Central Head & Chin Biometric Oval (standard 70-80% height coverage) */}
                                 <ellipse
@@ -706,6 +1018,75 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
                           </div>
                         )}
                       </div>
+
+                      {/* Vector SVG Viewport (Vectorize) */}
+                      {activeTab === 'vectorize' && (
+                        <div className="img-vector-container">
+                          {vectorViewMode === 'split' ? (
+                            <div className="img-vector-split">
+                              {/* Left: Original Raster */}
+                              <div className="img-vector-pane">
+                                <div className="img-vector-pane-header">
+                                  <span>{t.previewOriginal}</span>
+                                </div>
+                                <div className="img-vector-pane-body img-checkerboard">
+                                  <img
+                                    src={vectorInputDataUrl || loadedImage.src}
+                                    alt={t.previewOriginal}
+                                    className="img-vector-preview-img"
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Right: Traced SVG */}
+                              <div className="img-vector-pane">
+                                <div className="img-vector-pane-header">
+                                  <span>{t.previewVector}</span>
+                                </div>
+                                <div className="img-vector-pane-body img-checkerboard">
+                                  {vectorSvgBlobUrl ? (
+                                    <img
+                                      src={vectorSvgBlobUrl}
+                                      alt={t.previewVector}
+                                      className="img-vector-preview-img"
+                                    />
+                                  ) : null}
+                                </div>
+                              </div>
+                            </div>
+                          ) : vectorViewMode === 'vector' ? (
+                            <div className="img-vector-single img-checkerboard">
+                              {vectorSvgBlobUrl ? (
+                                <img
+                                  src={vectorSvgBlobUrl}
+                                  alt={t.previewVector}
+                                  className="img-vector-preview-img"
+                                />
+                              ) : null}
+                            </div>
+                          ) : (
+                            <div className="img-vector-single img-checkerboard">
+                              <img
+                                src={vectorInputDataUrl || loadedImage.src}
+                                alt={t.previewOriginal}
+                                className="img-vector-preview-img"
+                              />
+                            </div>
+                          )}
+
+                          {isVectorizing && (
+                            <div className="img-loading-overlay" role="status" aria-label={t.vectorizing}>
+                              {motionEnabled ? (
+                                <span className="img-loading-spinner" aria-hidden="true" />
+                              ) : (
+                                <span className="img-loading-static" aria-hidden="true">
+                                  ⏳
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     {/* Right Column: Context Settings Panel */}
@@ -819,7 +1200,168 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
                         </div>
                       )}
 
-                      {/* TAB 2: WATERMARK & PROTECTION */}
+                      {/* TAB 2: REMOVE BACKGROUND & TRANSPARENCY */}
+                      {activeTab === 'remove-bg' && (
+                        <div className="img-tab-content">
+                          {/* Polished Enable/Disable Banner Card */}
+                          <div className="img-feature-toggle-card">
+                            <div className="img-feature-toggle-info">
+                              <span className="img-feature-toggle-title">{t.removeBgEnableLabel}</span>
+                              <span className="img-feature-toggle-desc">{t.removeBgEnableDesc}</span>
+                            </div>
+                            <Toggle
+                              id="img-bgremoval-toggle"
+                              checked={bgRemoval.enabled}
+                              onChange={(checked) => {
+                                setBgRemoval((b) => ({ ...b, enabled: checked }))
+                                if (checked && format === 'image/jpeg') {
+                                  setFormat('image/png')
+                                }
+                              }}
+                              aria-label={t.removeBgEnableLabel}
+                            />
+                          </div>
+
+                          {/* Feature Options (dimmed when background removal is inactive) */}
+                          <div
+                            className={`img-feature-body ${!bgRemoval.enabled ? 'img-feature-body--disabled' : ''}`}
+                          >
+                            {/* Color Sampling & Pipette */}
+                            <div className="img-panel-group">
+                              <label className="img-panel-label">{t.bgColorLabel}</label>
+
+                              {/* Prominent Eyedropper Action Button */}
+                              <Button
+                                id="img-pick-color-btn"
+                                variant={isPickingColor ? 'primary' : 'secondary'}
+                                size="sm"
+                                onClick={() => setIsPickingColor((v) => !v)}
+                                icon={<PipetteIcon />}
+                                style={{ width: '100%', marginBottom: '0.6rem' }}
+                              >
+                                {isPickingColor ? t.pickingColor : t.pickFromImage}
+                              </Button>
+
+                              {/* Native Color Picker & Hex Swatch */}
+                              <div className="img-color-picker-row" style={{ marginBottom: '0.6rem' }}>
+                                <input
+                                  id="img-bgremoval-color"
+                                  type="color"
+                                  value={bgRemoval.color}
+                                  onChange={(e) => {
+                                    setBgRemoval((b) => ({ ...b, color: e.target.value, enabled: true }))
+                                    if (format === 'image/jpeg') setFormat('image/png')
+                                  }}
+                                  className="img-color-input"
+                                  aria-label={t.bgColorLabel}
+                                />
+                                <span className="img-color-hex-text">{bgRemoval.color.toUpperCase()}</span>
+                              </div>
+
+                              {/* Balanced 4-Column Common Color Swatches */}
+                              <div className="img-grid-4">
+                                {[
+                                  { color: '#ffffff', label: t.presetWhite },
+                                  { color: '#000000', label: t.presetBlack },
+                                  { color: '#00ff00', label: 'Green' },
+                                  { color: '#f3f4f6', label: 'Gray' },
+                                ].map((p) => (
+                                  <Button
+                                    key={p.color}
+                                    variant={
+                                      bgRemoval.color.toLowerCase() === p.color.toLowerCase() ? 'primary' : 'secondary'
+                                    }
+                                    size="sm"
+                                    onClick={() => {
+                                      setBgRemoval((b) => ({ ...b, color: p.color, enabled: true }))
+                                      if (format === 'image/jpeg') setFormat('image/png')
+                                    }}
+                                  >
+                                    {p.label}
+                                  </Button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Removal Scope: Balanced 2-Column Grid */}
+                            <div className="img-panel-group">
+                              <label className="img-panel-label">{t.bgScope}</label>
+                              <div className="img-grid-2">
+                                <Button
+                                  variant={bgRemoval.mode === 'contiguous' ? 'primary' : 'secondary'}
+                                  size="sm"
+                                  onClick={() => setBgRemoval((b) => ({ ...b, mode: 'contiguous', enabled: true }))}
+                                >
+                                  {t.scopeContiguous}
+                                </Button>
+                                <Button
+                                  variant={bgRemoval.mode === 'all' ? 'primary' : 'secondary'}
+                                  size="sm"
+                                  onClick={() => setBgRemoval((b) => ({ ...b, mode: 'all', enabled: true }))}
+                                >
+                                  {t.scopeAll}
+                                </Button>
+                              </div>
+                            </div>
+
+                            {/* Tolerance Slider */}
+                            <div className="img-panel-group">
+                              <div className="img-panel-label-row">
+                                <label htmlFor="img-tolerance-slider" className="img-panel-label">
+                                  {t.tolerance}
+                                </label>
+                                <span className="img-panel-badge">{bgRemoval.tolerance}%</span>
+                              </div>
+                              <input
+                                id="img-tolerance-slider"
+                                type="range"
+                                min="1"
+                                max="100"
+                                step="1"
+                                value={bgRemoval.tolerance}
+                                onChange={(e) =>
+                                  setBgRemoval((b) => ({ ...b, tolerance: Number(e.target.value), enabled: true }))
+                                }
+                                className="img-slider"
+                                aria-label={t.tolerance}
+                              />
+                              <div className="img-slider-hints">
+                                <span>1%</span>
+                                <span>100%</span>
+                              </div>
+                            </div>
+
+                            {/* Feather / Edge Softening Slider */}
+                            <div className="img-panel-group">
+                              <div className="img-panel-label-row">
+                                <label htmlFor="img-feather-slider" className="img-panel-label">
+                                  {t.feather}
+                                </label>
+                                <span className="img-panel-badge">{bgRemoval.feather}px</span>
+                              </div>
+                              <input
+                                id="img-feather-slider"
+                                type="range"
+                                min="0"
+                                max="4"
+                                step="1"
+                                value={bgRemoval.feather}
+                                onChange={(e) =>
+                                  setBgRemoval((b) => ({ ...b, feather: Number(e.target.value), enabled: true }))
+                                }
+                                className="img-slider"
+                                aria-label={t.feather}
+                              />
+                              <div className="img-slider-hints">
+                                <span>0px</span>
+                                <span>4px</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* TAB 3: WATERMARK & PROTECTION */}
                       {activeTab === 'watermark' && (
                         <div className="img-tab-content">
                           {/* Polished Enable/Disable Banner Card */}
@@ -1016,6 +1558,87 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
                           </div>
                         </div>
                       )}
+
+                      {/* TAB 4: VECTORIZE TO SVG */}
+                      {activeTab === 'vectorize' && (
+                        <div className="img-tab-content">
+                          {/* Mode: Color vs B&W */}
+                          <div className="img-panel-group">
+                            <label className="img-panel-label">{t.vectorMode}</label>
+                            <div className="img-preset-grid">
+                              <Button
+                                variant={vectorConfig.mode === 'color' ? 'primary' : 'secondary'}
+                                size="sm"
+                                onClick={() => setVectorConfig((v) => ({ ...v, mode: 'color' }))}
+                              >
+                                {t.modeColor}
+                              </Button>
+                              <Button
+                                variant={vectorConfig.mode === 'bw' ? 'primary' : 'secondary'}
+                                size="sm"
+                                onClick={() => setVectorConfig((v) => ({ ...v, mode: 'bw' }))}
+                              >
+                                {t.modeBW}
+                              </Button>
+                            </div>
+                          </div>
+
+                          {/* Color mode options */}
+                          {vectorConfig.mode === 'color' ? (
+                            <div className="img-panel-group">
+                              <div className="img-panel-label-row">
+                                <label className="img-panel-label">{t.colorCount}</label>
+                                <span className="img-panel-badge">{vectorConfig.numberOfColors}</span>
+                              </div>
+                              <div className="img-preset-grid">
+                                {[2, 4, 8, 16, 32, 64].map((c) => (
+                                  <Button
+                                    key={c}
+                                    variant={vectorConfig.numberOfColors === c ? 'primary' : 'secondary'}
+                                    size="sm"
+                                    onClick={() => setVectorConfig((v) => ({ ...v, numberOfColors: c }))}
+                                  >
+                                    {c}
+                                  </Button>
+                                ))}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="img-panel-group">
+                              <div className="img-panel-label-row">
+                                <label htmlFor="img-vector-bw-thresh" className="img-panel-label">
+                                  {t.bwThreshold}
+                                </label>
+                                <span className="img-panel-badge">{vectorConfig.bwThreshold}</span>
+                              </div>
+                              <input
+                                id="img-vector-bw-thresh"
+                                type="range"
+                                min="10"
+                                max="240"
+                                step="2"
+                                value={vectorConfig.bwThreshold}
+                                onChange={(e) =>
+                                  setVectorConfig((v) => ({ ...v, bwThreshold: Number(e.target.value) }))
+                                }
+                                className="img-slider"
+                              />
+                              <div className="img-slider-hints">
+                                <span>10</span>
+                                <span>240</span>
+                              </div>
+                            </div>
+                          )}
+
+
+
+                          {vectorError && (
+                            <div className="img-help-text" style={{ color: 'var(--all-danger, #ef4444)' }}>
+                              {vectorError}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </>
@@ -1026,12 +1649,14 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
         controls={
           loadedImage ? (
             <ControlsBar>
-              <PillGroup<'crop' | 'watermark' | 'format'>
+              <PillGroup<'crop' | 'remove-bg' | 'watermark' | 'format' | 'vectorize'>
                 size="sm"
                 options={[
                   { value: 'crop', label: t.cropTab },
+                  { value: 'remove-bg', label: t.removeBgTab },
                   { value: 'watermark', label: t.watermarkTab },
                   { value: 'format', label: t.formatTab },
+                  { value: 'vectorize', label: t.vectorizeTab },
                 ]}
                 value={activeTab}
                 onChange={setActiveTab}
@@ -1041,22 +1666,34 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
                 id="img-download-btn"
                 variant="primary"
                 size="sm"
-                onClick={handleDownload}
+                onClick={activeTab === 'vectorize' ? handleDownloadSvg : handleDownload}
                 icon={<DownloadIcon />}
-                disabled={isLoading}
+                disabled={activeTab === 'vectorize' ? isVectorizing || !vectorResult : isLoading}
               >
-                {t.download}
+                {activeTab === 'vectorize' ? t.downloadSvg : t.download}
               </Button>
 
               <Button
                 id="img-copy-btn"
                 variant="secondary"
                 size="sm"
-                onClick={handleCopy}
-                icon={copied ? <CheckIcon /> : <CopyIcon />}
-                disabled={isLoading}
+                onClick={activeTab === 'vectorize' ? handleCopySvg : handleCopy}
+                icon={
+                  activeTab === 'vectorize' ? (
+                    copiedSvg ? (
+                      <CheckIcon />
+                    ) : (
+                      <CopyIcon />
+                    )
+                  ) : copied ? (
+                    <CheckIcon />
+                  ) : (
+                    <CopyIcon />
+                  )
+                }
+                disabled={activeTab === 'vectorize' ? isVectorizing || !vectorResult : isLoading}
               >
-                {copied ? t.copied : t.copy}
+                {activeTab === 'vectorize' ? (copiedSvg ? t.copiedSvg : t.copySvg) : copied ? t.copied : t.copy}
               </Button>
 
               <Button
@@ -1068,17 +1705,6 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false }: ToolCo
                 title={t.newImage}
               >
                 {t.newImage}
-              </Button>
-
-              <Button
-                id="img-reset-btn"
-                variant="ghost"
-                size="sm"
-                onClick={resetAll}
-                icon={<RestartIcon />}
-                title={t.reset}
-              >
-                {t.reset}
               </Button>
             </ControlsBar>
           ) : undefined

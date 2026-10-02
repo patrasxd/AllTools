@@ -1,5 +1,5 @@
 import heic2any from 'heic2any'
-import type { ImageFormat, ResizeConfig, WatermarkConfig } from '../types'
+import type { ImageFormat, ResizeConfig, WatermarkConfig, BgRemovalConfig } from '../types'
 
 /**
  * Loads a File into an HTMLImageElement, automatically decoding HEIC/HEIF if needed.
@@ -125,12 +125,130 @@ export function calculateDimensions(
 }
 
 /**
- * Renders the image with cropping/resizing and watermark onto an offscreen canvas.
+ * Converts a hex color string (#fff or #ffffff) to RGB object.
+ */
+export function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  let cleaned = hex.replace(/^#/, '')
+  if (cleaned.length === 3) {
+    cleaned = cleaned
+      .split('')
+      .map((c) => c + c)
+      .join('')
+  }
+  const num = parseInt(cleaned, 16)
+  if (isNaN(num)) return { r: 255, g: 255, b: 255 }
+  return {
+    r: (num >> 16) & 255,
+    g: (num >> 8) & 255,
+    b: num & 255,
+  }
+}
+
+/**
+ * Erases background pixels matching config.color (either flood-filled from borders or global).
+ */
+export function applyBackgroundRemoval(canvas: HTMLCanvasElement, config: BgRemovalConfig): void {
+  if (!config.enabled) return
+
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
+
+  const { width, height } = canvas
+  const imgData = ctx.getImageData(0, 0, width, height)
+  const data = imgData.data
+
+  const target = hexToRgb(config.color)
+  const maxDist = 441.67 // sqrt(255^2 * 3)
+  const toleranceThreshold = (Math.max(1, Math.min(100, config.tolerance)) / 100) * maxDist
+
+  function colorDist(r: number, g: number, b: number): number {
+    const dr = r - target.r
+    const dg = g - target.g
+    const db = b - target.b
+    return Math.sqrt(dr * dr + dg * dg + db * db)
+  }
+
+  if (config.mode === 'all') {
+    // Replace all matching pixels across entire canvas
+    for (let i = 0; i < data.length; i += 4) {
+      const a = data[i + 3]
+      if (a === 0) continue
+      const dist = colorDist(data[i], data[i + 1], data[i + 2])
+      if (dist <= toleranceThreshold) {
+        if (config.feather > 0 && dist > toleranceThreshold * 0.7) {
+          const ratio = (dist - toleranceThreshold * 0.7) / (toleranceThreshold * 0.3)
+          data[i + 3] = Math.round(a * ratio)
+        } else {
+          data[i + 3] = 0
+        }
+      }
+    }
+  } else {
+    // Contiguous: BFS Flood Fill starting from all perimeter edge pixels
+    const visited = new Uint8Array(width * height)
+    const queue: number[] = []
+
+    function checkAndEnqueue(x: number, y: number) {
+      const idx = y * width + x
+      if (visited[idx]) return
+      visited[idx] = 1
+      const pIdx = idx * 4
+      const a = data[pIdx + 3]
+      if (a === 0) {
+        queue.push(idx)
+        return
+      }
+      const dist = colorDist(data[pIdx], data[pIdx + 1], data[pIdx + 2])
+      if (dist <= toleranceThreshold) {
+        queue.push(idx)
+      }
+    }
+
+    // Initialize perimeter pixels
+    for (let x = 0; x < width; x++) {
+      checkAndEnqueue(x, 0)
+      checkAndEnqueue(x, height - 1)
+    }
+    for (let y = 1; y < height - 1; y++) {
+      checkAndEnqueue(0, y)
+      checkAndEnqueue(width - 1, y)
+    }
+
+    let head = 0
+    while (head < queue.length) {
+      const curr = queue[head++]
+      const x = curr % width
+      const y = Math.floor(curr / width)
+
+      // Clear or fade alpha
+      const pIdx = curr * 4
+      const dist = colorDist(data[pIdx], data[pIdx + 1], data[pIdx + 2])
+      if (config.feather > 0 && dist > toleranceThreshold * 0.7) {
+        const ratio = (dist - toleranceThreshold * 0.7) / (toleranceThreshold * 0.3)
+        data[pIdx + 3] = Math.round(data[pIdx + 3] * ratio)
+      } else {
+        data[pIdx + 3] = 0
+      }
+
+      // Check 4 neighbors
+      if (x > 0) checkAndEnqueue(x - 1, y)
+      if (x < width - 1) checkAndEnqueue(x + 1, y)
+      if (y > 0) checkAndEnqueue(x, y - 1)
+      if (y < height - 1) checkAndEnqueue(x, y + 1)
+    }
+  }
+
+  ctx.putImageData(imgData, 0, 0)
+}
+
+/**
+ * Renders the image with cropping/resizing, optional background removal, and watermark onto an offscreen canvas.
  */
 export function renderProcessedCanvas(
   img: HTMLImageElement,
   resize: ResizeConfig,
   watermark: WatermarkConfig,
+  bgRemoval?: BgRemovalConfig,
 ): HTMLCanvasElement {
   const { targetW, targetH, srcX, srcY, srcW, srcH } = calculateDimensions(img.naturalWidth, img.naturalHeight, resize)
 
@@ -146,6 +264,11 @@ export function renderProcessedCanvas(
 
   // Draw base image (with crop/scale)
   ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, targetW, targetH)
+
+  // Apply Background Removal if enabled
+  if (bgRemoval && bgRemoval.enabled) {
+    applyBackgroundRemoval(canvas, bgRemoval)
+  }
 
   // Draw Watermark if enabled
   if (watermark.enabled && watermark.text.trim()) {

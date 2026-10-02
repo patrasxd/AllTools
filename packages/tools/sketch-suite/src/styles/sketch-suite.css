@@ -415,11 +415,45 @@
 
 .paint-dynamic-box--select {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: space-between;
   width: 100%;
   height: 67px;
-  gap: 8px;
+  gap: 5px;
+}
+
+.paint-select-modes-row {
+  display: flex;
+  gap: 5px;
+  height: 31px;
+  width: 100%;
+}
+
+.paint-select-modes-row .paint-btn {
+  flex: 1;
+  height: 31px;
+  padding: 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.paint-select-actions-row {
+  display: flex;
+  gap: 5px;
+  height: 31px;
+  width: 100%;
+}
+
+.paint-select-actions-row .paint-btn {
+  flex: 1;
+  height: 31px;
+  padding: 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .paint-dynamic-box--bucket,
@@ -433,42 +467,6 @@
   gap: 6px;
   padding: 4px;
   text-align: center;
-}
-
-.paint-select-info-box {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  height: 67px;
-  background: var(--all-surface, #18181b);
-  border: 1px solid var(--all-border, #27272a);
-  border-radius: var(--all-radius-sm, 2px);
-  padding: 4px 6px;
-  box-sizing: border-box;
-}
-
-[data-theme='light'] .paint-select-info-box {
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-}
-
-.paint-select-info-dims {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--all-text);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.paint-select-info-label {
-  font-size: 9px;
-  color: var(--all-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-top: 2px;
-  white-space: nowrap;
 }
 
 /* MS Paint 4-Preset Stack */
@@ -1042,18 +1040,74 @@
   box-shadow: 0 4px 20px rgba(15, 23, 42, 0.18), 0 1px 4px rgba(15, 23, 42, 0.12);
 }
 
+/* ─── High-Contrast Cursors (Dual-outline guaranteed visible on pure white #ffffff and dark drawings) ─── */
 .paint-canvas {
   display: block;
-  cursor: crosshair;
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M12 2v7M12 15v7M2 12h7M15 12h7' stroke='white' stroke-width='3.5' stroke-linecap='square'/%3E%3Ccircle cx='12' cy='12' r='2' fill='white'/%3E%3Cpath d='M12 2v7M12 15v7M2 12h7M15 12h7' stroke='%23000000' stroke-width='1.5' stroke-linecap='square'/%3E%3Ccircle cx='12' cy='12' r='1' fill='%23000000'/%3E%3C/svg%3E") 12 12, crosshair;
   background-color: #ffffff;
 }
 
-.paint-canvas--hand {
-  cursor: grab;
+/* 1. Selection: Rectangular */
+.paint-canvas--tool-select,
+.paint-canvas--select-rect {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M10 2v5M10 13v5M2 10h5M13 10h5' stroke='white' stroke-width='3.5' stroke-linecap='square'/%3E%3Crect x='13' y='13' width='9' height='9' fill='white' stroke='white' stroke-width='2'/%3E%3Cpath d='M10 2v5M10 13v5M2 10h5M13 10h5' stroke='%23000000' stroke-width='1.5' stroke-linecap='square'/%3E%3Ccircle cx='10' cy='10' r='1' fill='%23000000'/%3E%3Crect x='13.5' y='13.5' width='8' height='8' fill='none' stroke='%23000000' stroke-width='1.2' stroke-dasharray='2 1'/%3E%3C/svg%3E") 10 10, crosshair;
 }
 
-.paint-canvas--hand:active {
-  cursor: grabbing;
+/* 2. Selection: Freehand Lasso */
+.paint-canvas--select-freehand {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M6 2v4M6 10v4M2 6h4M10 6h4' stroke='white' stroke-width='3.5' stroke-linecap='square'/%3E%3Cpath d='M14 11c-3 0-5 2-4 5s4 4 6 2 2-5-2-7' stroke='white' stroke-width='3.5' fill='none'/%3E%3Cpath d='M6 2v4M6 10v4M2 6h4M10 6h4' stroke='%23000000' stroke-width='1.5' stroke-linecap='square'/%3E%3Ccircle cx='6' cy='6' r='1' fill='%23000000'/%3E%3Cpath d='M14 11c-3 0-5 2-4 5s4 4 6 2 2-5-2-7' stroke='%23000000' stroke-width='1.5' fill='none'/%3E%3C/svg%3E") 6 6, crosshair;
+}
+
+/* 3. Selection: Polygonal Lasso */
+.paint-canvas--select-polygon {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M6 2v4M6 10v4M2 6h4M10 6h4' stroke='white' stroke-width='3.5' stroke-linecap='square'/%3E%3Cpolygon points='12 12 21 13 18 21 11 19' stroke='white' stroke-width='3.5' fill='none'/%3E%3Cpath d='M6 2v4M6 10v4M2 6h4M10 6h4' stroke='%23000000' stroke-width='1.5' stroke-linecap='square'/%3E%3Ccircle cx='6' cy='6' r='1' fill='%23000000'/%3E%3Cpolygon points='12 12 21 13 18 21 11 19' stroke='%23000000' stroke-width='1.2' stroke-dasharray='2 1' fill='none'/%3E%3Ccircle cx='12' cy='12' r='1.5' fill='%23000000'/%3E%3Ccircle cx='21' cy='13' r='1.5' fill='%23000000'/%3E%3Ccircle cx='18' cy='21' r='1.5' fill='%23000000'/%3E%3Ccircle cx='11' cy='19' r='1.5' fill='%23000000'/%3E%3C/svg%3E") 6 6, crosshair;
+}
+
+/* 4. Color Picker (Eyedropper) */
+.paint-canvas--tool-eyedropper {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M2 22l4.5-1.5 11-11a2.8 2.8 0 0 0 0-4l-1-1a2.8 2.8 0 0 0-4 0l-11 11L1 21z' fill='white' stroke='white' stroke-width='3' stroke-linejoin='round'/%3E%3Cpath d='M2 22l4.5-1.5 11-11a2.8 2.8 0 0 0 0-4l-1-1a2.8 2.8 0 0 0-4 0l-11 11L1 21z' fill='%2318181b' stroke='%23000000' stroke-width='1.5' stroke-linejoin='round'/%3E%3Cpath d='M12.5 6.5l4 4' stroke='white' stroke-width='1.5'/%3E%3Ccircle cx='2' cy='22' r='1.5' fill='%23000000' stroke='white' stroke-width='0.8'/%3E%3C/svg%3E") 2 22, crosshair;
+}
+
+/* 5. Fill Bucket */
+.paint-canvas--tool-bucket {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M19 11L9 1 2 8l10 10 7-7z' fill='white' stroke='white' stroke-width='3' stroke-linejoin='round'/%3E%3Cpath d='M3 20c-1 1-1 3 0 3.5s3 0.5 3-1.5c0-1.5-3-2-3-2z' fill='white' stroke='white' stroke-width='2'/%3E%3Cpath d='M19 11L9 1 2 8l10 10 7-7z' fill='%2327272a' stroke='%23000000' stroke-width='1.5' stroke-linejoin='round'/%3E%3Cpath d='M5.5 4.5l10 10' stroke='white' stroke-width='1.2'/%3E%3Cpath d='M3 20c-1 1-1 3 0 3.5s3 0.5 3-1.5c0-1.5-3-2-3-2z' fill='%23000000'/%3E%3C/svg%3E") 4 20, crosshair;
+}
+
+/* 6. Pencil */
+.paint-canvas--tool-pencil {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 1 23l2.5-6.5L17 3z' fill='white' stroke='white' stroke-width='3' stroke-linejoin='round'/%3E%3Cpath d='M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 1 23l2.5-6.5L17 3z' fill='%2327272a' stroke='%23000000' stroke-width='1.5' stroke-linejoin='round'/%3E%3Cpath d='M15 5l4 4' stroke='white' stroke-width='1.2'/%3E%3Cpolygon points='1 23 3.5 16.5 7.5 20.5' fill='%2352525b'/%3E%3Ccircle cx='1' cy='23' r='1' fill='%23000000'/%3E%3C/svg%3E") 1 23, crosshair;
+}
+
+/* 7. Eraser */
+.paint-canvas--tool-eraser {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 22 22'%3E%3Crect x='2' y='2' width='18' height='18' fill='white' stroke='white' stroke-width='3' rx='2'/%3E%3Crect x='2' y='2' width='18' height='18' fill='%23fafafa' stroke='%23000000' stroke-width='1.5' rx='2'/%3E%3Crect x='5' y='5' width='12' height='12' fill='%23e4e4e7' stroke='%23a1a1aa' stroke-width='1'/%3E%3C/svg%3E") 11 11, crosshair;
+}
+
+/* 8. Text Tool (High-contrast dual-outline I-beam with precision crosshair) */
+.paint-canvas--tool-text,
+.paint-canvas-viewport--tool-text,
+.paint-canvas-viewport--tool-text .paint-canvas-wrapper,
+.paint-canvas-viewport--tool-text .paint-canvas,
+.paint-text-box-input {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M7 4h10M12 4v16M7 20h10' stroke='white' stroke-width='4.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Cpath d='M7 4h10M12 4v16M7 20h10' stroke='%23000000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Cline x1='10' y1='12' x2='14' y2='12' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3Cline x1='10' y1='12' x2='14' y2='12' stroke='%23000000' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") 12 12, text !important;
+}
+
+/* 9. Hand Tool (High-contrast dual outline visible on white canvas & dark viewport) */
+.paint-canvas--hand,
+.paint-canvas--tool-hand,
+.paint-canvas-viewport--hand,
+.paint-canvas-viewport--hand .paint-canvas-wrapper,
+.paint-canvas-viewport--hand .paint-canvas {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M18 11V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2M14 10V4a2 2 0 0 0-2-2 2 2 0 0 0-2 2v2M10 10.5V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v8M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15' stroke='white' stroke-width='3.5' fill='white' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M18 11V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2M14 10V4a2 2 0 0 0-2-2 2 2 0 0 0-2 2v2M10 10.5V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v8M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15' stroke='%23000000' stroke-width='1.5' fill='%23fafafa' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") 10 10, grab !important;
+}
+
+.paint-canvas--hand:active,
+.paint-canvas--tool-hand:active,
+.paint-canvas-viewport--panning,
+.paint-canvas-viewport--panning *,
+body.is-panning,
+body.is-panning * {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M10 13V6a1.5 1.5 0 0 1 3 0v4 M13 10V5a1.5 1.5 0 0 1 3 0v5 M16 11V7a1.5 1.5 0 0 1 3 0v6a6 6 0 0 1-6 6h-2c-2.2 0-3.8-.7-5-1.9L6 15a1.5 1.5 0 0 1 2.1-2.1L10 14' stroke='white' stroke-width='3.5' fill='white' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M10 13V6a1.5 1.5 0 0 1 3 0v4 M13 10V5a1.5 1.5 0 0 1 3 0v5 M16 11V7a1.5 1.5 0 0 1 3 0v6a6 6 0 0 1-6 6h-2c-2.2 0-3.8-.7-5-1.9L6 15a1.5 1.5 0 0 1 2.1-2.1L10 14' stroke='%23000000' stroke-width='1.5' fill='%23e0e0e0' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") 10 10, grabbing !important;
 }
 
 .paint-preview-canvas {
@@ -1064,69 +1118,116 @@
   background-color: transparent;
 }
 
-/* ─── MS Paint Style Inline On-Canvas Text Selection Box ─── */
+/* ─── MS Paint Style Inline On-Canvas Text Selection Box (Selection Marquee Style) ─── */
 .paint-canvas-text-box {
   position: absolute;
   z-index: 50;
-  display: flex;
+  display: inline-flex;
   flex-direction: column;
   box-sizing: border-box;
-  border: 1.5px dashed var(--all-accent, #ffffff);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
-  background-color: var(--all-surface);
-  min-width: 160px;
+  background-color: transparent !important;
+  min-width: 140px;
+  overflow: visible;
+  padding: 2px;
+  /* Dual-tone alternating black & white 4px marching-ants selection dash */
+  background-image:
+    repeating-linear-gradient(90deg, #000000 0, #000000 4px, #ffffff 4px, #ffffff 8px),
+    repeating-linear-gradient(90deg, #000000 0, #000000 4px, #ffffff 4px, #ffffff 8px),
+    repeating-linear-gradient(0deg, #000000 0, #000000 4px, #ffffff 4px, #ffffff 8px),
+    repeating-linear-gradient(0deg, #000000 0, #000000 4px, #ffffff 4px, #ffffff 8px);
+  background-size: 100% 1px, 100% 1px, 1px 100%, 1px 100%;
+  background-position: top, bottom, left, right;
+  background-repeat: no-repeat;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 [data-theme='light'] .paint-canvas-text-box {
-  border: 1.5px dashed #0284c7;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  background-color: #ffffff;
+  border: none !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
 }
 
 [data-eink='true'] .paint-canvas-text-box,
 [data-theme^='e-ink'] .paint-canvas-text-box {
-  box-shadow: none !important;
-  border: 2px dashed #000000 !important;
+  border: 1px dashed #000000 !important;
+  background-image: none !important;
+  background-color: transparent !important;
 }
 
 [data-theme='e-ink-dark'] .paint-canvas-text-box {
-  border: 2px dashed #ffffff !important;
-  background-color: #000000 !important;
+  border: 1px dashed #ffffff !important;
+  background-image: none !important;
+  background-color: transparent !important;
 }
 
-/* Drag handle bar at the top of the text box */
+/* Small square anchor handles around text selection box (like MS Paint selection) */
+.paint-text-box-handle {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  background-color: #ffffff;
+  border: 1px solid #000000;
+  box-sizing: border-box;
+  pointer-events: none;
+  z-index: 52;
+}
+
+.paint-text-box-handle--nw { top: -2.5px; left: -2.5px; }
+.paint-text-box-handle--ne { top: -2.5px; right: -2.5px; }
+.paint-text-box-handle--sw { bottom: -2.5px; left: -2.5px; }
+.paint-text-box-handle--se { bottom: -2.5px; right: -2.5px; }
+.paint-text-box-handle--n  { top: -2.5px; left: calc(50% - 2.5px); }
+.paint-text-box-handle--s  { bottom: -2.5px; left: calc(50% - 2.5px); }
+.paint-text-box-handle--w  { top: calc(50% - 2.5px); left: -2.5px; }
+.paint-text-box-handle--e  { top: calc(50% - 2.5px); right: -2.5px; }
+
+/* Drag handle bar floating above the text box so it doesn't push down the text or cover canvas */
 .paint-text-box-drag-handle {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: -1.5px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   padding: 2px 6px;
-  background-color: var(--all-surface-2, #27272a);
-  border-bottom: 1px solid var(--all-border, #383842);
+  background-color: var(--all-surface, #18181b);
+  border: 1px solid var(--all-border, #383842);
+  border-radius: var(--all-radius-sm, 3px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
   cursor: grab;
   user-select: none;
   font-size: 10px;
   height: 22px;
   box-sizing: border-box;
+  white-space: nowrap;
 }
 
 .paint-text-box-drag-handle:active {
   cursor: grabbing;
 }
 
+.paint-text-box-drag-handle--bottom {
+  bottom: auto;
+  top: calc(100% + 4px);
+}
+
 [data-theme='light'] .paint-text-box-drag-handle {
-  background-color: #e2e8f0;
-  border-bottom: 1px solid #cbd5e1;
+  background-color: #f8fafc;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 [data-theme='e-ink-dark'] .paint-text-box-drag-handle {
   background-color: #000000 !important;
-  border-bottom: 1.5px solid #ffffff !important;
+  border: 1px solid #ffffff !important;
 }
 
 [data-theme='e-ink-light'] .paint-text-box-drag-handle,
 [data-eink='true']:not([data-theme='e-ink-dark']) .paint-text-box-drag-handle {
   background-color: #ffffff !important;
-  border-bottom: 1.5px solid #000000 !important;
+  border: 1px solid #000000 !important;
 }
 
 .paint-text-box-grip {
@@ -1159,7 +1260,7 @@
 }
 
 .paint-text-box-btn:hover {
-  background: var(--all-surface, #18181b);
+  background: var(--all-surface-2, #27272a);
   color: var(--all-text, #ffffff);
 }
 
@@ -1171,17 +1272,23 @@
   color: var(--all-danger, #ef4444);
 }
 
-/* Directly editable input on canvas */
+/* Directly editable multiline textarea on canvas */
 .paint-text-box-input {
   display: block;
   width: 100%;
   min-width: 140px;
   box-sizing: border-box;
-  padding: 4px 6px;
+  padding: 0 2px;
   margin: 0;
   border: none;
   outline: none;
   background: transparent;
+  resize: both;
+  overflow: hidden;
+  line-height: 1.25;
+  white-space: pre-wrap;
+  word-break: break-word;
+  field-sizing: content;
 }
 
 /* ─── Placed Image Floating Selection Box (MS Paint & PDF Suite style) ─── */

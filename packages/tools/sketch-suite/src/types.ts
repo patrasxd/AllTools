@@ -11,6 +11,8 @@ export interface ToolComponentProps {
   setHeader?: (content: React.ReactNode) => void
   /** Optional callback for persisting arbitrary data */
   onSave?: (data: unknown) => void
+  isDirty?: boolean
+  setIsDirty?: (dirty: boolean) => void
 }
 
 export type SketchTool =
@@ -28,6 +30,8 @@ export type SketchTool =
   | 'rounded-rect'
   | 'ellipse'
   | 'triangle'
+
+export type SelectionMode = 'rect' | 'freehand' | 'polygon'
 
 export interface SelectionRect {
   x: number
@@ -64,4 +68,3 @@ export interface PlacedImageOverlay {
   naturalWidth: number
   naturalHeight: number
 }
-

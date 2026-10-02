@@ -28,6 +28,8 @@ export interface ToolComponentProps {
   locale: Locale
   setHeader?: (content: React.ReactNode) => void
   onSave?: (data: unknown) => void
+  isDirty?: boolean
+  setIsDirty?: (dirty: boolean) => void
 }
 
 export interface ToolModule {

@@ -69,23 +69,32 @@ export function ToolPage() {
   const { theme, isEink } = useTheme()
   const metadata = TOOLS_METADATA.find((item) => item.slug === slug)
 
+  const { setHeaderExtra, isDirty, setIsDirty, requestExit } = useToolHeader()
+
   useEffect(() => {
     if (slug) {
       setLastActiveCardId(`tool-card-${slug}`)
     }
   }, [slug])
 
-  const handleBackToTools = useCallback(() => {
-    if (slug) {
-      setLastActiveCardId(`tool-card-${slug}`)
+  useEffect(() => {
+    return () => {
+      setIsDirty(false)
     }
-    navigate('/')
-  }, [navigate, slug])
+  }, [setIsDirty])
+
+  const handleBackToTools = useCallback(() => {
+    requestExit(() => {
+      if (slug) {
+        setLastActiveCardId(`tool-card-${slug}`)
+      }
+      navigate('/')
+    })
+  }, [requestExit, navigate, slug])
 
   const [ToolComp, setToolComp] = useState<React.ComponentType<any> | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
 
-  const { setHeaderExtra } = useToolHeader()
   const setHeader = useCallback(
     (content: React.ReactNode) => {
       setHeaderExtra(content)
@@ -139,7 +148,9 @@ export function ToolPage() {
           <div id="tool-page-top-actions" className="tool-page-top-actions" />
         </div>
 
-        <div className={`tool-page-content ${slug === 'screen-ruler' || slug === 'sketch-suite' ? 'tool-page-content--fullbleed' : ''}`.trim()}>
+        <div
+          className={`tool-page-content ${slug === 'screen-ruler' || slug === 'sketch-suite' ? 'tool-page-content--fullbleed' : ''}`.trim()}
+        >
           {loading ? (
             <ToolFallback />
           ) : ToolComp ? (
@@ -148,6 +159,8 @@ export function ToolPage() {
               setHeader={setHeader}
               isEink={isEink}
               theme={theme}
+              isDirty={isDirty}
+              setIsDirty={setIsDirty}
               onSave={(data: unknown) => {
                 try {
                   localStorage.setItem(`alltools:${slug}:saved`, JSON.stringify(data))

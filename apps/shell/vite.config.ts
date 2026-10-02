@@ -14,7 +14,7 @@ export default defineConfig({
         enabled: true,
         type: 'module',
       },
-      includeAssets: ['favicon.svg', 'icons/*.png', 'icons/*.svg'],
+      includeAssets: ['favicon.svg', 'icons/*.png', 'icons/*.svg', '**/*.wasm'],
       manifest: {
         name: 'AllTools',
         short_name: 'AllTools',
@@ -42,7 +42,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,webmanifest}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,webmanifest,wasm}'],
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
       },
     }),

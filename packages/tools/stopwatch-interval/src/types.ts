@@ -6,6 +6,8 @@ export interface ToolComponentProps {
   locale?: Locale
   isEink?: boolean
   theme?: string
+  isDirty?: boolean
+  setIsDirty?: (dirty: boolean) => void
   onSave?: (data: unknown) => void
   setHeader?: (content: React.ReactNode) => void
 }

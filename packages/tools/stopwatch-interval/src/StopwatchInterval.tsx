@@ -132,7 +132,7 @@ function NumberStepper({
   )
 }
 
-export function StopwatchInterval({ locale = 'en', isEink = false, setHeader }: ToolComponentProps) {
+export function StopwatchInterval({ locale = 'en', isEink = false, setHeader, setIsDirty }: ToolComponentProps) {
   const [activeMode, setActiveMode] = useState<Mode>('stopwatch')
 
   // ─── Stopwatch state ───
@@ -222,6 +222,12 @@ export function StopwatchInterval({ locale = 'en', isEink = false, setHeader }: 
   const [timeRemaining, setTimeRemaining] = useState<number>(activeSteps[0]?.workSec ?? 20)
   const [dashOffset, setDashOffset] = useState<number>(0)
   const [intRunning, setIntRunning] = useState<boolean>(false)
+
+  // ─── Track Unsaved Edits / Navigation Guard ─────────────────
+  useEffect(() => {
+    const isDirty = swRunning || elapsedMs > 0 || laps.length > 0 || intRunning
+    setIsDirty?.(isDirty)
+  }, [swRunning, elapsedMs, laps.length, intRunning, setIsDirty])
 
   // Custom interval dialog state
   const [isCustomDialogOpen, setIsCustomDialogOpen] = useState<boolean>(false)

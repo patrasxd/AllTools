@@ -24,6 +24,11 @@ export const translations = {
     favorites: 'Favorites',
     openTool: 'Open Tool',
     legalNotice: 'Legal Notice & Privacy',
+    exitConfirmTitle: 'Unsaved changes',
+    exitConfirmDesc:
+      'You have active changes or unsaved progress in this tool. If you leave now, your changes will be lost. Are you sure you want to exit?',
+    exitConfirmLeave: 'Exit tool',
+    exitConfirmStay: 'Stay here',
   },
   pl: {
     appTitle: 'AllTools',
@@ -50,6 +55,11 @@ export const translations = {
     favorites: 'Ulubione',
     openTool: 'Otwórz narzędzie',
     legalNotice: 'Nota prawna & Prywatność',
+    exitConfirmTitle: 'Niezapisane zmiany',
+    exitConfirmDesc:
+      'W tym narzędziu masz aktywne zmiany lub rozpoczęte zadanie. Jeśli wyjdziesz teraz, Twoje postępy zostaną utracone. Czy na pewno chcesz wyjść?',
+    exitConfirmLeave: 'Wyjdź z narzędzia',
+    exitConfirmStay: 'Zostań',
   },
 } as const
 

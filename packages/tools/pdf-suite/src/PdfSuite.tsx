@@ -35,6 +35,8 @@ export interface ToolComponentProps {
   setHeader?: (header: React.ReactNode) => void
   isEink?: boolean
   theme?: string
+  isDirty?: boolean
+  setIsDirty?: (dirty: boolean) => void
   onSave?: (data: unknown) => void
 }
 
@@ -154,7 +156,7 @@ export async function renderTypedSignaturePng(text: string, font: SignatureFont)
   return trimCanvas(offscreen)
 }
 
-export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: ToolComponentProps) {
+export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme, setIsDirty }: ToolComponentProps) {
   const t = pdfSuiteTranslations[locale] || pdfSuiteTranslations.en
   const fileInputId = useId()
 
@@ -192,6 +194,18 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme }: To
   const [activeImageIndex, setActiveImageIndex] = useState<number>(0)
   const [activePinIndex, setActivePinIndex] = useState<number | null>(null)
   const [generatingPdf, setGeneratingPdf] = useState<boolean>(false)
+
+  // ─── Track Unsaved Edits / Navigation Guard ─────────────────
+  useEffect(() => {
+    const isDirty =
+      pdfFiles.length > 0 ||
+      pdfPages.length > 0 ||
+      imageFiles.length > 0 ||
+      editableImages.length > 0 ||
+      isLoading ||
+      generatingPdf
+    setIsDirty?.(isDirty)
+  }, [pdfFiles.length, pdfPages.length, imageFiles.length, editableImages.length, isLoading, generatingPdf, setIsDirty])
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const sigCanvasRef = useRef<HTMLCanvasElement>(null)

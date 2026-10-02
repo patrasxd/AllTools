@@ -22,7 +22,15 @@ import {
   IconMaximize2,
   IconZoomIn,
 } from '@alltools/ui'
-import { ToolComponentProps, SketchTool, ShapeFillMode, Point, SelectionRect, PlacedImageOverlay } from './types'
+import {
+  ToolComponentProps,
+  SketchTool,
+  SelectionMode,
+  ShapeFillMode,
+  Point,
+  SelectionRect,
+  PlacedImageOverlay,
+} from './types'
 import { translations } from './i18n'
 import {
   hexToRgba,
@@ -30,8 +38,86 @@ import {
   drawShape,
   getCanvasCoordinates,
   copyCanvasToClipboard,
+  getBoundingBoxFromPoints,
+  drawPencilSegment,
+  drawPencilDot,
 } from './utils/sketchEngine'
 import './styles/sketch-suite.css'
+
+const IconRectSelect: React.FC<{ size?: number }> = ({ size = 16 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeDasharray="3 3"
+    aria-hidden="true"
+  >
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+  </svg>
+)
+
+const IconLasso: React.FC<{ size?: number }> = ({ size = 16 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M7 16C5 13 4 9 7 5C10 1 17 2 18 6C19 10 16 14 12 16" />
+    <ellipse cx="14" cy="18" rx="4" ry="3" transform="rotate(-15 14 18)" />
+    <path d="M10 18L7 21" />
+  </svg>
+)
+
+const IconPolygonLasso: React.FC<{ size?: number }> = ({ size = 16 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <polygon points="4 7 12 3 20 8 18 19 6 18" strokeDasharray="3 2" />
+    <circle cx="4" cy="7" r="1.5" fill="currentColor" />
+    <circle cx="12" cy="3" r="1.5" fill="currentColor" />
+    <circle cx="20" cy="8" r="1.5" fill="currentColor" />
+    <circle cx="18" cy="19" r="1.5" fill="currentColor" />
+    <circle cx="6" cy="18" r="1.5" fill="currentColor" />
+  </svg>
+)
+
+const IconHand: React.FC<{ size?: number }> = ({ size = 18 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M18 11V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2" />
+    <path d="M14 10V4a2 2 0 0 0-2-2 2 2 0 0 0-2 2v2" />
+    <path d="M10 10.5V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v8" />
+    <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" />
+  </svg>
+)
 
 const SWATCH_PALETTE = [
   '#000000',
@@ -68,7 +154,10 @@ const PRESET_RESOLUTIONS = [
 ]
 
 function rgbToHex(r: number, g: number, b: number): string {
-  const toHex = (n: number) => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, '0')
+  const toHex = (n: number) =>
+    Math.max(0, Math.min(255, Math.round(n)))
+      .toString(16)
+      .padStart(2, '0')
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`
 }
 
@@ -76,6 +165,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
   locale = 'en',
   isEink: propEink,
   theme: propTheme,
+  setIsDirty,
 }) => {
   const themeCtx = useContext(ThemeContext)
   const activeTheme = propTheme || themeCtx?.theme || 'dark'
@@ -88,7 +178,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
   const canvasViewportRef = useRef<HTMLElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const colorPickerRef = useRef<HTMLInputElement | null>(null)
-  const textInputRef = useRef<HTMLInputElement | null>(null)
+  const textInputRef = useRef<HTMLTextAreaElement | null>(null)
 
   // Canvas Dimensions & Zoom
   const [canvasDim, setCanvasDim] = useState<{ width: number; height: number }>({
@@ -111,6 +201,11 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
   const [activeColorSlot, setActiveColorSlot] = useState<1 | 2>(1)
   const [shapeFillMode, setShapeFillMode] = useState<ShapeFillMode>('outline')
   const [selectionRect, setSelectionRect] = useState<SelectionRect | null>(null)
+  const [selectionMode, setSelectionMode] = useState<SelectionMode>('rect')
+  const [selectionPoints, setSelectionPoints] = useState<Point[] | null>(null)
+  const [polygonPoints, setPolygonPoints] = useState<Point[]>([])
+  const polygonPointsRef = useRef<Point[]>([])
+  const lassoPointsRef = useRef<Point[]>([])
   const [activePlacedImage, setActivePlacedImage] = useState<PlacedImageOverlay | null>(null)
   const activePlacedImageRef = useRef<PlacedImageOverlay | null>(null)
   const isDraggingPlacedImageRef = useRef(false)
@@ -147,21 +242,15 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
 
   // Synchronous updater for activePlacedImage to prevent stale ref
   const setPlacedImageState = useCallback(
-    (
-      val:
-        | PlacedImageOverlay
-        | null
-        | ((prev: PlacedImageOverlay | null) => PlacedImageOverlay | null)
-    ) => {
+    (val: PlacedImageOverlay | null | ((prev: PlacedImageOverlay | null) => PlacedImageOverlay | null)) => {
       setActivePlacedImage((prev) => {
         const next = typeof val === 'function' ? val(prev) : val
         activePlacedImageRef.current = next
         return next
       })
     },
-    []
+    [],
   )
-
 
   // UI Menus & Modals
   const [isFileDialogOpen, setIsFileDialogOpen] = useState(false)
@@ -295,9 +384,19 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
   // Drawing state refs (avoid React re-renders during high-frequency mouse moves)
   const isDrawingRef = useRef(false)
   const isPanningRef = useRef(false)
+  const [isPanning, setIsPanning] = useState(false)
   const panStartRef = useRef({ clientX: 0, clientY: 0, scrollLeft: 0, scrollTop: 0 })
   const startPointRef = useRef<Point>({ x: 0, y: 0 })
   const lastPointRef = useRef<Point>({ x: 0, y: 0 })
+
+  useEffect(() => {
+    if (isPanning) {
+      document.body.classList.add('is-panning')
+      return () => {
+        document.body.classList.remove('is-panning')
+      }
+    }
+  }, [isPanning])
 
   // History stack
   const historyRef = useRef<ImageData[]>([])
@@ -362,6 +461,12 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
     setCanRedo(historyIndexRef.current < historyRef.current.length - 1)
   }, [])
 
+  // ─── Track Unsaved Edits / Navigation Guard ─────────────────
+  useEffect(() => {
+    const isDirty = canUndo || activePlacedImage !== null || activeTextOverlay !== null
+    setIsDirty?.(isDirty)
+  }, [canUndo, activePlacedImage, activeTextOverlay, setIsDirty])
+
   // Initialize canvas with clean white background
   useEffect(() => {
     const canvas = canvasRef.current
@@ -394,29 +499,121 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
   }, [])
 
   // Draw or clear dashed marquee on preview canvas
-  const drawMarquee = useCallback((rect: SelectionRect | null) => {
-    const previewCanvas = previewCanvasRef.current
-    if (!previewCanvas) return
-    const pCtx = previewCanvas.getContext('2d')
-    if (!pCtx) return
-    pCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height)
-    if (!rect || rect.width <= 0 || rect.height <= 0) return
+  const drawMarquee = useCallback(
+    (
+      rect: SelectionRect | null,
+      points?: Point[] | null,
+      rubberBandTo?: Point | null,
+    ) => {
+      const previewCanvas = previewCanvasRef.current
+      if (!previewCanvas) return
+      const pCtx = previewCanvas.getContext('2d')
+      if (!pCtx) return
+      pCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height)
 
-    pCtx.save()
-    pCtx.strokeStyle = '#000000'
-    pCtx.lineWidth = 1
-    pCtx.setLineDash([4, 4])
-    pCtx.strokeRect(rect.x + 0.5, rect.y + 0.5, rect.width, rect.height)
-    pCtx.strokeStyle = '#ffffff'
-    pCtx.lineDashOffset = 4
-    pCtx.strokeRect(rect.x + 0.5, rect.y + 0.5, rect.width, rect.height)
-    pCtx.restore()
-  }, [])
+      // 1. Points-based marquee (Lasso / Polygon)
+      if (points && points.length > 0) {
+        pCtx.save()
+        pCtx.lineWidth = 1
+        pCtx.lineCap = 'round'
+        pCtx.lineJoin = 'round'
+
+        const tracePath = () => {
+          pCtx.beginPath()
+          pCtx.moveTo(points[0].x + 0.5, points[0].y + 0.5)
+          for (let i = 1; i < points.length; i++) {
+            pCtx.lineTo(points[i].x + 0.5, points[i].y + 0.5)
+          }
+          if (rubberBandTo) {
+            pCtx.lineTo(rubberBandTo.x + 0.5, rubberBandTo.y + 0.5)
+          } else if (points.length >= 3) {
+            pCtx.closePath?.()
+          }
+        }
+
+        // Black dash
+        pCtx.strokeStyle = '#000000'
+        pCtx.setLineDash([4, 4])
+        tracePath()
+        pCtx.stroke()
+
+        // White dash overlay
+        pCtx.strokeStyle = '#ffffff'
+        pCtx.lineDashOffset = 4
+        tracePath()
+        pCtx.stroke()
+
+        // Draw small anchor handles at points if in-progress polygon
+        if (rubberBandTo || points.length < 3) {
+          pCtx.setLineDash([])
+          pCtx.lineWidth = 1
+          points.forEach((pt, idx) => {
+            pCtx.fillStyle = '#ffffff'
+            pCtx.strokeStyle = '#000000'
+            pCtx.fillRect(pt.x - 2.5, pt.y - 2.5, 5, 5)
+            pCtx.strokeRect(pt.x - 2.5, pt.y - 2.5, 5, 5)
+            // Highlight starting origin point in green/accent so user knows clicking it closes loop
+            if (idx === 0 && points.length >= 3) {
+              pCtx.fillStyle = '#22c55e'
+              pCtx.fillRect(pt.x - 3.5, pt.y - 3.5, 7, 7)
+              pCtx.strokeRect(pt.x - 3.5, pt.y - 3.5, 7, 7)
+            }
+          })
+        }
+
+        pCtx.restore()
+        return
+      }
+
+      // 2. Standard Rectangular Marquee
+      if (!rect || rect.width <= 0 || rect.height <= 0) return
+
+      pCtx.save()
+      pCtx.strokeStyle = '#000000'
+      pCtx.lineWidth = 1
+      pCtx.setLineDash([4, 4])
+      pCtx.strokeRect(rect.x + 0.5, rect.y + 0.5, rect.width, rect.height)
+      pCtx.strokeStyle = '#ffffff'
+      pCtx.lineDashOffset = 4
+      pCtx.strokeRect(rect.x + 0.5, rect.y + 0.5, rect.width, rect.height)
+      pCtx.restore()
+    },
+    [],
+  )
 
   const clearSelection = useCallback(() => {
     setSelectionRect(null)
+    setSelectionPoints(null)
+    setPolygonPoints([])
+    polygonPointsRef.current = []
+    lassoPointsRef.current = []
     drawMarquee(null)
   }, [drawMarquee])
+
+  // Finalize in-progress polygon selection
+  const finalizePolygon = useCallback(() => {
+    const pts = polygonPointsRef.current
+    if (pts.length >= 3) {
+      const bbox = getBoundingBoxFromPoints(pts)
+      if (bbox.width > 2 && bbox.height > 2) {
+        setSelectionRect(bbox)
+        const cloned = [...pts]
+        setSelectionPoints(cloned)
+        drawMarquee(bbox, cloned)
+        showNotice(
+          locale === 'pl'
+            ? `Zaznaczono wielokąt: ${cloned.length} pkt (${bbox.width}×${bbox.height}px)`
+            : `Selected polygon: ${cloned.length} pts (${bbox.width}×${bbox.height}px)`,
+        )
+      } else {
+        clearSelection()
+      }
+    } else {
+      clearSelection()
+    }
+    polygonPointsRef.current = []
+    setPolygonPoints([])
+  }, [drawMarquee, clearSelection, locale, showNotice])
 
   // Live render text preview onto preview canvas while typing in text overlay
   useEffect(() => {
@@ -455,12 +652,8 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
       if (!isDraggingTextRef.current) return
       const deltaX = (moveEvt.clientX - dragStartPosRef.current.clientX) / zoom
       const deltaY = (moveEvt.clientY - dragStartPosRef.current.clientY) / zoom
-      const newX = Math.round(
-        Math.max(0, Math.min(canvasDim.width - 20, dragStartPosRef.current.startX + deltaX))
-      )
-      const newY = Math.round(
-        Math.max(0, Math.min(canvasDim.height - 20, dragStartPosRef.current.startY + deltaY))
-      )
+      const newX = Math.round(Math.max(0, Math.min(canvasDim.width - 20, dragStartPosRef.current.startX + deltaX)))
+      const newY = Math.round(Math.max(0, Math.min(canvasDim.height - 20, dragStartPosRef.current.startY + deltaY)))
       setActiveTextOverlay((prev) => (prev ? { ...prev, x: newX, y: newY } : null))
     }
 
@@ -527,18 +720,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
     ctx.restore()
     pushHistory()
     setActiveTextOverlay(null)
-  }, [
-    activeTextOverlay,
-    isItalic,
-    isBold,
-    fontSize,
-    fontFamily,
-    isSolidBg,
-    color2,
-    color1,
-    isUnderline,
-    pushHistory,
-  ])
+  }, [activeTextOverlay, isItalic, isBold, fontSize, fontFamily, isSolidBg, color2, color1, isUnderline, pushHistory])
 
   // Automatically commit text when switching away from text tool
   useEffect(() => {
@@ -550,6 +732,17 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
       }
     }
   }, [currentTool, activeTextOverlay, handleCommitText])
+
+  // Auto-grow textarea height to fit multiline content seamlessly
+  useEffect(() => {
+    if (textInputRef.current && activeTextOverlay) {
+      textInputRef.current.style.height = 'auto'
+      textInputRef.current.style.height = `${Math.max(
+        Math.round(fontSize * zoom * 1.3),
+        textInputRef.current.scrollHeight
+      )}px`
+    }
+  }, [activeTextOverlay?.text, fontSize, zoom])
 
   // ─── Placed Image Handlers (MS Paint & PDF Suite signature style) ───
   // Commit Placed Image onto Canvas
@@ -652,13 +845,13 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
               width: prev.naturalWidth,
               height: prev.naturalHeight,
             }
-          : null
+          : null,
       )
       pushHistory()
       showNotice(
         locale === 'pl'
           ? `Rozszerzono płótno do ${neededW}×${neededH} px!`
-          : `Expanded canvas to ${neededW}×${neededH} px!`
+          : `Expanded canvas to ${neededW}×${neededH} px!`,
       )
     }
     tempImg.src = snapshot
@@ -728,7 +921,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
       t.placedImage.pastedNotice,
       showNotice,
       setPlacedImageState,
-    ]
+    ],
   )
 
   // Draw/Place image onto canvas (paste, drop, open)
@@ -736,7 +929,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
     (img: HTMLImageElement) => {
       initiateImagePlacement(img)
     },
-    [initiateImagePlacement]
+    [initiateImagePlacement],
   )
 
   // Handle image paste from clipboard (Ctrl+V)
@@ -778,7 +971,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
         reader.readAsDataURL(fileBlob)
       }
     },
-    [initiateImagePlacement]
+    [initiateImagePlacement],
   )
 
   // Toolbar Paste button action
@@ -860,7 +1053,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
   // Placed Image Resizing (4 corners maintaining aspect ratio + 4 edges)
   const handlePlacedImageResizeStart = (
     e: React.PointerEvent<HTMLDivElement>,
-    handle: 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w'
+    handle: 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w',
   ) => {
     if (e.button !== 0) return
     e.preventDefault()
@@ -946,7 +1139,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
               width: Math.round(newW),
               height: Math.round(newH),
             }
-          : null
+          : null,
       )
     }
 
@@ -961,7 +1154,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
     window.addEventListener('pointerup', handlePointerUp)
   }
 
-  // Automatically commit placed image ONLY when switching tools
+  // Automatically commit placed image & clear selection when switching tools
   const prevToolRef = useRef(currentTool)
   useEffect(() => {
     if (prevToolRef.current !== currentTool) {
@@ -969,8 +1162,11 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
       if (activePlacedImageRef.current) {
         handleCommitPlacedImage()
       }
+      if (currentTool !== 'select') {
+        clearSelection()
+      }
     }
-  }, [currentTool, handleCommitPlacedImage])
+  }, [currentTool, handleCommitPlacedImage, clearSelection])
 
   // Dynamic size stepper functions
   const increaseToolSize = useCallback(() => {
@@ -1033,56 +1229,64 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
   const getCurrentToolSize = useCallback(() => {
     if (currentTool === 'pencil') return pencilSize
     if (currentTool === 'eraser') return eraserSize
-    if (['line', 'arrow', 'rectangle', 'rounded-rect', 'ellipse', 'triangle'].includes(currentTool)) return shapeStrokeWidth
+    if (['line', 'arrow', 'rectangle', 'rounded-rect', 'ellipse', 'triangle'].includes(currentTool))
+      return shapeStrokeWidth
     return brushSize
   }, [currentTool, pencilSize, eraserSize, shapeStrokeWidth, brushSize])
 
   // Helper to set active tool's size
-  const setCurrentToolSize = useCallback((val: number) => {
-    if (currentTool === 'pencil') {
-      setPencilSize(val)
-      showNotice(`${t.dynamicProps.pencilTitle}: ${val}px`)
-    } else if (currentTool === 'eraser') {
-      setEraserSize(val)
-      showNotice(`${t.dynamicProps.eraserTitle}: ${val}px`)
-    } else if (['line', 'arrow', 'rectangle', 'rounded-rect', 'ellipse', 'triangle'].includes(currentTool)) {
-      setShapeStrokeWidth(val)
-      showNotice(`${t.dynamicProps.shapeTitle}: ${val}px`)
-    } else {
-      setBrushSize(val)
-      showNotice(`${t.dynamicProps.brushTitle}: ${val}px`)
-    }
-  }, [currentTool, t])
+  const setCurrentToolSize = useCallback(
+    (val: number) => {
+      if (currentTool === 'pencil') {
+        setPencilSize(val)
+        showNotice(`${t.dynamicProps.pencilTitle}: ${val}px`)
+      } else if (currentTool === 'eraser') {
+        setEraserSize(val)
+        showNotice(`${t.dynamicProps.eraserTitle}: ${val}px`)
+      } else if (['line', 'arrow', 'rectangle', 'rounded-rect', 'ellipse', 'triangle'].includes(currentTool)) {
+        setShapeStrokeWidth(val)
+        showNotice(`${t.dynamicProps.shapeTitle}: ${val}px`)
+      } else {
+        setBrushSize(val)
+        showNotice(`${t.dynamicProps.brushTitle}: ${val}px`)
+      }
+    },
+    [currentTool, t],
+  )
 
   // Helper to get title for Size Dialog
   const getSizeDialogTitle = useCallback(() => {
     if (currentTool === 'pencil') return t.dynamicProps.pencilTitle
     if (currentTool === 'eraser') return t.dynamicProps.eraserTitle
-    if (['line', 'arrow', 'rectangle', 'rounded-rect', 'ellipse', 'triangle'].includes(currentTool)) return t.dynamicProps.shapeTitle
+    if (['line', 'arrow', 'rectangle', 'rounded-rect', 'ellipse', 'triangle'].includes(currentTool))
+      return t.dynamicProps.shapeTitle
     return t.dynamicProps.brushTitle
   }, [currentTool, t])
-
 
   // Selection and Copy/Cut Handlers
   const handleSelectAll = useCallback(() => {
     setCurrentTool('select')
+    setSelectionMode('rect')
+    setSelectionPoints(null)
+    setPolygonPoints([])
+    polygonPointsRef.current = []
     const rect: SelectionRect = { x: 0, y: 0, width: canvasDim.width, height: canvasDim.height }
     setSelectionRect(rect)
     drawMarquee(rect)
     showNotice(locale === 'pl' ? 'Zaznaczono całe płótno (Ctrl+A)' : 'Selected entire canvas (Ctrl+A)')
-  }, [canvasDim.width, canvasDim.height, drawMarquee, locale])
+  }, [canvasDim.width, canvasDim.height, drawMarquee, locale, showNotice])
 
   const handleCopy = useCallback(async () => {
     setIsFileDialogOpen(false)
     const canvas = canvasRef.current
     if (!canvas) return
     if (selectionRect && selectionRect.width > 0 && selectionRect.height > 0) {
-      const success = await copyCanvasToClipboard(canvas, selectionRect)
+      const success = await copyCanvasToClipboard(canvas, selectionRect, selectionPoints || undefined)
       if (success) {
         showNotice(
           locale === 'pl'
             ? `Skopiowano zaznaczony fragment (${selectionRect.width}×${selectionRect.height}px)!`
-            : `Copied selection (${selectionRect.width}×${selectionRect.height}px)!`
+            : `Copied selection (${selectionRect.width}×${selectionRect.height}px)!`,
         )
       }
     } else {
@@ -1091,7 +1295,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
         showNotice(t.actions.copiedNotice)
       }
     }
-  }, [selectionRect, locale, t.actions.copiedNotice])
+  }, [selectionRect, selectionPoints, locale, t.actions.copiedNotice, showNotice])
 
   const handleCut = useCallback(async () => {
     const canvas = canvasRef.current
@@ -1102,18 +1306,31 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
       width: canvas.width,
       height: canvas.height,
     }
-    const success = await copyCanvasToClipboard(canvas, targetRect)
+    const success = await copyCanvasToClipboard(canvas, targetRect, selectionPoints || undefined)
     if (success) {
       const ctx = canvas.getContext('2d', { willReadFrequently: true })
       if (ctx) {
-        ctx.fillStyle = color2
-        ctx.fillRect(targetRect.x, targetRect.y, targetRect.width, targetRect.height)
+        if (selectionPoints && selectionPoints.length >= 3) {
+          ctx.save()
+          ctx.beginPath()
+          ctx.moveTo(selectionPoints[0].x, selectionPoints[0].y)
+          for (let i = 1; i < selectionPoints.length; i++) {
+            ctx.lineTo(selectionPoints[i].x, selectionPoints[i].y)
+          }
+          ctx.closePath()
+          ctx.fillStyle = color2
+          ctx.fill()
+          ctx.restore()
+        } else {
+          ctx.fillStyle = color2
+          ctx.fillRect(targetRect.x, targetRect.y, targetRect.width, targetRect.height)
+        }
         pushHistory()
       }
       clearSelection()
       showNotice(locale === 'pl' ? 'Wycięto do schowka!' : 'Cut to clipboard!')
     }
-  }, [selectionRect, color2, pushHistory, clearSelection, locale])
+  }, [selectionRect, selectionPoints, color2, pushHistory, clearSelection, locale, showNotice])
 
   const handleDeleteSelection = useCallback(() => {
     if (!selectionRect) return
@@ -1121,13 +1338,47 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
     if (!canvas) return
     const ctx = canvas.getContext('2d', { willReadFrequently: true })
     if (ctx) {
-      ctx.fillStyle = color2
-      ctx.fillRect(selectionRect.x, selectionRect.y, selectionRect.width, selectionRect.height)
+      if (selectionPoints && selectionPoints.length >= 3) {
+        ctx.save()
+        ctx.beginPath()
+        ctx.moveTo(selectionPoints[0].x, selectionPoints[0].y)
+        for (let i = 1; i < selectionPoints.length; i++) {
+          ctx.lineTo(selectionPoints[i].x, selectionPoints[i].y)
+        }
+        ctx.closePath()
+        ctx.fillStyle = color2
+        ctx.fill()
+        ctx.restore()
+      } else {
+        ctx.fillStyle = color2
+        ctx.fillRect(selectionRect.x, selectionRect.y, selectionRect.width, selectionRect.height)
+      }
       pushHistory()
     }
     clearSelection()
     showNotice(locale === 'pl' ? 'Usunięto zaznaczony fragment' : 'Deleted selection')
-  }, [selectionRect, color2, pushHistory, clearSelection, locale])
+  }, [selectionRect, selectionPoints, color2, pushHistory, clearSelection, locale, showNotice])
+
+  const handleSwitchSelectionMode = useCallback(
+    (mode: SelectionMode) => {
+      if (selectionMode === mode) return
+      clearSelection()
+      setSelectionMode(mode)
+      const modeLabels = {
+        rect: t.dynamicProps.modeRect,
+        freehand: t.dynamicProps.modeFreehand,
+        polygon: t.dynamicProps.modePolygon,
+      }
+      showNotice(modeLabels[mode])
+    },
+    [selectionMode, clearSelection, t.dynamicProps, showNotice],
+  )
+
+  const handleCanvasDoubleClick = useCallback(() => {
+    if (currentTool === 'select' && selectionMode === 'polygon') {
+      finalizePolygon()
+    }
+  }, [currentTool, selectionMode, finalizePolygon])
 
   // Handle keyboard shortcuts (Ctrl+Z, Ctrl+Y, Ctrl+A, Ctrl+C, Ctrl+X, Del, Escape, Ctrl +/- for size, [ and ] for size)
   useEffect(() => {
@@ -1149,6 +1400,33 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
         if (e.key === 'Escape' || e.key === 'Delete' || e.key === 'Backspace') {
           e.preventDefault()
           handleCancelPlacedImage()
+          return
+        }
+      }
+
+      // Handle polygon lasso in-progress keyboard controls
+      if (currentTool === 'select' && selectionMode === 'polygon' && polygonPointsRef.current.length > 0) {
+        if (e.key === 'Enter') {
+          e.preventDefault()
+          finalizePolygon()
+          return
+        }
+        if (e.key === 'Escape') {
+          e.preventDefault()
+          clearSelection()
+          return
+        }
+        if (e.key === 'Backspace') {
+          e.preventDefault()
+          const pts = [...polygonPointsRef.current]
+          pts.pop()
+          polygonPointsRef.current = pts
+          setPolygonPoints(pts)
+          if (pts.length > 0) {
+            drawMarquee(null, pts)
+          } else {
+            drawMarquee(null)
+          }
           return
         }
       }
@@ -1178,17 +1456,11 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
       } else if (e.key === 'Escape' && selectionRect) {
         e.preventDefault()
         clearSelection()
-      } else if (
-        (e.ctrlKey || e.metaKey) &&
-        (e.key === '=' || e.key === '+' || e.key === 'Add')
-      ) {
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === '=' || e.key === '+' || e.key === 'Add')) {
         // MS Paint style: Ctrl + Plus to increase tool size (preventing browser zoom!)
         e.preventDefault()
         increaseToolSize()
-      } else if (
-        (e.ctrlKey || e.metaKey) &&
-        (e.key === '-' || e.key === '_' || e.key === 'Subtract')
-      ) {
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === '-' || e.key === '_' || e.key === 'Subtract')) {
         // MS Paint style: Ctrl + Minus to decrease tool size (preventing browser zoom!)
         e.preventDefault()
         decreaseToolSize()
@@ -1215,7 +1487,11 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
     handleCut,
     handleDeleteSelection,
     clearSelection,
+    finalizePolygon,
+    drawMarquee,
     selectionRect,
+    currentTool,
+    selectionMode,
     handleCommitPlacedImage,
     handleCancelPlacedImage,
   ])
@@ -1334,6 +1610,41 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
     setIsExportDialogOpen(false)
   }
 
+  const startPanning = useCallback((clientX: number, clientY: number, captureEl?: Element | null, pointerId?: number) => {
+    const viewport = canvasViewportRef.current
+    if (!viewport) return
+    isPanningRef.current = true
+    setIsPanning(true)
+    panStartRef.current = {
+      clientX,
+      clientY,
+      scrollLeft: viewport.scrollLeft,
+      scrollTop: viewport.scrollTop,
+    }
+    if (captureEl && pointerId !== undefined && 'setPointerCapture' in captureEl) {
+      try {
+        (captureEl as HTMLElement).setPointerCapture(pointerId)
+      } catch {}
+    }
+    const handleGlobalPointerMove = (moveEvt: PointerEvent) => {
+      if (!isPanningRef.current) return
+      const v = canvasViewportRef.current
+      if (!v) return
+      v.scrollLeft = panStartRef.current.scrollLeft - (moveEvt.clientX - panStartRef.current.clientX)
+      v.scrollTop = panStartRef.current.scrollTop - (moveEvt.clientY - panStartRef.current.clientY)
+    }
+    const handleGlobalPointerUp = () => {
+      isPanningRef.current = false
+      setIsPanning(false)
+      window.removeEventListener('pointermove', handleGlobalPointerMove)
+      window.removeEventListener('pointerup', handleGlobalPointerUp)
+      window.removeEventListener('pointercancel', handleGlobalPointerUp)
+    }
+    window.addEventListener('pointermove', handleGlobalPointerMove)
+    window.addEventListener('pointerup', handleGlobalPointerUp)
+    window.addEventListener('pointercancel', handleGlobalPointerUp)
+  }, [])
+
   // Pointer Down (Start Drawing / Tool Action)
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
     // If placing an image, clicking canvas outside commits the placed image
@@ -1343,17 +1654,9 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
     }
 
     if (currentTool === 'hand') {
-      const viewport = canvasViewportRef.current
-      if (!viewport) return
       e.preventDefault()
-      isPanningRef.current = true
-      panStartRef.current = {
-        clientX: e.clientX,
-        clientY: e.clientY,
-        scrollLeft: viewport.scrollLeft,
-        scrollTop: viewport.scrollTop,
-      }
-      e.currentTarget.setPointerCapture?.(e.pointerId)
+      e.stopPropagation()
+      startPanning(e.clientX, e.clientY, e.currentTarget, e.pointerId)
       return
     }
 
@@ -1370,10 +1673,38 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
     const primaryColor = activeColorSlot === 1 ? color1 : color2
     const secondaryColor = activeColorSlot === 1 ? color2 : color1
 
-    // Marquee Selection Tool: reset selection and start tracking
+    // Selection Tool: start rect, freehand, or handle polygon point
     if (currentTool === 'select') {
-      clearSelection()
-      return
+      if (selectionMode === 'rect') {
+        clearSelection()
+        isDrawingRef.current = true
+        startPointRef.current = coords
+        return
+      }
+      if (selectionMode === 'freehand') {
+        clearSelection()
+        isDrawingRef.current = true
+        lassoPointsRef.current = [coords]
+        drawMarquee(null, [coords])
+        return
+      }
+      if (selectionMode === 'polygon') {
+        const pts = polygonPointsRef.current
+        // If clicking near origin and have >= 3 points, close polygon
+        if (pts.length >= 3) {
+          const distToOrigin = Math.hypot(coords.x - pts[0].x, coords.y - pts[0].y)
+          if (distToOrigin < 10) {
+            finalizePolygon()
+            return
+          }
+        }
+        // Add point to in-progress polygon
+        const next = [...pts, coords]
+        polygonPointsRef.current = next
+        setPolygonPoints(next)
+        drawMarquee(null, next, coords)
+        return
+      }
     }
 
     // Flood Fill Tool
@@ -1391,9 +1722,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
     // Eyedropper Tool
     if (currentTool === 'eyedropper') {
       const pixel = ctx.getImageData(coords.x, coords.y, 1, 1).data
-      const hex = `#${((1 << 24) + (pixel[0] << 16) + (pixel[1] << 8) + pixel[2])
-        .toString(16)
-        .slice(1)}`
+      const hex = `#${((1 << 24) + (pixel[0] << 16) + (pixel[1] << 8) + pixel[2]).toString(16).slice(1)}`
       if (activeColorSlot === 1) {
         setColor1(hex)
       } else {
@@ -1419,9 +1748,11 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
       return
     }
 
-    // Freehand Pencil / Brush / Eraser initial dot
-    if (currentTool === 'pencil' || currentTool === 'brush' || currentTool === 'eraser') {
-      const activeSize = currentTool === 'pencil' ? pencilSize : currentTool === 'brush' ? brushSize : eraserSize
+    // Freehand Pencil (Graphite texture) vs Brush / Eraser (Solid smooth)
+    if (currentTool === 'pencil') {
+      drawPencilDot(ctx, coords, primaryColor, pencilSize)
+    } else if (currentTool === 'brush' || currentTool === 'eraser') {
+      const activeSize = currentTool === 'brush' ? brushSize : eraserSize
       ctx.save()
       ctx.strokeStyle = currentTool === 'eraser' ? color2 : primaryColor
       ctx.fillStyle = currentTool === 'eraser' ? color2 : primaryColor
@@ -1430,13 +1761,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
       ctx.lineJoin = 'round'
 
       ctx.beginPath()
-      ctx.arc(
-        coords.x,
-        coords.y,
-        Math.max(0.5, activeSize / 2),
-        0,
-        Math.PI * 2
-      )
+      ctx.arc(coords.x, coords.y, Math.max(0.5, activeSize / 2), 0, Math.PI * 2)
       ctx.fill()
       ctx.restore()
     }
@@ -1463,22 +1788,47 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
 
     const primaryColor = activeColorSlot === 1 ? color1 : color2
     const secondaryColor = activeColorSlot === 1 ? color2 : color1
-    // Marquee Selection: draw live dotted rectangle on preview canvas
+    // Marquee / Lasso Selection: draw live preview on preview canvas
     if (currentTool === 'select') {
-      const minX = Math.round(Math.min(startPointRef.current.x, coords.x))
-      const minY = Math.round(Math.min(startPointRef.current.y, coords.y))
-      const w = Math.round(Math.abs(coords.x - startPointRef.current.x))
-      const h = Math.round(Math.abs(coords.y - startPointRef.current.y))
-      drawMarquee({ x: minX, y: minY, width: w, height: h })
+      if (selectionMode === 'rect' && isDrawingRef.current) {
+        const minX = Math.round(Math.min(startPointRef.current.x, coords.x))
+        const minY = Math.round(Math.min(startPointRef.current.y, coords.y))
+        const w = Math.round(Math.abs(coords.x - startPointRef.current.x))
+        const h = Math.round(Math.abs(coords.y - startPointRef.current.y))
+        drawMarquee({ x: minX, y: minY, width: w, height: h })
+        return
+      }
+      if (selectionMode === 'freehand' && isDrawingRef.current) {
+        const pts = lassoPointsRef.current
+        const last = pts[pts.length - 1]
+        if (!last || Math.hypot(coords.x - last.x, coords.y - last.y) >= 2) {
+          pts.push(coords)
+          drawMarquee(null, pts)
+        }
+        return
+      }
+      if (selectionMode === 'polygon' && polygonPointsRef.current.length > 0) {
+        drawMarquee(null, polygonPointsRef.current, coords)
+        return
+      }
       return
     }
 
-    // Freehand drawing directly onto main canvas
-    if (currentTool === 'pencil' || currentTool === 'brush' || currentTool === 'eraser') {
+    // Freehand Pencil: Realistic graphite sketch texture
+    if (currentTool === 'pencil') {
+      const ctx = canvas.getContext('2d', { willReadFrequently: true })
+      if (!ctx) return
+      drawPencilSegment(ctx, lastPointRef.current, coords, primaryColor, pencilSize)
+      lastPointRef.current = coords
+      return
+    }
+
+    // Freehand Brush / Eraser: Smooth solid strokes
+    if (currentTool === 'brush' || currentTool === 'eraser') {
       const ctx = canvas.getContext('2d', { willReadFrequently: true })
       if (!ctx) return
 
-      const activeSize = currentTool === 'pencil' ? pencilSize : currentTool === 'brush' ? brushSize : eraserSize
+      const activeSize = currentTool === 'brush' ? brushSize : eraserSize
       ctx.save()
       ctx.strokeStyle = currentTool === 'eraser' ? color2 : primaryColor
       ctx.lineWidth = activeSize
@@ -1508,7 +1858,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
       primaryColor,
       secondaryColor,
       shapeStrokeWidth,
-      shapeFillMode
+      shapeFillMode,
     )
   }
 
@@ -1516,6 +1866,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
   const handlePointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (isPanningRef.current) {
       isPanningRef.current = false
+      setIsPanning(false)
       return
     }
     if (!isDrawingRef.current) return
@@ -1533,25 +1884,52 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
     const primaryColor = activeColorSlot === 1 ? color1 : color2
     const secondaryColor = activeColorSlot === 1 ? color2 : color1
 
-    // Marquee Selection Tool: finalize bounding box
+    // Selection Tool: finalize bounding box
     if (currentTool === 'select') {
-      const minX = Math.round(Math.min(startPointRef.current.x, coords.x))
-      const minY = Math.round(Math.min(startPointRef.current.y, coords.y))
-      const w = Math.round(Math.abs(coords.x - startPointRef.current.x))
-      const h = Math.round(Math.abs(coords.y - startPointRef.current.y))
-      if (w > 3 && h > 3) {
-        const newRect: SelectionRect = { x: minX, y: minY, width: w, height: h }
-        setSelectionRect(newRect)
-        drawMarquee(newRect)
-        showNotice(
-          locale === 'pl'
-            ? `Zaznaczono: ${w}×${h}px (Ctrl+C aby skopiować)`
-            : `Selected: ${w}×${h}px (Ctrl+C to copy)`
-        )
-      } else {
-        clearSelection()
+      if (selectionMode === 'rect') {
+        const minX = Math.round(Math.min(startPointRef.current.x, coords.x))
+        const minY = Math.round(Math.min(startPointRef.current.y, coords.y))
+        const w = Math.round(Math.abs(coords.x - startPointRef.current.x))
+        const h = Math.round(Math.abs(coords.y - startPointRef.current.y))
+        if (w > 3 && h > 3) {
+          const newRect: SelectionRect = { x: minX, y: minY, width: w, height: h }
+          setSelectionRect(newRect)
+          setSelectionPoints(null)
+          drawMarquee(newRect)
+          showNotice(
+            locale === 'pl' ? `Zaznaczono: ${w}×${h}px (Ctrl+C aby skopiować)` : `Selected: ${w}×${h}px (Ctrl+C to copy)`,
+          )
+        } else {
+          clearSelection()
+        }
+        return
       }
-      return
+      if (selectionMode === 'freehand') {
+        const pts = lassoPointsRef.current
+        if (pts.length >= 3) {
+          const bbox = getBoundingBoxFromPoints(pts)
+          if (bbox.width > 3 && bbox.height > 3) {
+            setSelectionRect(bbox)
+            const cloned = [...pts]
+            setSelectionPoints(cloned)
+            drawMarquee(bbox, cloned)
+            showNotice(
+              locale === 'pl'
+                ? `Zaznaczono lasso: ${bbox.width}×${bbox.height}px (Ctrl+C aby skopiować)`
+                : `Lasso selected: ${bbox.width}×${bbox.height}px (Ctrl+C to copy)`,
+            )
+          } else {
+            clearSelection()
+          }
+        } else {
+          clearSelection()
+        }
+        return
+      }
+      if (selectionMode === 'polygon') {
+        // In polygon mode, points are added on pointerDown; nothing to finalize on pointerUp
+        return
+      }
     }
 
     // If active tool was a shape, commit it to main canvas
@@ -1571,7 +1949,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
         primaryColor,
         secondaryColor,
         shapeStrokeWidth,
-        shapeFillMode
+        shapeFillMode,
       )
       pCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height)
     }
@@ -1619,11 +1997,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
             {/* Section: Clipboard */}
             <div className="paint-section">
               <div className="paint-section-content">
-                <button
-                  className="paint-btn paint-btn-large"
-                  onClick={handleToolbarPaste}
-                  title={t.actions.paste}
-                >
+                <button className="paint-btn paint-btn-large" onClick={handleToolbarPaste} title={t.actions.paste}>
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
                     <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
@@ -1673,9 +2047,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                     title={t.tools.hand}
                     aria-label={t.tools.hand}
                   >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M8 11V5a2 2 0 0 1 4 0v6-8a2 2 0 0 1 4 0v8-5a2 2 0 0 1 4 0v8a7 7 0 0 1-7 7h-1a7 7 0 0 1-6-3.5l-2-3a2 2 0 0 1 3.5-2L8 14" />
-                    </svg>
+                    <IconHand size={18} />
                   </button>
                   <button
                     className={`paint-btn ${currentTool === 'pencil' ? 'active' : ''}`}
@@ -1740,7 +2112,15 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                     title={t.tools.line}
                     aria-label={t.tools.line}
                   >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                    >
                       <line x1="4" y1="20" x2="20" y2="4" />
                     </svg>
                   </button>
@@ -1750,7 +2130,16 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                     title={t.tools.arrow}
                     aria-label={t.tools.arrow}
                   >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
                       <line x1="4" y1="12" x2="20" y2="12" />
                       <polyline points="14 6 20 12 14 18" />
                     </svg>
@@ -1791,7 +2180,15 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                     title={t.tools.triangle}
                     aria-label={t.tools.triangle}
                   >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round">
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                      strokeLinejoin="round"
+                    >
                       <polygon points="12 4 21 20 3 20" />
                     </svg>
                   </button>
@@ -1806,8 +2203,41 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                 {/* Case 0: Select */}
                 {currentTool === 'select' && (
                   <div className="paint-dynamic-box paint-dynamic-box--select">
-                    <div className="paint-grid-2x2">
+                    {/* Row 1: Selection Modes */}
+                    <div className="paint-select-modes-row">
                       <button
+                        type="button"
+                        className={`paint-btn ${selectionMode === 'rect' ? 'active' : ''}`}
+                        onClick={() => handleSwitchSelectionMode('rect')}
+                        title={t.dynamicProps.modeRect}
+                        aria-label={t.dynamicProps.modeRect}
+                      >
+                        <IconRectSelect size={18} />
+                      </button>
+                      <button
+                        type="button"
+                        className={`paint-btn ${selectionMode === 'freehand' ? 'active' : ''}`}
+                        onClick={() => handleSwitchSelectionMode('freehand')}
+                        title={t.dynamicProps.modeFreehand}
+                        aria-label={t.dynamicProps.modeFreehand}
+                      >
+                        <IconLasso size={18} />
+                      </button>
+                      <button
+                        type="button"
+                        className={`paint-btn ${selectionMode === 'polygon' ? 'active' : ''}`}
+                        onClick={() => handleSwitchSelectionMode('polygon')}
+                        title={t.dynamicProps.modePolygon}
+                        aria-label={t.dynamicProps.modePolygon}
+                      >
+                        <IconPolygonLasso size={18} />
+                      </button>
+                    </div>
+
+                    {/* Row 2: Selection Actions */}
+                    <div className="paint-select-actions-row">
+                      <button
+                        type="button"
                         className="paint-btn"
                         onClick={handleSelectAll}
                         title={`${t.actions.selectAll} (Ctrl+A)`}
@@ -1816,6 +2246,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                         <IconSelectAll size={18} />
                       </button>
                       <button
+                        type="button"
                         className="paint-btn"
                         onClick={handleCopy}
                         title={`${t.actions.copyImage} (Ctrl+C)`}
@@ -1824,6 +2255,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                         <IconCopy size={18} />
                       </button>
                       <button
+                        type="button"
                         className="paint-btn"
                         onClick={handleCut}
                         title={`${t.actions.cut} (Ctrl+X)`}
@@ -1832,6 +2264,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                         <IconScissors size={18} />
                       </button>
                       <button
+                        type="button"
                         className="paint-btn"
                         onClick={handleDeleteSelection}
                         disabled={!selectionRect}
@@ -1844,15 +2277,6 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                       >
                         <IconTrash size={18} />
                       </button>
-                    </div>
-
-                    <div className="paint-select-info-box">
-                      <span className="paint-select-info-dims">
-                        {selectionRect ? `${selectionRect.width} × ${selectionRect.height}` : '0 × 0'}
-                      </span>
-                      <span className="paint-select-info-label">
-                        {selectionRect ? (locale === 'pl' ? 'zaznaczone' : 'selected') : (locale === 'pl' ? 'brak zazn.' : 'none')}
-                      </span>
                     </div>
                   </div>
                 )}
@@ -1893,11 +2317,24 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                         title={t.dynamicProps.customSize}
                         aria-label={t.dynamicProps.customSize}
                       >
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-                          <line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" />
-                          <line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" />
-                          <line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" />
-                          <line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" />
+                        <svg
+                          width="15"
+                          height="15"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                        >
+                          <line x1="4" y1="21" x2="4" y2="14" />
+                          <line x1="4" y1="10" x2="4" y2="3" />
+                          <line x1="12" y1="21" x2="12" y2="12" />
+                          <line x1="12" y1="8" x2="12" y2="3" />
+                          <line x1="20" y1="21" x2="20" y2="16" />
+                          <line x1="20" y1="12" x2="20" y2="3" />
+                          <line x1="1" y1="14" x2="7" y2="14" />
+                          <line x1="9" y1="8" x2="15" y2="8" />
+                          <line x1="17" y1="16" x2="23" y2="16" />
                         </svg>
                         <span className="paint-size-custom-badge">{brushSize}px</span>
                       </button>
@@ -1942,11 +2379,24 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                         title={t.dynamicProps.customSize}
                         aria-label={t.dynamicProps.customSize}
                       >
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-                          <line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" />
-                          <line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" />
-                          <line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" />
-                          <line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" />
+                        <svg
+                          width="15"
+                          height="15"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                        >
+                          <line x1="4" y1="21" x2="4" y2="14" />
+                          <line x1="4" y1="10" x2="4" y2="3" />
+                          <line x1="12" y1="21" x2="12" y2="12" />
+                          <line x1="12" y1="8" x2="12" y2="3" />
+                          <line x1="20" y1="21" x2="20" y2="16" />
+                          <line x1="20" y1="12" x2="20" y2="3" />
+                          <line x1="1" y1="14" x2="7" y2="14" />
+                          <line x1="9" y1="8" x2="15" y2="8" />
+                          <line x1="17" y1="16" x2="23" y2="16" />
                         </svg>
                         <span className="paint-size-custom-badge">{eraserSize}px</span>
                       </button>
@@ -1990,11 +2440,24 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                         title={t.dynamicProps.customSize}
                         aria-label={t.dynamicProps.customSize}
                       >
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-                          <line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" />
-                          <line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" />
-                          <line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" />
-                          <line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" />
+                        <svg
+                          width="15"
+                          height="15"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                        >
+                          <line x1="4" y1="21" x2="4" y2="14" />
+                          <line x1="4" y1="10" x2="4" y2="3" />
+                          <line x1="12" y1="21" x2="12" y2="12" />
+                          <line x1="12" y1="8" x2="12" y2="3" />
+                          <line x1="20" y1="21" x2="20" y2="16" />
+                          <line x1="20" y1="12" x2="20" y2="3" />
+                          <line x1="1" y1="14" x2="7" y2="14" />
+                          <line x1="9" y1="8" x2="15" y2="8" />
+                          <line x1="17" y1="16" x2="23" y2="16" />
                         </svg>
                         <span className="paint-size-custom-badge">{pencilSize}px</span>
                       </button>
@@ -2038,11 +2501,24 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                         title={t.dynamicProps.customSize}
                         aria-label={t.dynamicProps.customSize}
                       >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-                          <line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" />
-                          <line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" />
-                          <line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" />
-                          <line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" />
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                        >
+                          <line x1="4" y1="21" x2="4" y2="14" />
+                          <line x1="4" y1="10" x2="4" y2="3" />
+                          <line x1="12" y1="21" x2="12" y2="12" />
+                          <line x1="12" y1="8" x2="12" y2="3" />
+                          <line x1="20" y1="21" x2="20" y2="16" />
+                          <line x1="20" y1="12" x2="20" y2="3" />
+                          <line x1="1" y1="14" x2="7" y2="14" />
+                          <line x1="9" y1="8" x2="15" y2="8" />
+                          <line x1="17" y1="16" x2="23" y2="16" />
                         </svg>
                         <span className="paint-size-custom-badge">{shapeStrokeWidth}px</span>
                       </button>
@@ -2163,7 +2639,9 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                         {activeColorSlot === 1 ? t.actions.color1.split(' ')[0] : t.actions.color2.split(' ')[0]}
                       </span>
                     </div>
-                    <span style={{ fontSize: 10, color: 'var(--all-text-muted)', lineHeight: 1.2, textAlign: 'center' }}>
+                    <span
+                      style={{ fontSize: 10, color: 'var(--all-text-muted)', lineHeight: 1.2, textAlign: 'center' }}
+                    >
                       {t.dynamicProps.bucketHint}
                     </span>
                   </div>
@@ -2175,7 +2653,9 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                     <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--all-text)' }}>
                       {t.dynamicProps.eyedropperTitle}
                     </span>
-                    <span style={{ fontSize: 10, color: 'var(--all-text-muted)', lineHeight: 1.2, textAlign: 'center' }}>
+                    <span
+                      style={{ fontSize: 10, color: 'var(--all-text-muted)', lineHeight: 1.2, textAlign: 'center' }}
+                    >
                       {t.dynamicProps.eyedropperHint}
                     </span>
                   </div>
@@ -2185,14 +2665,18 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                 {currentTool === 'hand' && (
                   <div className="paint-dynamic-box paint-dynamic-box--hand">
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <path d="M8 11V5a2 2 0 0 1 4 0v6-8a2 2 0 0 1 4 0v8-5a2 2 0 0 1 4 0v8a7 7 0 0 1-7 7h-1a7 7 0 0 1-6-3.5l-2-3a2 2 0 0 1 3.5-2L8 14" />
-                      </svg>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--all-text)' }}>
-                        {t.tools.hand}
-                      </span>
+                      <IconHand size={18} />
+                      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--all-text)' }}>{t.tools.hand}</span>
                     </div>
-                    <span style={{ fontSize: 10, color: 'var(--all-text-muted)', lineHeight: 1.25, textAlign: 'center', maxWidth: 150 }}>
+                    <span
+                      style={{
+                        fontSize: 10,
+                        color: 'var(--all-text-muted)',
+                        lineHeight: 1.25,
+                        textAlign: 'center',
+                        maxWidth: 150,
+                      }}
+                    >
                       {t.dynamicProps.handHint}
                     </span>
                   </div>
@@ -2202,20 +2686,20 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                 {currentTool === 'select'
                   ? t.dynamicProps.selectTitle
                   : currentTool === 'hand'
-                  ? t.dynamicProps.handTitle
-                  : currentTool === 'brush'
-                  ? t.dynamicProps.brushTitle
-                  : currentTool === 'eraser'
-                  ? t.dynamicProps.eraserTitle
-                  : currentTool === 'pencil'
-                  ? t.dynamicProps.pencilTitle
-                  : currentTool === 'text'
-                  ? t.dynamicProps.textTitle
-                  : currentTool === 'bucket'
-                  ? t.dynamicProps.bucketTitle
-                  : currentTool === 'eyedropper'
-                  ? t.dynamicProps.eyedropperTitle
-                  : t.dynamicProps.shapeTitle}
+                    ? t.dynamicProps.handTitle
+                    : currentTool === 'brush'
+                      ? t.dynamicProps.brushTitle
+                      : currentTool === 'eraser'
+                        ? t.dynamicProps.eraserTitle
+                        : currentTool === 'pencil'
+                          ? t.dynamicProps.pencilTitle
+                          : currentTool === 'text'
+                            ? t.dynamicProps.textTitle
+                            : currentTool === 'bucket'
+                              ? t.dynamicProps.bucketTitle
+                              : currentTool === 'eyedropper'
+                                ? t.dynamicProps.eyedropperTitle
+                                : t.dynamicProps.shapeTitle}
               </span>
             </div>
 
@@ -2294,9 +2778,14 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
         {/* ─── Canvas Viewport (Center) ─── */}
         <main
           ref={canvasViewportRef}
-          className="paint-canvas-viewport"
+          className={`paint-canvas-viewport paint-canvas-viewport--tool-${currentTool} ${currentTool === 'hand' ? 'paint-canvas-viewport--hand' : ''} ${isPanning ? 'paint-canvas-viewport--panning' : ''}`}
           onDragOver={(e) => e.preventDefault()}
           onDrop={handleDrop}
+          onPointerDown={(e) => {
+            if (currentTool === 'hand') {
+              startPanning(e.clientX, e.clientY, e.currentTarget, e.pointerId)
+            }
+          }}
         >
           <div
             className="paint-canvas-wrapper"
@@ -2307,7 +2796,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
           >
             <canvas
               ref={canvasRef}
-              className={`paint-canvas ${currentTool === 'hand' ? 'paint-canvas--hand' : ''}`}
+              className={`paint-canvas paint-canvas--tool-${currentTool} ${currentTool === 'select' ? `paint-canvas--select-${selectionMode}` : ''} ${currentTool === 'hand' ? 'paint-canvas--hand' : ''}`}
               style={{
                 width: canvasDim.width * zoom,
                 height: canvasDim.height * zoom,
@@ -2316,7 +2805,12 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
-              onPointerLeave={handlePointerUp}
+              onPointerLeave={(e) => {
+                if (!isPanningRef.current) {
+                  handlePointerUp(e)
+                }
+              }}
+              onDoubleClick={handleCanvasDoubleClick}
             />
             <canvas
               ref={previewCanvasRef}
@@ -2337,16 +2831,25 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                   left: `${activeTextOverlay.x * zoom}px`,
                   top: `${activeTextOverlay.y * zoom}px`,
                   zIndex: 50,
+                  backgroundColor: isSolidBg ? color2 : 'transparent',
                 }}
               >
                 {/* Drag bar / header with grip & quick action buttons */}
                 <div
-                  className="paint-text-box-drag-handle"
+                  className={`paint-text-box-drag-handle ${activeTextOverlay.y * zoom < 26 ? 'paint-text-box-drag-handle--bottom' : ''}`}
                   onPointerDown={handleTextDragStart}
                   title={locale === 'pl' ? 'Przeciągnij, aby przesunąć pole tekstowe' : 'Drag to reposition text box'}
                 >
                   <div className="paint-text-box-grip">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                    <svg
+                      width="10"
+                      height="10"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      aria-hidden="true"
+                    >
                       <circle cx="9" cy="5" r="1.5" fill="currentColor" />
                       <circle cx="9" cy="12" r="1.5" fill="currentColor" />
                       <circle cx="9" cy="19" r="1.5" fill="currentColor" />
@@ -2357,6 +2860,9 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                     <span>
                       {activeTextOverlay.x}, {activeTextOverlay.y}
                     </span>
+                    <span style={{ opacity: 0.6, fontSize: 9, marginLeft: 4 }}>
+                      Ctrl+↵
+                    </span>
                   </div>
 
                   <div className="paint-text-box-actions">
@@ -2364,10 +2870,18 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                       type="button"
                       className="paint-text-box-btn paint-text-box-btn--commit"
                       onClick={handleCommitText}
-                      title={locale === 'pl' ? 'Zatwierdź tekst (Enter)' : 'Commit text (Enter)'}
+                      title={locale === 'pl' ? 'Zatwierdź tekst (Ctrl+Enter)' : 'Commit text (Ctrl+Enter)'}
                       aria-label="Commit text"
                     >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden="true">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        aria-hidden="true"
+                      >
                         <polyline points="20 6 9 17 4 12" />
                       </svg>
                     </button>
@@ -2378,7 +2892,15 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                       title={locale === 'pl' ? 'Anuluj (Esc)' : 'Cancel (Esc)'}
                       aria-label="Cancel text"
                     >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden="true">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        aria-hidden="true"
+                      >
                         <line x1="18" y1="6" x2="6" y2="18" />
                         <line x1="6" y1="6" x2="18" y2="18" />
                       </svg>
@@ -2386,12 +2908,13 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                   </div>
                 </div>
 
-                {/* Direct On-Canvas Text Input */}
-                <input
+                {/* Direct On-Canvas Multiline Text Input */}
+                <textarea
                   ref={textInputRef}
                   className="paint-text-box-input"
                   placeholder={locale === 'pl' ? 'Wpisz tekst...' : 'Type text...'}
                   value={activeTextOverlay.text}
+                  rows={Math.max(1, activeTextOverlay.text.split('\n').length)}
                   style={{
                     fontFamily,
                     fontSize: `${fontSize * zoom}px`,
@@ -2401,6 +2924,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                     color: color1,
                     backgroundColor: isSolidBg ? color2 : 'transparent',
                     caretColor: color1,
+                    lineHeight: 1.25,
                   }}
                   onChange={(e) =>
                     setActiveTextOverlay({
@@ -2409,16 +2933,28 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                     })
                   }
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
+                    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                       e.preventDefault()
                       handleCommitText()
+                      return
                     }
                     if (e.key === 'Escape') {
                       e.preventDefault()
                       setActiveTextOverlay(null)
+                      return
                     }
                   }}
                 />
+
+                {/* 8 MS Paint style selection frame anchor handles */}
+                <div className="paint-text-box-handle paint-text-box-handle--nw" />
+                <div className="paint-text-box-handle paint-text-box-handle--ne" />
+                <div className="paint-text-box-handle paint-text-box-handle--sw" />
+                <div className="paint-text-box-handle paint-text-box-handle--se" />
+                <div className="paint-text-box-handle paint-text-box-handle--n" />
+                <div className="paint-text-box-handle paint-text-box-handle--s" />
+                <div className="paint-text-box-handle paint-text-box-handle--w" />
+                <div className="paint-text-box-handle paint-text-box-handle--e" />
               </div>
             )}
 
@@ -2441,7 +2977,15 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                   onPointerDown={(e) => e.stopPropagation()}
                 >
                   <div className="paint-placed-image-info">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                    <svg
+                      width="10"
+                      height="10"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      aria-hidden="true"
+                    >
                       <circle cx="9" cy="5" r="1.5" fill="currentColor" />
                       <circle cx="9" cy="12" r="1.5" fill="currentColor" />
                       <circle cx="9" cy="19" r="1.5" fill="currentColor" />
@@ -2462,7 +3006,15 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                     title={t.placedImage.fitToCanvas}
                     aria-label={t.placedImage.fitToCanvas}
                   >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      aria-hidden="true"
+                    >
                       <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
                     </svg>
                     <span>{locale === 'pl' ? 'Dopasuj' : 'Fit'}</span>
@@ -2491,7 +3043,15 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                       title={t.placedImage.expandCanvas}
                       aria-label={t.placedImage.expandCanvas}
                     >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        aria-hidden="true"
+                      >
                         <polyline points="15 3 21 3 21 9" />
                         <polyline points="9 21 3 21 3 15" />
                         <line x1="21" y1="3" x2="14" y2="10" />
@@ -2509,7 +3069,15 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                     title={t.placedImage.commit}
                     aria-label={t.placedImage.commit}
                   >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden="true">
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      aria-hidden="true"
+                    >
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
                     <span>{locale === 'pl' ? 'Wstaw' : 'Place'}</span>
@@ -2523,7 +3091,15 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                     title={t.placedImage.cancel}
                     aria-label={t.placedImage.cancel}
                   >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      aria-hidden="true"
+                    >
                       <line x1="18" y1="6" x2="6" y2="18" />
                       <line x1="6" y1="6" x2="18" y2="18" />
                     </svg>
@@ -2614,6 +3190,28 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
             </strong>
           </div>
 
+          {selectionRect && (
+            <div className="paint-status-item">
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <IconSelect size={13} aria-hidden="true" />
+                {locale === 'pl' ? 'Zaznaczenie:' : 'Selection:'}
+              </span>
+              <strong>
+                {selectionRect.width} × {selectionRect.height} px
+              </strong>
+            </div>
+          )}
+
+          {polygonPoints.length > 0 && (
+            <div className="paint-status-item" style={{ color: 'var(--all-accent)' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <IconPolygonLasso size={13} aria-hidden="true" />
+                {polygonPoints.length} {t.dynamicProps.polygonPointsLabel}
+              </span>
+              <span style={{ fontSize: 10, opacity: 0.85 }}>({t.dynamicProps.polygonCloseTip})</span>
+            </div>
+          )}
+
           {statusMessage && (
             <div
               className="paint-status-item"
@@ -2670,9 +3268,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
               }}
             >
               <div className="paint-anchored-popover-header">
-                <span className="paint-popover-title all-dialog__title">
-                  {t.fileMenu.button}
-                </span>
+                <span className="paint-popover-title all-dialog__title">{t.fileMenu.button}</span>
                 <button
                   type="button"
                   className="paint-popover-close-btn"
@@ -2783,7 +3379,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                 </div>
               </div>
             </div>,
-            document.body
+            document.body,
           )}
 
         {/* ─── New Canvas Dialog ─── */}
@@ -2939,13 +3535,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                 <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--all-text-muted)' }}>
                   {t.dialogs.quality}: {exportQuality}%
                 </label>
-                <Slider
-                  min={40}
-                  max={100}
-                  step={1}
-                  value={exportQuality}
-                  onChange={(val) => setExportQuality(val)}
-                />
+                <Slider min={40} max={100} step={1} value={exportQuality} onChange={(val) => setExportQuality(val)} />
               </div>
             )}
 
@@ -3000,9 +3590,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
               }}
             >
               <div className="paint-anchored-popover-header">
-                <span className="paint-popover-title all-dialog__title">
-                  {getSizeDialogTitle()}
-                </span>
+                <span className="paint-popover-title all-dialog__title">{getSizeDialogTitle()}</span>
                 <button
                   type="button"
                   className="paint-popover-close-btn"
@@ -3022,22 +3610,12 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                     style={{
                       width: Math.min(56, Math.max(2, getCurrentToolSize())),
                       height: Math.min(56, Math.max(2, getCurrentToolSize())),
-                      backgroundColor:
-                        currentTool === 'eraser'
-                          ? color2
-                          : activeColorSlot === 1
-                          ? color1
-                          : color2,
+                      backgroundColor: currentTool === 'eraser' ? color2 : activeColorSlot === 1 ? color1 : color2,
                       borderRadius: currentTool === 'eraser' ? 2 : '50%',
-                      border:
-                        currentTool === 'eraser'
-                          ? '1px solid var(--all-border-2)'
-                          : undefined,
+                      border: currentTool === 'eraser' ? '1px solid var(--all-border-2)' : undefined,
                     }}
                   />
-                  <span className="paint-size-dialog-value">
-                    {getCurrentToolSize()} px
-                  </span>
+                  <span className="paint-size-dialog-value">{getCurrentToolSize()} px</span>
                 </div>
 
                 {/* Slider */}
@@ -3045,14 +3623,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                   value={getCurrentToolSize()}
                   min={currentTool === 'eraser' ? 2 : 1}
                   max={
-                    [
-                      'line',
-                      'arrow',
-                      'rectangle',
-                      'rounded-rect',
-                      'ellipse',
-                      'triangle',
-                    ].includes(currentTool)
+                    ['line', 'arrow', 'rectangle', 'rounded-rect', 'ellipse', 'triangle'].includes(currentTool)
                       ? 48
                       : 64
                   }
@@ -3075,23 +3646,14 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                     {(currentTool === 'pencil'
                       ? [1, 2, 4, 8, 12, 16, 24]
                       : currentTool === 'eraser'
-                      ? [4, 8, 12, 16, 24, 32, 48, 64]
-                      : [
-                          'line',
-                          'arrow',
-                          'rectangle',
-                          'rounded-rect',
-                          'ellipse',
-                          'triangle',
-                        ].includes(currentTool)
-                      ? [1, 2, 4, 6, 8, 12, 16, 24, 32, 48]
-                      : [1, 2, 4, 6, 8, 12, 16, 24, 32, 48, 64]
+                        ? [4, 8, 12, 16, 24, 32, 48, 64]
+                        : ['line', 'arrow', 'rectangle', 'rounded-rect', 'ellipse', 'triangle'].includes(currentTool)
+                          ? [1, 2, 4, 6, 8, 12, 16, 24, 32, 48]
+                          : [1, 2, 4, 6, 8, 12, 16, 24, 32, 48, 64]
                     ).map((sz) => (
                       <Button
                         key={sz}
-                        variant={
-                          getCurrentToolSize() === sz ? 'primary' : 'secondary'
-                        }
+                        variant={getCurrentToolSize() === sz ? 'primary' : 'secondary'}
                         size="sm"
                         shape="pill"
                         onClick={() => setCurrentToolSize(sz)}
@@ -3104,16 +3666,12 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
               </div>
 
               <div className="paint-anchored-popover-footer">
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => setIsCustomSizeOpen(false)}
-                >
+                <Button variant="primary" size="sm" onClick={() => setIsCustomSizeOpen(false)}>
                   {locale === 'pl' ? 'Gotowe' : 'Done'}
                 </Button>
               </div>
             </div>,
-            document.body
+            document.body,
           )}
 
         {/* ─── Anchored Custom Color Popover ─── */}
@@ -3133,10 +3691,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
               <div className="paint-anchored-popover-header">
                 <span className="paint-popover-title all-dialog__title">
                   {t.actions.customColor} (
-                  {activeColorSlot === 1
-                    ? t.actions.color1.split(' ')[0]
-                    : t.actions.color2.split(' ')[0]}
-                  )
+                  {activeColorSlot === 1 ? t.actions.color1.split(' ')[0] : t.actions.color2.split(' ')[0]})
                 </span>
                 <button
                   type="button"
@@ -3152,10 +3707,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
               <div className="paint-anchored-popover-body">
                 {/* Active Color Preview & Hex input */}
                 <div className="paint-color-popover-preview-row">
-                  <div
-                    className="paint-color-popover-swatch-large"
-                    style={{ backgroundColor: activeColor }}
-                  />
+                  <div className="paint-color-popover-swatch-large" style={{ backgroundColor: activeColor }} />
                   <div className="paint-color-popover-hex-input-wrap">
                     <label
                       htmlFor="paint-color-hex-input"
@@ -3198,9 +3750,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                       min={0}
                       max={255}
                       valueDisplay={`R: ${currentColorRgb.r}`}
-                      onChange={(v) =>
-                        handleRgbChange(v, currentColorRgb.g, currentColorRgb.b)
-                      }
+                      onChange={(v) => handleRgbChange(v, currentColorRgb.g, currentColorRgb.b)}
                     />
                   </div>
                   <div className="paint-color-slider-row">
@@ -3209,9 +3759,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                       min={0}
                       max={255}
                       valueDisplay={`G: ${currentColorRgb.g}`}
-                      onChange={(v) =>
-                        handleRgbChange(currentColorRgb.r, v, currentColorRgb.b)
-                      }
+                      onChange={(v) => handleRgbChange(currentColorRgb.r, v, currentColorRgb.b)}
                     />
                   </div>
                   <div className="paint-color-slider-row">
@@ -3220,9 +3768,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                       min={0}
                       max={255}
                       valueDisplay={`B: ${currentColorRgb.b}`}
-                      onChange={(v) =>
-                        handleRgbChange(currentColorRgb.r, currentColorRgb.g, v)
-                      }
+                      onChange={(v) => handleRgbChange(currentColorRgb.r, currentColorRgb.g, v)}
                     />
                   </div>
                 </div>
@@ -3242,17 +3788,11 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                     {SWATCH_PALETTE.map((hex) => (
                       <div
                         key={hex}
-                        className={`paint-swatch ${
-                          activeColor.toLowerCase() === hex.toLowerCase()
-                            ? 'active'
-                            : ''
-                        }`}
+                        className={`paint-swatch ${activeColor.toLowerCase() === hex.toLowerCase() ? 'active' : ''}`}
                         style={{
                           backgroundColor: hex,
                           outline:
-                            activeColor.toLowerCase() === hex.toLowerCase()
-                              ? '2px solid var(--all-accent)'
-                              : undefined,
+                            activeColor.toLowerCase() === hex.toLowerCase() ? '2px solid var(--all-accent)' : undefined,
                           outlineOffset: 1,
                         }}
                         onClick={() => handleHexInputChange(hex)}
@@ -3262,10 +3802,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                 </div>
               </div>
 
-              <div
-                className="paint-anchored-popover-footer"
-                style={{ justifyContent: 'space-between' }}
-              >
+              <div className="paint-anchored-popover-footer" style={{ justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', gap: 4 }}>
                   <Button
                     variant={activeColorSlot === 1 ? 'primary' : 'secondary'}
@@ -3284,16 +3821,12 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                     2
                   </Button>
                 </div>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => setIsCustomColorOpen(false)}
-                >
+                <Button variant="primary" size="sm" onClick={() => setIsCustomColorOpen(false)}>
                   {locale === 'pl' ? 'Gotowe' : 'Done'}
                 </Button>
               </div>
             </div>,
-            document.body
+            document.body,
           )}
       </div>
     </FullBleedLayout>

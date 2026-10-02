@@ -50,6 +50,10 @@ export interface TranslationDictionary {
   noFilteredTools: string
   clearFilter: string
   legalNotice: string
+  exitConfirmTitle: string
+  exitConfirmDesc: string
+  exitConfirmLeave: string
+  exitConfirmStay: string
 }
 
 export const translations: Record<Locale, TranslationDictionary> = {
@@ -86,6 +90,11 @@ export const translations: Record<Locale, TranslationDictionary> = {
     noFilteredTools: 'No tools found in this category.',
     clearFilter: 'Show all tools',
     legalNotice: 'Legal Notice & Privacy',
+    exitConfirmTitle: 'Unsaved changes',
+    exitConfirmDesc:
+      'You have active changes or unsaved progress in this tool. If you leave now, your changes will be lost. Are you sure you want to exit?',
+    exitConfirmLeave: 'Exit tool',
+    exitConfirmStay: 'Stay here',
   },
   pl: {
     backToHomeAria: 'AllTools — wróć do strony głównej',
@@ -125,6 +134,11 @@ export const translations: Record<Locale, TranslationDictionary> = {
     noFilteredTools: 'Brak narzędzi w tej kategorii.',
     clearFilter: 'Pokaż wszystkie narzędzia',
     legalNotice: 'Nota prawna & Prywatność',
+    exitConfirmTitle: 'Niezapisane zmiany',
+    exitConfirmDesc:
+      'W tym narzędziu masz aktywne zmiany lub rozpoczęte zadanie. Jeśli wyjdziesz teraz, Twoje postępy zostaną utracone. Czy na pewno chcesz wyjść?',
+    exitConfirmLeave: 'Wyjdź z narzędzia',
+    exitConfirmStay: 'Zostań',
   },
 }
 

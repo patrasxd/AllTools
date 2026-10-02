@@ -112,6 +112,30 @@ describe('getCanvasCoordinates', () => {
   })
 })
 
+describe('getBoundingBoxFromPoints', () => {
+  it('returns zero box for empty points array', async () => {
+    const { getBoundingBoxFromPoints } = await import('../utils/sketchEngine')
+    expect(getBoundingBoxFromPoints([])).toEqual({ x: 0, y: 0, width: 0, height: 0 })
+  })
+
+  it('calculates bounding box from arbitrary polygon vertices', async () => {
+    const { getBoundingBoxFromPoints } = await import('../utils/sketchEngine')
+    const points = [
+      { x: 50, y: 100 },
+      { x: 200, y: 80 },
+      { x: 180, y: 250 },
+      { x: 30, y: 220 },
+    ]
+    const bbox = getBoundingBoxFromPoints(points)
+    expect(bbox).toEqual({
+      x: 30,
+      y: 80,
+      width: 170, // 200 - 30
+      height: 170, // 250 - 80
+    })
+  })
+})
+
 describe('copyCanvasToClipboard', () => {
   it('returns false when clipboard API is unavailable', async () => {
     const { copyCanvasToClipboard } = await import('../utils/sketchEngine')
@@ -135,3 +159,28 @@ describe('copyCanvasToClipboard', () => {
   })
 })
 
+describe('drawPencilDot & drawPencilSegment', () => {
+  it('renders realistic graphite pencil dot without error', async () => {
+    const { drawPencilDot } = await import('../utils/sketchEngine')
+    const canvas = document.createElement('canvas')
+    canvas.width = 100
+    canvas.height = 100
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    expect(() => drawPencilDot(ctx, { x: 50, y: 50 }, '#000000', 2)).not.toThrow()
+  })
+
+  it('renders realistic graphite pencil stroke segment without error', async () => {
+    const { drawPencilSegment } = await import('../utils/sketchEngine')
+    const canvas = document.createElement('canvas')
+    canvas.width = 100
+    canvas.height = 100
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    expect(() =>
+      drawPencilSegment(ctx, { x: 10, y: 10 }, { x: 50, y: 50 }, '#333333', 4)
+    ).not.toThrow()
+  })
+})
