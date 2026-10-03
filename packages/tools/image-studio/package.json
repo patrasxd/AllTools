@@ -9,7 +9,8 @@
     "heic2any": "^0.0.4",
     "imagetracerjs": "^1.2.6",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "vectortracer": "0.1.2"
   },
   "devDependencies": {
     "@types/react": "^18.3.12",

@@ -77,6 +77,38 @@ export function useVectorizeWorker(): UseVectorizeWorkerReturn {
     setIsVectorizing(false)
   }, [])
 
+  // Main-thread fallback (no Worker support, or the worker could not be messaged)
+  const runOnMainThread = useCallback(
+    (
+      requestId: number,
+      imageData: { width: number; height: number; data: Uint8ClampedArray },
+      config: VectorizeConfig,
+    ) => {
+      setTimeout(async () => {
+        if (activeRequestIdRef.current !== requestId) return
+        try {
+          const start = performance.now()
+          const res = await traceImageDataToSVG(imageData, config)
+          if (activeRequestIdRef.current !== requestId) return
+          const durationMs = Math.max(1, Math.round(performance.now() - start))
+          const sizeBytes = new Blob([res.svg], { type: 'image/svg+xml' }).size
+          setVectorResult({
+            svg: res.svg,
+            sizeBytes,
+            pathsCount: res.pathsCount,
+            durationMs,
+          })
+          setIsVectorizing(false)
+        } catch (syncErr) {
+          if (activeRequestIdRef.current !== requestId) return
+          setIsVectorizing(false)
+          setError(syncErr instanceof Error ? syncErr.message : 'Vectorization error')
+        }
+      }, 0)
+    },
+    [],
+  )
+
   const runVectorize = useCallback(
     (imageData: { width: number; height: number; data: Uint8ClampedArray }, config: VectorizeConfig) => {
       setError(null)
@@ -104,51 +136,14 @@ export function useVectorizeWorker(): UseVectorizeWorkerReturn {
           )
         } catch (err) {
           console.error('Failed to post message to worker, falling back to main thread:', err)
-          // Fallback to synchronous execution
-          setTimeout(() => {
-            if (activeRequestIdRef.current !== requestId) return
-            try {
-              const start = performance.now()
-              const res = traceImageDataToSVG(imageData, config)
-              const durationMs = Math.max(1, Math.round(performance.now() - start))
-              const sizeBytes = new Blob([res.svg], { type: 'image/svg+xml' }).size
-              setVectorResult({
-                svg: res.svg,
-                sizeBytes,
-                pathsCount: res.pathsCount,
-                durationMs,
-              })
-              setIsVectorizing(false)
-            } catch (syncErr) {
-              setIsVectorizing(false)
-              setError(syncErr instanceof Error ? syncErr.message : 'Vectorization error')
-            }
-          }, 0)
+          runOnMainThread(requestId, imageData, config)
         }
       } else {
         // Fallback for environments without Web Worker support (e.g. tests)
-        setTimeout(() => {
-          if (activeRequestIdRef.current !== requestId) return
-          try {
-            const start = performance.now()
-            const res = traceImageDataToSVG(imageData, config)
-            const durationMs = Math.max(1, Math.round(performance.now() - start))
-            const sizeBytes = new Blob([res.svg], { type: 'image/svg+xml' }).size
-            setVectorResult({
-              svg: res.svg,
-              sizeBytes,
-              pathsCount: res.pathsCount,
-              durationMs,
-            })
-            setIsVectorizing(false)
-          } catch (syncErr) {
-            setIsVectorizing(false)
-            setError(syncErr instanceof Error ? syncErr.message : 'Vectorization error')
-          }
-        }, 0)
+        runOnMainThread(requestId, imageData, config)
       }
     },
-    [getOrCreateWorker],
+    [getOrCreateWorker, runOnMainThread],
   )
 
   useEffect(() => {

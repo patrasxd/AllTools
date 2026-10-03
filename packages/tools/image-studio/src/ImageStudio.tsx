@@ -21,7 +21,6 @@ import type {
   CompressionConfig,
   VectorizeConfig,
   VectorizeMode,
-  VectorizeSmoothing,
   BgRemovalConfig,
 } from './types'
 import { loadFileToImage, renderProcessedCanvas, exportCompressedBlob, calculateDimensions } from './utils/imageEngine'
@@ -143,11 +142,10 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false, setIsDir
     numberOfColors: 16,
     bwThreshold: 128,
     speckleFilter: 8,
-    smoothing: 'medium',
-    rightAngleEnhance: true,
-    lineFilter: true,
+    smoothness: 50,
+    rightAngleEnhance: false,
   })
-  const [vectorViewMode, setVectorViewMode] = useState<'split' | 'vector' | 'original'>('split')
+  const [vectorViewMode, setVectorViewMode] = useState<'split' | 'vector' | 'original'>('vector')
   const [copiedSvg, setCopiedSvg] = useState<boolean>(false)
   const [vectorSvgBlobUrl, setVectorSvgBlobUrl] = useState<string>('')
 
@@ -1632,41 +1630,47 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false, setIsDir
 
 
 
-                          {/* Curve Smoothing */}
+                          {/* Smoothness Slider */}
                           <div className="img-panel-group">
-                            <label className="img-panel-label">{t.curveSmoothing}</label>
-                            <div className="img-preset-grid">
-                              {[
-                                { value: 'low' as const, label: t.smoothLow },
-                                { value: 'medium' as const, label: t.smoothMedium },
-                                { value: 'high' as const, label: t.smoothHigh },
-                              ].map((s) => (
-                                <Button
-                                  key={s.value}
-                                  variant={(vectorConfig.smoothing || 'medium') === s.value ? 'primary' : 'secondary'}
-                                  size="sm"
-                                  onClick={() => setVectorConfig((v) => ({ ...v, smoothing: s.value }))}
-                                >
-                                  {s.label}
-                                </Button>
-                              ))}
+                            <div className="img-panel-label-row">
+                              <label htmlFor="img-vector-smoothness" className="img-panel-label">
+                                {t.smoothness}
+                              </label>
+                              <span className="img-panel-badge">{vectorConfig.smoothness ?? 50}</span>
                             </div>
+                            <input
+                              id="img-vector-smoothness"
+                              type="range"
+                              min="0"
+                              max="100"
+                              step="5"
+                              value={vectorConfig.smoothness ?? 50}
+                              onChange={(e) => setVectorConfig((v) => ({ ...v, smoothness: Number(e.target.value) }))}
+                              className="img-slider"
+                            />
+                            <div className="img-slider-hints">
+                              <span>0</span>
+                              <span>100</span>
+                            </div>
+                            <p className="img-help-text">{t.smoothnessHint}</p>
                           </div>
 
-                          {/* Right Angle Corners Toggle */}
-                          <div className="img-feature-toggle-card">
-                            <div className="img-feature-toggle-info">
-                              <span className="img-feature-toggle-title">{t.rightAngles}</span>
+                          {/* Right Angle Corners Toggle (color mode only: imagetracerjs option) */}
+                          {vectorConfig.mode === 'color' && (
+                            <div className="img-feature-toggle-card">
+                              <div className="img-feature-toggle-info">
+                                <span className="img-feature-toggle-title">{t.rightAngles}</span>
+                              </div>
+                              <Toggle
+                                id="img-vector-right-angles"
+                                checked={vectorConfig.rightAngleEnhance ?? false}
+                                onChange={(checked) =>
+                                  setVectorConfig((v) => ({ ...v, rightAngleEnhance: checked }))
+                                }
+                                aria-label={t.rightAngles}
+                              />
                             </div>
-                            <Toggle
-                              id="img-vector-right-angles"
-                              checked={vectorConfig.rightAngleEnhance ?? true}
-                              onChange={(checked) =>
-                                setVectorConfig((v) => ({ ...v, rightAngleEnhance: checked }))
-                              }
-                              aria-label={t.rightAngles}
-                            />
-                          </div>
+                          )}
 
                           {/* Speckle Filter Slider */}
                           <div className="img-panel-group">

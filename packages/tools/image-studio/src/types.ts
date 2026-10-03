@@ -43,16 +43,18 @@ export interface CompressionConfig {
 }
 
 export type VectorizeMode = 'color' | 'bw'
-export type VectorizeSmoothing = 'low' | 'medium' | 'high'
 
 export interface VectorizeConfig {
   mode: VectorizeMode
   numberOfColors: number // 2 to 64 (color mode)
   bwThreshold: number // 10 to 240 (bw mode)
-  speckleFilter?: number // 0 to 64 (corresponds to pathomit, default: 4)
-  smoothing?: VectorizeSmoothing
-  rightAngleEnhance?: boolean
-  lineFilter?: boolean
+  speckleFilter?: number // 0 to 64 px, in source-image pixels (default: 8)
+  /**
+   * 0 to 100 (default: 50). Single control for edge smoothness: drives the pre-trace
+   * upscale factor, the gaussian pre-blur and the curve-fitting tolerances.
+   */
+  smoothness?: number
+  rightAngleEnhance?: boolean // color mode only (default: false)
 }
 
 export interface VectorizeResult {

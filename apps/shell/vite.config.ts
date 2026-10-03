@@ -2,6 +2,11 @@ import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
+import { createRequire } from 'module'
+
+// `vectortracer` (VTracer WASM bindings, MIT) is instantiated manually by image-studio, so we alias its
+// wasm-bindgen glue and .wasm file directly instead of using wasm/top-level-await Vite plugins.
+const vectortracerDir = path.dirname(createRequire(import.meta.url).resolve('vectortracer'))
 
 const cspPlugin = (): Plugin => ({
   name: 'production-csp',
@@ -96,7 +101,14 @@ export default defineConfig({
       '@alltools/screen-ruler': path.resolve(__dirname, '../../packages/tools/screen-ruler/src'),
       '@alltools/sound-meter': path.resolve(__dirname, '../../packages/tools/sound-meter/src'),
       '@alltools/sketch-suite': path.resolve(__dirname, '../../packages/tools/sketch-suite/src'),
+      'vectortracer-glue': path.join(vectortracerDir, 'vectortracer_bg.js'),
+      // `?url` makes Vite emit the .wasm as a hashed asset and hand us its URL.
+      'vectortracer-wasm': `${path.join(vectortracerDir, 'vectortracer_bg.wasm')}?url`,
     },
+  },
+  worker: {
+    // The vectorize worker lazy-loads the VTracer WASM wrapper via dynamic import(), which needs ES output.
+    format: 'es',
   },
   server: {
     port: 5174,

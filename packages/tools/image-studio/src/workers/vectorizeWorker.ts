@@ -1,7 +1,7 @@
 import type { VectorizeWorkerRequest, VectorizeWorkerResponse } from '../types'
 import { traceImageDataToSVG } from '../utils/vectorEngine'
 
-self.onmessage = (e: MessageEvent<VectorizeWorkerRequest>) => {
+self.onmessage = async (e: MessageEvent<VectorizeWorkerRequest>) => {
   const req = e.data
 
   if (!req || req.type !== 'vectorize') {
@@ -12,7 +12,7 @@ self.onmessage = (e: MessageEvent<VectorizeWorkerRequest>) => {
 
   try {
     const data = new Uint8ClampedArray(req.buffer)
-    const result = traceImageDataToSVG(
+    const result = await traceImageDataToSVG(
       {
         width: req.width,
         height: req.height,

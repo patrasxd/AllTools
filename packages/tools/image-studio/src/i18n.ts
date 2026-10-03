@@ -102,13 +102,10 @@ export interface ImageStudioTranslations {
   bwThreshold: string
   speckleFilter: string
   speckleHint: string
-  curveSmoothing: string
-  smoothLow: string
-  smoothMedium: string
-  smoothHigh: string
+  smoothness: string
+  smoothnessHint: string
   advancedSection: string
   rightAngles: string
-  lineFilter: string
   previewOriginal: string
   previewVector: string
   compareSideBySide: string
@@ -228,13 +225,10 @@ export const imageStudioTranslations: Record<'en' | 'pl', ImageStudioTranslation
     bwThreshold: 'B&W threshold',
     speckleFilter: 'Speckle filter',
     speckleHint: 'Filters out noise specks smaller than this radius.',
-    curveSmoothing: 'Curve smoothing',
-    smoothLow: 'Sharp',
-    smoothMedium: 'Balanced',
-    smoothHigh: 'Smooth',
+    smoothness: 'Smoothness',
+    smoothnessHint: 'Higher values give smoother edges but round off small details. Lower values keep sharp corners.',
     advancedSection: 'Advanced settings',
     rightAngles: 'Right-angle corners',
-    lineFilter: 'Line noise filter',
     previewOriginal: 'Original (Raster)',
     previewVector: 'Result (SVG)',
     compareSideBySide: 'Side by side',
@@ -351,13 +345,11 @@ export const imageStudioTranslations: Record<'en' | 'pl', ImageStudioTranslation
     bwThreshold: 'Próg czerni i bieli',
     speckleFilter: 'Filtr drobnych plamek',
     speckleHint: 'Ignoruje plamki i zakłócenia mniejsze niż zadana wielkość.',
-    curveSmoothing: 'Wygładzanie krzywych',
-    smoothLow: 'Ostre',
-    smoothMedium: 'Zbalansowane',
-    smoothHigh: 'Gładkie',
+    smoothness: 'Gładkość',
+    smoothnessHint:
+      'Wyższe wartości dają gładsze krawędzie, ale zaokrąglają drobne detale. Niższe zachowują ostre rogi.',
     advancedSection: 'Zaawansowane opcje',
     rightAngles: 'Kąty proste',
-    lineFilter: 'Filtr linii szumowych',
     previewOriginal: 'Oryginał (Raster)',
     previewVector: 'Wynik (SVG)',
     compareSideBySide: 'Obok siebie',

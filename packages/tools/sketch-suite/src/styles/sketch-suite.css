@@ -1015,8 +1015,8 @@
   overflow: auto;
   background-color: #121215;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: safe center;
+  justify-content: safe center;
   padding: 24px;
 }
 
@@ -1027,7 +1027,6 @@
 .paint-canvas-wrapper {
   position: relative;
   flex-shrink: 0;
-  margin: auto;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45), 0 1px 4px rgba(0, 0, 0, 0.2);
   background-color: #ffffff;
   border: 1px solid #2a2a32;
