@@ -43,13 +43,43 @@ export const IconGuitar: React.FC<IconProps> = ({ size = 20, className = '', ...
     className={className}
     {...props}
   >
-    <path d="M12 2a3 3 0 0 0-3 3v7a6 6 0 1 0 6 0V5a3 3 0 0 0-3-3Z" />
-    <path d="M12 12v6" />
-    <circle cx="12" cy="18" r="1.5" />
-    <path d="M9 5h6" />
-    <path d="M9 8h6" />
+    <rect x="10" y="2" width="4" height="3.5" rx="0.5" />
+    <line x1="8.5" y1="2.75" x2="10" y2="2.75" />
+    <line x1="14" y1="2.75" x2="15.5" y2="2.75" />
+    <line x1="8.5" y1="4.25" x2="10" y2="4.25" />
+    <line x1="14" y1="4.25" x2="15.5" y2="4.25" />
+    <line x1="11" y1="5.5" x2="11" y2="10" />
+    <line x1="13" y1="5.5" x2="13" y2="10" />
+    <line x1="11" y1="7.5" x2="13" y2="7.5" />
+    <path d="M11 10c-2.5 0-4.5 1.4-4.5 3.3 0 1.1.6 2 1.4 2.6-.9.8-1.4 1.8-1.4 3.1 0 2.3 2.5 4 5.5 4s5.5-1.7 5.5-4c0-1.3-.5-2.3-1.4-3.1.8-.6 1.4-1.5 1.4-2.6 0-1.9-2-3.3-4.5-3.3h-2z" />
+    <circle cx="12" cy="14.5" r="1.5" />
+    <line x1="10" y1="19" x2="14" y2="19" />
   </svg>
 )
+
+export const IconLevel: React.FC<IconProps> = ({ size = 20, className = '', ...props }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    {...props}
+  >
+    <rect x="2" y="6" width="20" height="12" rx="2" />
+    <path d="M8 10h8a2 2 0 0 1 0 4H8a2 2 0 0 1 0-4Z" />
+    <circle cx="12" cy="12" r="1" fill="currentColor" />
+    <line x1="10" y1="10" x2="10" y2="14" />
+    <line x1="14" y1="10" x2="14" y2="14" />
+    <circle cx="4.5" cy="12" r="0.75" />
+    <circle cx="19.5" cy="12" r="0.75" />
+  </svg>
+)
+export const IconSpiritLevel = IconLevel
 
 export const IconCompass: React.FC<IconProps> = ({ size = 20, className = '', ...props }) => (
   <svg
@@ -596,10 +626,13 @@ export const IconRuler: React.FC<IconProps> = ({ size = 20, className = '', ...p
     className={className}
     {...props}
   >
-    <path d="m21.73 7.82-5.55-5.55a2.5 2.5 0 0 0-3.54 0L2.27 12.64a2.5 2.5 0 0 0 0 3.54l5.55 5.55a2.5 2.5 0 0 0 3.54 0l10.37-10.37a2.5 2.5 0 0 0 0-3.54Z" />
-    <path d="m10.5 6.5-2 2" />
-    <path d="m13.5 9.5-3 3" />
-    <path d="m16.5 12.5-2 2" />
+    <rect x="2" y="6" width="20" height="12" rx="1.5" />
+    <circle cx="5" cy="12" r="1" />
+    <line x1="8" y1="6" x2="8" y2="12" />
+    <line x1="11" y1="6" x2="11" y2="9.5" />
+    <line x1="14" y1="6" x2="14" y2="12" />
+    <line x1="17" y1="6" x2="17" y2="9.5" />
+    <line x1="20" y1="6" x2="20" y2="12" />
   </svg>
 )
 
@@ -950,11 +983,11 @@ export const IconPaint: React.FC<IconProps> = ({ size = 20, className = '', ...p
     className={className}
     {...props}
   >
-    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c1.66 0 3-1.34 3-3 0-.78-.29-1.48-.8-2-.5-.5-.8-1.21-.8-2 0-1.66 1.34-3 3-3h1.6c3.31 0 6-2.69 6-6 0-5.52-4.48-10-10-10z" />
-    <circle cx="7.5" cy="11.5" r="1.5" fill="currentColor" />
-    <circle cx="10" cy="7.5" r="1.5" fill="currentColor" />
-    <circle cx="14" cy="7.5" r="1.5" fill="currentColor" />
-    <circle cx="16.5" cy="11.5" r="1.5" fill="currentColor" />
+    <path d="M12 2C6.5 2 2 6.5 2 12c0 5 4 9 9 9 1 0 1.8-.8 1.8-1.8 0-.5-.2-.9-.5-1.3-.3-.4-.5-.9-.5-1.4 0-1.1.9-2 2-2h1.7c3.6 0 6.5-2.9 6.5-6.5C22 6.5 17.5 2 12 2Z" />
+    <circle cx="7.5" cy="10" r="1.25" fill="currentColor" />
+    <circle cx="10.5" cy="6.5" r="1.25" fill="currentColor" />
+    <circle cx="15" cy="6.5" r="1.25" fill="currentColor" />
+    <circle cx="18" cy="10" r="1.25" fill="currentColor" />
   </svg>
 )
 

@@ -1,5 +1,5 @@
 import React from 'react'
-import { IconProtractor } from '@alltools/ui'
+import { IconLevel } from '@alltools/ui'
 
 export const metadata = {
   slug: 'level-protractor',
@@ -11,7 +11,7 @@ export const metadata = {
     en: '2D surface bubble level, rotational angle protractor, and digital magnetic compass.',
     pl: 'Poziomica 2D z czujnikami orientacji, kątomierz obrotowy oraz cyfrowy kompas magnetyczny.',
   },
-  icon: <IconProtractor size={24} strokeWidth={1.5} />,
+  icon: <IconLevel size={24} strokeWidth={1.5} />,
   category: 'measurement' as const,
   tags: {
     en: ['Measurement', 'Sensor'],
