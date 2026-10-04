@@ -12,7 +12,7 @@
   <img src="https://img.shields.io/badge/TypeScript-5.5-blue.svg" alt="TypeScript 5" />
   <img src="https://img.shields.io/badge/Vite-6.0-646CFF.svg" alt="Vite" />
   <img src="https://img.shields.io/badge/PWA-Offline--First-brightgreen.svg" alt="PWA Ready" />
-  <img src="https://img.shields.io/badge/Vitest-14%20passed-success.svg" alt="Vitest Tests" />
+  <img src="https://img.shields.io/badge/Vitest-372%20passed-success.svg" alt="Vitest Tests" />
 </p>
 
 ---
@@ -61,11 +61,11 @@ AllTools currently provides **12 high-utility tools**:
 | :----------------------- | :------------------- | :--------------- | :---------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Sound Meter**          | `sound-meter`        | Audio / Sensor   | `FullBleedLayout`       | Real-time acoustic noise meter via microphone input with dBA/dBZ frequency weighting, peak hold, and live audio oscilloscope.                                                    |
 | **Dev Vault**            | `dev-vault`          | Utility / Dev    | `SplitWorkspaceLayout`  | CSPRNG password & passphrase generator, UUIDv4, SHA/MD5 hashing, Base64 encoder/decoder, JWT payload inspector, and IPv4/CIDR subnet calculator.                                 |
-| **PDF Suite**            | `pdf-suite`          | Documents        | `SplitWorkspaceLayout`  | In-browser PDF toolkit powered by `pdf-lib` & `pdfjs-dist`: merge documents, extract/split pages, rotate orientations, and convert images into PDF.                              |
+| **PDF Suite**            | `pdf-suite`          | Documents        | `SplitWorkspaceLayout`  | In-browser PDF toolkit powered by `pdf-lib` & `pdfjs-dist`: merge documents, extract/split pages, rotate orientations, sign documents (drawn or typed signature), and convert images into PDF.                              |
 | **Image Studio**         | `image-studio`       | Media / Graphics | `CenteredUtilityLayout` | Client-side image editor: crop, resize, text/image watermarking, quality compression, format conversion (PNG/JPEG/WebP/HEIC), and raster-to-SVG vectorization (B&W via VTracer WASM `vectortracer`, color via `imagetracerjs`; a single Smoothness slider drives pre-trace upscale + blur and curve fitting). |
 | **Calc & Converter**     | `calc-converter`     | Math / Utility   | `CenteredUtilityLayout` | Dual-mode calculator (Standard & Scientific) paired with multi-unit converter across Length, Mass, Temperature, Speed, Time, and Digital Storage.                                |
 | **Guitar Tuner**         | `guitar-tuner`       | Audio            | `FullBleedLayout`       | High-precision chromatic and guitar tuner using real-time Web Audio FFT pitch detection, note frequency gauge, and reference tone generator.                                     |
-| **Level & Protractor**   | `level-protractor`   | Measurement      | `FullBleedLayout`       | Dual-axis bubble level using DeviceOrientation API, calibrated tubular spirit level, and interactive touch-canvas protractor with angle lock.                                    |
+| **Level & Protractor**   | `level-protractor`   | Measurement      | `FullBleedLayout`       | Dual-axis bubble level using DeviceOrientation API, calibrated tubular spirit level, interactive touch-canvas protractor with angle lock, and digital magnetic compass.                                    |
 | **Screen Ruler**         | `screen-ruler`       | Measurement      | `FullBleedLayout`       | Screen-calibrated on-screen ruler supporting millimeters, centimeters, and inches with standard credit-card PPI calibration and dual-axis calipers.                              |
 | **QR Suite**             | `qr-suite`           | Utility          | `SplitWorkspaceLayout`  | Offline QR Code generator (URL, text, WiFi credentials, vCard) with custom sizing and error correction, paired with live camera & file QR scanner.                               |
 | **Stopwatch & Interval** | `stopwatch-interval` | Time             | `CenteredUtilityLayout` | Precision stopwatch with millisecond timing, lap recordings, split differences, and customizable interval HIIT workout timer with audio beeps.                                   |
