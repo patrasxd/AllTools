@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Badge, Button } from '@all/ui'
 import {
+  angleDelta,
+  smoothHeading,
   normalizeHeading,
   getCardinalDirection,
   CARDINALS,
@@ -8,6 +10,11 @@ import {
   requestOrientationPermission,
 } from '../utils/sensorUtils'
 import { levelTranslations, type Locale } from '../i18n'
+
+/** Low-pass factor per sensor event (0..1). Lower = steadier but slower to follow. */
+const HEADING_SMOOTHING = 0.2
+/** Minimum heading change (degrees) before the display is updated. */
+const HEADING_HYSTERESIS_DEG = 1
 
 export interface CompassProps {
   locale?: Locale
@@ -54,122 +61,82 @@ export function Compass({
   const visualAngleRef = useRef<number>(0)
   const hasReceivedEventRef = useRef<boolean>(false)
 
+  // The parent usually passes an inline callback. Keep it in a ref so the sensor subscription below
+  // is NOT torn down and recreated on every heading update (which used to reset the source
+  // detection state and let relative events leak through, making the heading flip between values).
+  const onHeadingChangeRef = useRef(onHeadingChange)
+  useEffect(() => {
+    onHeadingChangeRef.current = onHeadingChange
+  }, [onHeadingChange])
+
   useEffect(() => {
     if (isFrozen) return
     if (!isPermitted) return
 
-    let hasReceivedAbsolute = false
+    // Low-pass state (circular) and last value pushed to the UI.
+    let smoothed: number | null = null
+    let published: number | null = null
 
-    const processHeading = (trueHeading: number) => {
+    const getScreenAngle = (): number =>
+      typeof window !== 'undefined'
+        ? (window.screen?.orientation?.angle ?? (window as unknown as { orientation?: number }).orientation ?? 0)
+        : 0
+
+    const processHeading = (rawHeading: number) => {
+      // Raw magnetometer readings are noisy; smooth them along the shortest arc.
+      smoothed = smoothed === null ? rawHeading : smoothHeading(smoothed, rawHeading, HEADING_SMOOTHING)
+
+      // Hysteresis: ignore sub-degree jitter so the number and the dial stay readable.
+      if (published !== null && Math.abs(angleDelta(published, smoothed)) < HEADING_HYSTERESIS_DEG) {
+        return
+      }
+      published = smoothed
+      const trueHeading = normalizeHeading(smoothed)
+
       // Smooth unwrapping to avoid 359° -> 1° reverse spin
       if (!hasReceivedEventRef.current) {
-        visualAngleRef.current = trueHeading
+        visualAngleRef.current = smoothed
         hasReceivedEventRef.current = true
       } else {
-        let diff = trueHeading - (visualAngleRef.current % 360)
-        // Normalize diff to [-180, 180]
-        diff = ((((diff + 180) % 360) + 360) % 360) - 180
-        visualAngleRef.current += diff
+        visualAngleRef.current += angleDelta(visualAngleRef.current % 360, smoothed)
       }
 
       setHeading(trueHeading)
       setVisualAngle(visualAngleRef.current)
       setHasSensor(true)
-
-      const dirInfo = getCardinalDirection(trueHeading)
-      if (onHeadingChange) {
-        onHeadingChange(trueHeading, dirInfo.code)
-      }
+      onHeadingChangeRef.current?.(trueHeading, getCardinalDirection(trueHeading).code)
     }
 
-    const handleOrientationEvent = (e: DeviceOrientationEvent) => {
-      // 1. iOS Safari: webkitCompassHeading is calibrated to magnetic North directly by CoreLocation
+    // Only absolute (north-referenced) sources are valid for a compass:
+    //  - iOS Safari: webkitCompassHeading (calibrated magnetic heading)
+    //  - Android Chrome/Samsung: `deviceorientationabsolute`
+    //  - any `deviceorientation` event that is flagged absolute (e.g. Firefox)
+    // Plain `deviceorientation` on Chrome/Android is RELATIVE to an arbitrary start direction, so it is ignored.
+    const handleOrientation = (e: DeviceOrientationEvent, isAbsoluteEventType: boolean) => {
       const webkitHeading = (e as unknown as { webkitCompassHeading?: number }).webkitCompassHeading
       if (typeof webkitHeading === 'number' && !isNaN(webkitHeading) && webkitHeading >= 0) {
-        // webkitCompassHeading is already orientation-compensated by iOS CoreLocation
-        processHeading(normalizeHeading(webkitHeading))
+        processHeading(webkitHeading)
         return
       }
 
-      // 2. Android / W3C: DeviceOrientationEvent / deviceorientationabsolute
-      if (e.alpha !== null && !isNaN(e.alpha)) {
-        const screenAngle =
-          typeof window !== 'undefined'
-            ? (window.screen?.orientation?.angle ?? (window as unknown as { orientation?: number }).orientation ?? 0)
-            : 0
+      if (!isAbsoluteEventType && e.absolute !== true) return
+      if (e.alpha === null || e.alpha === undefined || isNaN(e.alpha)) return
 
-        // In W3C specification, alpha is the rotation angle around Z (counter-clockwise from North).
-        // Clockwise compass heading is: (360 - alpha + screenAngle) % 360.
-        const trueHeading = normalizeHeading(360 - e.alpha + screenAngle)
-        processHeading(trueHeading)
-      }
+      // alpha is the counter-clockwise rotation around Z from North; compass heading is clockwise.
+      processHeading(360 - e.alpha + getScreenAngle())
     }
 
-    // Android deviceorientationabsolute listener
-    const handleAbsoluteOrientation = (e: DeviceOrientationEvent) => {
-      if (e.alpha !== null && !isNaN(e.alpha)) {
-        hasReceivedAbsolute = true
-        handleOrientationEvent(e)
-      }
-    }
+    const handleAbsolute = (e: Event) => handleOrientation(e as DeviceOrientationEvent, true)
+    const handleStandard = (e: Event) => handleOrientation(e as DeviceOrientationEvent, false)
 
-    // Standard deviceorientation listener (iOS or fallback)
-    const handleStandardOrientation = (e: DeviceOrientationEvent) => {
-      const webkitHeading = (e as unknown as { webkitCompassHeading?: number }).webkitCompassHeading
-      const isIos = typeof webkitHeading === 'number' && !isNaN(webkitHeading) && webkitHeading >= 0
-
-      // If we are already receiving absolute orientation on Android, ignore relative events
-      if (hasReceivedAbsolute && !isIos) {
-        return
-      }
-      handleOrientationEvent(e)
-    }
-
-    // Generic Sensor API fallback (Chrome on Android)
-    let sensorInstance: any = null
-    if (typeof window !== 'undefined' && 'AbsoluteOrientationSensor' in window) {
-      try {
-        const SensorClass = (window as unknown as { AbsoluteOrientationSensor: any }).AbsoluteOrientationSensor
-        const sensor = new SensorClass({ frequency: 60 })
-        sensorInstance = sensor
-        sensor.addEventListener('reading', () => {
-          const q = sensor.quaternion
-          if (q && q.length === 4) {
-            hasReceivedAbsolute = true
-            const [x, y, z, w] = q
-            // Yaw from quaternion
-            const siny_cosp = 2 * (w * z + x * y)
-            const cosy_cosp = 1 - 2 * (y * y + z * z)
-            const yawDeg = Math.atan2(siny_cosp, cosy_cosp) * (180 / Math.PI)
-            const screenAngle =
-              typeof window !== 'undefined'
-                ? (window.screen?.orientation?.angle ?? (window as unknown as { orientation?: number }).orientation ?? 0)
-                : 0
-            const heading = normalizeHeading(360 - yawDeg + screenAngle)
-            processHeading(heading)
-          }
-        })
-        sensor.start()
-      } catch {}
-    }
-
-    window.addEventListener('deviceorientationabsolute', handleAbsoluteOrientation as EventListener, true)
-    if (typeof window !== 'undefined') {
-      window.addEventListener('deviceorientation', handleStandardOrientation, true)
-    }
+    window.addEventListener('deviceorientationabsolute', handleAbsolute, true)
+    window.addEventListener('deviceorientation', handleStandard, true)
 
     return () => {
-      window.removeEventListener('deviceorientationabsolute', handleAbsoluteOrientation as EventListener, true)
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('deviceorientation', handleStandardOrientation, true)
-      }
-      if (sensorInstance) {
-        try {
-          sensorInstance.stop()
-        } catch {}
-      }
+      window.removeEventListener('deviceorientationabsolute', handleAbsolute, true)
+      window.removeEventListener('deviceorientation', handleStandard, true)
     }
-  }, [isFrozen, onHeadingChange, isPermitted])
+  }, [isFrozen, isPermitted])
 
   const cardinalInfo = getCardinalDirection(heading)
 

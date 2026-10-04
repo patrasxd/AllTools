@@ -1,7 +1,29 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { Compass } from '../components/Compass'
+
+function fireOrientation(type: string, props: { alpha: number; absolute?: boolean }) {
+  const e = new Event(type) as Event & { alpha: number; beta: number; gamma: number; absolute?: boolean }
+  e.alpha = props.alpha
+  e.beta = 0
+  e.gamma = 0
+  if (props.absolute !== undefined) e.absolute = props.absolute
+  act(() => {
+    window.dispatchEvent(e)
+  })
+}
+
+// Mirrors LevelProtractor.tsx: the parent keeps state and passes a NEW inline callback on every render.
+function ParentWithInlineCallback() {
+  const [stats, setStats] = useState({ heading: 0, direction: 'N' })
+  return (
+    <div>
+      <span data-testid="parent-heading">{stats.heading}</span>
+      <Compass onHeadingChange={(heading, direction) => setStats({ heading, direction })} />
+    </div>
+  )
+}
 
 describe('Compass Component', () => {
   const originalDeviceOrientationEvent = window.DeviceOrientationEvent
@@ -205,6 +227,69 @@ describe('Compass Component', () => {
       expect(screen.getByText('90°')).toBeDefined()
       expect(screen.queryByText('270°')).toBeNull()
     })
+
+    it('does not flip between absolute and relative readings when the parent passes an inline callback (Android)', () => {
+      render(<ParentWithInlineCallback />)
+
+      const seen = new Set<string>()
+      for (let i = 0; i < 6; i++) {
+        fireOrientation('deviceorientationabsolute', { alpha: 270 }) // real heading: 90° (E)
+        seen.add(screen.getByTestId('parent-heading').textContent ?? '')
+        fireOrientation('deviceorientation', { alpha: 10, absolute: false }) // relative, arbitrary origin
+        seen.add(screen.getByTestId('parent-heading').textContent ?? '')
+      }
+
+      expect([...seen]).toEqual(['90'])
+    })
+
+    it('accepts deviceorientation events that are flagged absolute (e.g. Firefox Android)', () => {
+      render(<Compass />)
+      fireOrientation('deviceorientation', { alpha: 270, absolute: true })
+      expect(screen.getByText('90°')).toBeDefined()
+    })
+
+    it('ignores plain deviceorientation events without an absolute flag (relative on Chrome/Android)', () => {
+      render(<Compass />)
+      fireOrientation('deviceorientation', { alpha: 270, absolute: false })
+      expect(screen.queryByText('90°')).toBeNull()
+      expect(screen.getByText('0°')).toBeDefined()
+    })
+
+    it('smooths noisy readings instead of following every sample', () => {
+      const onHeadingChange = vi.fn()
+      render(<Compass onHeadingChange={onHeadingChange} />)
+
+      // Steady at 90°, then a single +40° glitch (alpha 270 -> 230), then back to 90°
+      fireOrientation('deviceorientationabsolute', { alpha: 270 })
+      fireOrientation('deviceorientationabsolute', { alpha: 230 })
+      const afterGlitch = onHeadingChange.mock.calls.at(-1)![0] as number
+      expect(afterGlitch).toBeGreaterThan(90)
+      expect(afterGlitch).toBeLessThan(110) // far less than the raw +40° jump
+    })
+
+    it('ignores sub-degree jitter', () => {
+      const onHeadingChange = vi.fn()
+      render(<Compass onHeadingChange={onHeadingChange} />)
+
+      fireOrientation('deviceorientationabsolute', { alpha: 270 })
+      onHeadingChange.mockClear()
+      for (const alpha of [270.3, 269.8, 270.4, 269.7]) {
+        fireOrientation('deviceorientationabsolute', { alpha })
+      }
+      expect(onHeadingChange).not.toHaveBeenCalled()
+    })
+
+    it('crosses the 0°/360° meridian the short way', () => {
+      const onHeadingChange = vi.fn()
+      render(<Compass onHeadingChange={onHeadingChange} />)
+
+      fireOrientation('deviceorientationabsolute', { alpha: 2 }) // heading 358°
+      for (let i = 0; i < 40; i++) fireOrientation('deviceorientationabsolute', { alpha: 358 }) // heading 2°
+
+      const headings = onHeadingChange.mock.calls.map((c) => c[0] as number)
+      // Must pass through 359/0/1, never through the middle of the dial
+      expect(headings.every((h) => h >= 358 || h <= 3)).toBe(true)
+      expect(headings.at(-1)).toBeLessThanOrEqual(3)
+    })
   })
 })
-

@@ -92,6 +92,21 @@ export function normalizeHeading(deg: number): number {
   return ((rounded % 360) + 360) % 360
 }
 
+/** Signed shortest difference `to - from` on a circle, in [-180, 180). */
+export function angleDelta(from: number, to: number): number {
+  return ((((to - from) % 360) + 540) % 360) - 180
+}
+
+/**
+ * Exponential low-pass filter on a circular quantity (heading in degrees).
+ * Works through the shortest arc, so it never swings the long way around the 0°/360° wrap.
+ * Returns an un-normalized value in [0, 360).
+ */
+export function smoothHeading(previous: number, next: number, factor: number): number {
+  const f = Math.min(1, Math.max(0, factor))
+  return (((previous + angleDelta(previous, next) * f) % 360) + 360) % 360
+}
+
 /** Resolves cardinal direction label and code for a given heading */
 export function getCardinalDirection(deg: number): { code: string; en: string; pl: string } {
   const normalized = normalizeHeading(deg)

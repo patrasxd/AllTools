@@ -3,6 +3,8 @@ import {
   calculateCalibratedTilt,
   calculateAngleBetween,
   normalizeHeading,
+  angleDelta,
+  smoothHeading,
   getCardinalDirection,
   requiresOrientationPermission,
   detectPhoneOrientation,
@@ -199,6 +201,50 @@ describe('Sensor and Math Utilities (level-protractor)', () => {
     it('caps slope percent at 999.9 for vertical or steep angles', () => {
       expect(calculateSlopePercent(89.95)).toBe(999.9)
       expect(calculateSlopePercent(90)).toBe(999.9)
+    })
+  })
+
+  describe('angleDelta', () => {
+    it('returns the signed shortest arc', () => {
+      expect(angleDelta(10, 30)).toBe(20)
+      expect(angleDelta(30, 10)).toBe(-20)
+      expect(angleDelta(350, 10)).toBe(20)
+      expect(angleDelta(10, 350)).toBe(-20)
+      expect(angleDelta(0, 0)).toBe(0)
+    })
+
+    it('stays within [-180, 180)', () => {
+      for (let a = 0; a < 360; a += 17) {
+        for (let b = 0; b < 360; b += 13) {
+          const d = angleDelta(a, b)
+          expect(d).toBeGreaterThanOrEqual(-180)
+          expect(d).toBeLessThan(180)
+        }
+      }
+    })
+  })
+
+  describe('smoothHeading', () => {
+    it('moves a fraction of the way to the target', () => {
+      expect(smoothHeading(100, 110, 0.5)).toBeCloseTo(105, 6)
+      expect(smoothHeading(100, 110, 0)).toBeCloseTo(100, 6)
+      expect(smoothHeading(100, 110, 1)).toBeCloseTo(110, 6)
+    })
+
+    it('takes the short way across the 0°/360° wrap', () => {
+      expect(smoothHeading(350, 10, 0.5)).toBeCloseTo(0, 6)
+      expect(smoothHeading(10, 350, 0.5)).toBeCloseTo(0, 6)
+    })
+
+    it('always returns a value in [0, 360)', () => {
+      expect(smoothHeading(359, 3, 0.9)).toBeGreaterThanOrEqual(0)
+      expect(smoothHeading(359, 3, 0.9)).toBeLessThan(360)
+      expect(smoothHeading(1, 357, 0.9)).toBeLessThan(360)
+    })
+
+    it('clamps the factor', () => {
+      expect(smoothHeading(100, 110, 5)).toBeCloseTo(110, 6)
+      expect(smoothHeading(100, 110, -1)).toBeCloseTo(100, 6)
     })
   })
 })
