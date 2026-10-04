@@ -287,7 +287,7 @@ Deployment is fully automated via GitHub Actions ([`.github/workflows/deploy.yml
 
 ## Storage & Privacy
 
-All data is stored purely in client-side browser `localStorage` or `IndexedDB` under organized prefixes:
+All data is stored purely in client-side browser `localStorage` under organized prefixes:
 
 | Key Format           | Type                                                 | Description                            |
 | :------------------- | :--------------------------------------------------- | :------------------------------------- |
