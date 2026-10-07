@@ -1,5 +1,14 @@
 import { describe, it, expect } from 'vitest'
-import { hexToRgba, colorMatch, floodFill, getCanvasCoordinates } from '../utils/sketchEngine'
+import {
+  hexToRgba,
+  colorMatch,
+  floodFill,
+  getCanvasCoordinates,
+  fitImageToCanvasLimit,
+  calculateFitZoom,
+  parseCanvasDimension,
+  MAX_CANVAS_SIZE,
+} from '../utils/sketchEngine'
 
 describe('hexToRgba', () => {
   it('parses standard 6-character hex', () => {
@@ -182,5 +191,81 @@ describe('drawPencilDot & drawPencilSegment', () => {
     expect(() =>
       drawPencilSegment(ctx, { x: 10, y: 10 }, { x: 50, y: 50 }, '#333333', 4)
     ).not.toThrow()
+  })
+})
+
+describe('fitImageToCanvasLimit', () => {
+  it('keeps the photo size 1:1 when it fits', () => {
+    expect(fitImageToCanvasLimit(1200, 800)).toEqual({ width: 1200, height: 800, wasScaled: false })
+    expect(fitImageToCanvasLimit(MAX_CANVAS_SIZE, 100)).toEqual({ width: 4096, height: 100, wasScaled: false })
+  })
+
+  it('scales a landscape photo down proportionally to the limit', () => {
+    expect(fitImageToCanvasLimit(8192, 4096)).toEqual({ width: 4096, height: 2048, wasScaled: true })
+  })
+
+  it('scales a portrait photo down proportionally to the limit', () => {
+    expect(fitImageToCanvasLimit(3000, 12000)).toEqual({ width: 1024, height: 4096, wasScaled: true })
+  })
+
+  it('never returns a zero-sized canvas', () => {
+    const r = fitImageToCanvasLimit(100000, 1)
+    expect(r.width).toBe(4096)
+    expect(r.height).toBe(1)
+    expect(fitImageToCanvasLimit(0, 0)).toEqual({ width: 1, height: 1, wasScaled: false })
+  })
+
+  it('honours a custom limit', () => {
+    expect(fitImageToCanvasLimit(1000, 500, 250)).toEqual({ width: 250, height: 125, wasScaled: true })
+  })
+})
+
+describe('calculateFitZoom', () => {
+  it('returns 1 when the canvas already fits', () => {
+    expect(calculateFitZoom(800, 600, 1200, 900)).toBe(1)
+  })
+
+  it('shrinks to fit the limiting side', () => {
+    expect(calculateFitZoom(4000, 3000, 1000, 1000)).toBe(0.25)
+    expect(calculateFitZoom(1000, 4000, 1000, 1000)).toBe(0.25)
+  })
+
+  it('never goes below the minimum zoom', () => {
+    expect(calculateFitZoom(4096, 4096, 100, 100)).toBe(0.1)
+  })
+
+  it('falls back to 1 for unknown or invalid sizes', () => {
+    expect(calculateFitZoom(800, 600, 0, 0)).toBe(1)
+    expect(calculateFitZoom(0, 600, 1000, 1000)).toBe(1)
+    expect(calculateFitZoom(Number.NaN, 600, 1000, 1000)).toBe(1)
+  })
+})
+
+describe('parseCanvasDimension', () => {
+  it('accepts whole pixel values from 1 to the limit', () => {
+    expect(parseCanvasDimension('1')).toBe(1)
+    expect(parseCanvasDimension('200')).toBe(200)
+    expect(parseCanvasDimension(' 640 ')).toBe(640)
+    expect(parseCanvasDimension('4096')).toBe(4096)
+  })
+
+  it('rounds fractional input to whole pixels', () => {
+    expect(parseCanvasDimension('200.4')).toBe(200)
+    expect(parseCanvasDimension('200.6')).toBe(201)
+  })
+
+  it('rejects zero, negatives, empty and non-numeric text', () => {
+    expect(parseCanvasDimension('0')).toBeNull()
+    expect(parseCanvasDimension('0.2')).toBeNull()
+    expect(parseCanvasDimension('-5')).toBeNull()
+    expect(parseCanvasDimension('')).toBeNull()
+    expect(parseCanvasDimension('   ')).toBeNull()
+    expect(parseCanvasDimension('abc')).toBeNull()
+  })
+
+  it('rejects values above the limit', () => {
+    expect(parseCanvasDimension('4097')).toBeNull()
+    expect(parseCanvasDimension('100000')).toBeNull()
+    expect(parseCanvasDimension('300', 200)).toBeNull()
   })
 })

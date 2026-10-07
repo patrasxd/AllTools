@@ -48,9 +48,43 @@ export async function renderPdfThumbnails(file: File): Promise<{ url: string; as
 }
 
 /**
+ * Renders one page of a PDF at a size suited for full-screen viewing (longest side ~ `maxSide` px).
+ * Returns null when rendering is unavailable, so callers can fall back to the page thumbnail.
+ */
+export async function renderPdfPagePreview(
+  file: File,
+  pageIndex: number,
+  maxSide: number = 2000,
+): Promise<string | null> {
+  try {
+    const arrayBuffer = await file.arrayBuffer()
+    const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise
+    const page = await pdf.getPage(pageIndex + 1)
+    const base = page.getViewport({ scale: 1 })
+    const scale = Math.min(4, maxSide / Math.max(base.width, base.height))
+    const viewport = page.getViewport({ scale })
+    const canvas = document.createElement('canvas')
+    const context = canvas.getContext('2d')
+    if (!context) return null
+    canvas.width = Math.round(viewport.width)
+    canvas.height = Math.round(viewport.height)
+    context.fillStyle = '#ffffff'
+    context.fillRect(0, 0, canvas.width, canvas.height)
+    await (page.render as any)({ canvasContext: context, viewport, canvas }).promise
+    return canvas.toDataURL('image/jpeg', 0.92)
+  } catch (err) {
+    console.warn('PDF.js page preview rendering error:', err)
+    return null
+  }
+}
+
+/**
  * Reads basic PDF structure and returns page count and page descriptor list with thumbnails.
  */
-export async function loadPdfInfo(file: File): Promise<{ pageCount: number; pages: PdfPageItem[] }> {
+export async function loadPdfInfo(
+  file: File,
+  fileId: string = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+): Promise<{ pageCount: number; pages: PdfPageItem[] }> {
   const arrayBuffer = await file.arrayBuffer()
   const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true })
   const pageCount = pdfDoc.getPageCount()
@@ -59,7 +93,6 @@ export async function loadPdfInfo(file: File): Promise<{ pageCount: number; page
   const thumbnails = await renderPdfThumbnails(file)
 
   const pages: PdfPageItem[] = []
-  const fileId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
 
   for (let i = 0; i < pageCount; i++) {
     const page = pdfDoc.getPage(i)
@@ -102,25 +135,48 @@ export async function mergePdfs(files: File[]): Promise<Blob> {
   return new Blob([mergedBytes.buffer as ArrayBuffer], { type: 'application/pdf' })
 }
 
+export interface PageExportRef {
+  /** Id of the source file (PdfFileItem.id) the page comes from. */
+  fileId: string
+  /** 0-indexed page in that source file. */
+  pageIndex: number
+  /** Final rotation to apply (0, 90, 180, 270). */
+  rotation: number
+}
+
 /**
- * Extracts selected pages from a PDF and applies custom rotation to each in specified order.
+ * Builds a PDF from exactly the given pages, in the given order, each with its own rotation.
+ * Pages may come from several source files; every source is parsed only once.
  */
-export async function extractAndRotatePages(
-  file: File,
-  pagesToExport: { pageIndex: number; rotation: number }[],
-): Promise<Blob> {
-  const arrayBuffer = await file.arrayBuffer()
-  const sourcePdf = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true })
+export async function assemblePdfFromPages(sources: Record<string, File>, pages: PageExportRef[]): Promise<Blob> {
   const newPdf = await PDFDocument.create()
+  const loaded = new Map<string, PDFDocument>()
 
-  const indicesToCopy = pagesToExport.map((p) => p.pageIndex)
-  const copiedPages = await newPdf.copyPages(sourcePdf, indicesToCopy)
+  const getSource = async (fileId: string): Promise<PDFDocument> => {
+    const cached = loaded.get(fileId)
+    if (cached) return cached
+    const file = sources[fileId]
+    if (!file) throw new Error(`Missing source file for page (fileId: ${fileId})`)
+    const doc = await PDFDocument.load(await file.arrayBuffer(), { ignoreEncryption: true })
+    loaded.set(fileId, doc)
+    return doc
+  }
 
-  for (let i = 0; i < copiedPages.length; i++) {
-    const page = copiedPages[i]
-    const targetRotation = pagesToExport[i]?.rotation || 0
-    page.setRotation(degrees(targetRotation))
-    newPdf.addPage(page)
+  // Copy consecutive pages of the same source in one call so shared resources (fonts, images) are not duplicated.
+  let i = 0
+  while (i < pages.length) {
+    let j = i
+    while (j + 1 < pages.length && pages[j + 1].fileId === pages[i].fileId) j++
+    const run = pages.slice(i, j + 1)
+    const copied = await newPdf.copyPages(
+      await getSource(run[0].fileId),
+      run.map((p) => p.pageIndex),
+    )
+    copied.forEach((page, k) => {
+      page.setRotation(degrees(run[k].rotation || 0))
+      newPdf.addPage(page)
+    })
+    i = j + 1
   }
 
   const pdfBytes = await newPdf.save()

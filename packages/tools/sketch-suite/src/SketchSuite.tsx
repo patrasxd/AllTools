@@ -21,6 +21,7 @@ import {
   IconCrosshair,
   IconMaximize2,
   IconZoomIn,
+  IconPhoto,
 } from '@alltools/ui'
 import {
   ToolComponentProps,
@@ -41,6 +42,9 @@ import {
   getBoundingBoxFromPoints,
   drawPencilSegment,
   drawPencilDot,
+  fitImageToCanvasLimit,
+  calculateFitZoom,
+  parseCanvasDimension,
 } from './utils/sketchEngine'
 import './styles/sketch-suite.css'
 
@@ -177,6 +181,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
   const previewCanvasRef = useRef<HTMLCanvasElement | null>(null)
   const canvasViewportRef = useRef<HTMLElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const photoInputRef = useRef<HTMLInputElement | null>(null)
   const colorPickerRef = useRef<HTMLInputElement | null>(null)
   const textInputRef = useRef<HTMLTextAreaElement | null>(null)
 
@@ -262,8 +267,12 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false)
 
   // Dialog temporary form values
-  const [tempWidth, setTempWidth] = useState(900)
-  const [tempHeight, setTempHeight] = useState(600)
+  // Raw text of the size fields: typing is never clamped, validity only gates the Create/Apply buttons
+  const [tempWidth, setTempWidth] = useState('900')
+  const [tempHeight, setTempHeight] = useState('600')
+  const parsedTempWidth = parseCanvasDimension(tempWidth)
+  const parsedTempHeight = parseCanvasDimension(tempHeight)
+  const isTempSizeValid = parsedTempWidth !== null && parsedTempHeight !== null
   const [exportFormat, setExportFormat] = useState<'image/png' | 'image/jpeg' | 'image/webp'>('image/png')
   const [exportQuality, setExportQuality] = useState(92)
 
@@ -1512,6 +1521,85 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
     setIsFileDialogOpen(false)
   }
 
+  // Import a photo as the canvas itself: the canvas takes the photo's size and the photo fills it.
+  const importPhotoAsCanvas = useCallback(
+    (img: HTMLImageElement) => {
+      const canvas = canvasRef.current
+      const previewCanvas = previewCanvasRef.current
+      if (!canvas || !previewCanvas) return
+      const ctx = canvas.getContext('2d', { willReadFrequently: true })
+      if (!ctx) return
+
+      const { width, height, wasScaled } = fitImageToCanvasLimit(
+        img.naturalWidth || img.width || 1,
+        img.naturalHeight || img.height || 1,
+      )
+
+      // The photo replaces the whole document: drop any floating overlay/selection first.
+      setActiveTextOverlay(null)
+      setPlacedImageState(null)
+      clearSelection()
+
+      setCanvasDim({ width, height })
+      canvas.width = width
+      canvas.height = height
+      previewCanvas.width = width
+      previewCanvas.height = height
+
+      // White underneath so transparent PNGs/WebPs do not turn black on export
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(0, 0, width, height)
+      ctx.drawImage(img, 0, 0, width, height)
+
+      // History steps hold fixed-size pixel data, so a new document size starts a fresh history.
+      historyRef.current = []
+      historyIndexRef.current = -1
+      pushHistory()
+      setCanUndo(false)
+      setCanRedo(false)
+
+      const viewport = canvasViewportRef.current
+      setZoom(calculateFitZoom(width, height, (viewport?.clientWidth ?? 0) - 32, (viewport?.clientHeight ?? 0) - 32))
+
+      const sizeText = `${width}×${height} px`
+      showNotice(
+        wasScaled
+          ? locale === 'pl'
+            ? `Zaimportowano zdjęcie (pomniejszone do ${sizeText})`
+            : `Photo imported (scaled down to ${sizeText})`
+          : locale === 'pl'
+            ? `Zaimportowano zdjęcie: płótno ${sizeText}`
+            : `Photo imported: canvas is ${sizeText}`,
+      )
+    },
+    [clearSelection, locale, pushHistory, setPlacedImageState, showNotice],
+  )
+
+  const handlePhotoInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+
+    const url = URL.createObjectURL(file)
+    const img = new Image()
+    img.onload = () => {
+      importPhotoAsCanvas(img)
+      URL.revokeObjectURL(url)
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      showNotice(t.fileMenu.importPhotoError)
+    }
+    img.src = url
+  }
+
+  // Ask before replacing a canvas that has edits (the undo history cannot survive a size change)
+  const handleImportPhotoClick = () => {
+    setIsFileDialogOpen(false)
+    if (canUndo && !window.confirm(t.fileMenu.importPhotoConfirm)) return
+    photoInputRef.current?.click()
+  }
+
   // Drag and drop onto canvas
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
@@ -1549,15 +1637,18 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
     if (!canvas || !previewCanvas) return
     const ctx = canvas.getContext('2d', { willReadFrequently: true })
     if (!ctx) return
+    if (parsedTempWidth === null || parsedTempHeight === null) return
+    const newWidth = parsedTempWidth
+    const newHeight = parsedTempHeight
 
-    setCanvasDim({ width: tempWidth, height: tempHeight })
-    canvas.width = tempWidth
-    canvas.height = tempHeight
-    previewCanvas.width = tempWidth
-    previewCanvas.height = tempHeight
+    setCanvasDim({ width: newWidth, height: newHeight })
+    canvas.width = newWidth
+    canvas.height = newHeight
+    previewCanvas.width = newWidth
+    previewCanvas.height = newHeight
 
     ctx.fillStyle = '#ffffff'
-    ctx.fillRect(0, 0, tempWidth, tempHeight)
+    ctx.fillRect(0, 0, newWidth, newHeight)
     historyRef.current = []
     historyIndexRef.current = -1
     pushHistory()
@@ -1582,15 +1673,18 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
     if (tempCtx) {
       tempCtx.drawImage(canvas, 0, 0)
     }
+    if (parsedTempWidth === null || parsedTempHeight === null) return
+    const newWidth = parsedTempWidth
+    const newHeight = parsedTempHeight
 
-    setCanvasDim({ width: tempWidth, height: tempHeight })
-    canvas.width = tempWidth
-    canvas.height = tempHeight
-    previewCanvas.width = tempWidth
-    previewCanvas.height = tempHeight
+    setCanvasDim({ width: newWidth, height: newHeight })
+    canvas.width = newWidth
+    canvas.height = newHeight
+    previewCanvas.width = newWidth
+    previewCanvas.height = newHeight
 
     ctx.fillStyle = '#ffffff'
-    ctx.fillRect(0, 0, tempWidth, tempHeight)
+    ctx.fillRect(0, 0, newWidth, newHeight)
     ctx.drawImage(tempCanvas, 0, 0)
     pushHistory()
 
@@ -1957,6 +2051,41 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
     pushHistory()
   }
 
+  // Width/height fields shared by the New Canvas and Resize Canvas dialogs
+  const canvasSizeFields = (
+    <>
+      <div className="paint-dialog-row">
+        <Input
+          label={t.dialogs.width}
+          type="number"
+          inputMode="numeric"
+          value={tempWidth}
+          onChange={(e) => setTempWidth(e.target.value)}
+          fullWidth
+        />
+        <Input
+          label={t.dialogs.height}
+          type="number"
+          inputMode="numeric"
+          value={tempHeight}
+          onChange={(e) => setTempHeight(e.target.value)}
+          fullWidth
+        />
+      </div>
+      <p
+        className="paint-dialog-hint"
+        role={isTempSizeValid ? undefined : 'alert'}
+        style={{
+          margin: 0,
+          fontSize: 12,
+          color: isTempSizeValid ? 'var(--all-text-muted)' : 'var(--all-danger, #ef4444)',
+        }}
+      >
+        {t.dialogs.sizeRange}
+      </p>
+    </>
+  )
+
   return (
     <FullBleedLayout className="paint-fullbleed-root">
       <div className="paint-workspace" data-eink={isEink ? 'true' : undefined} data-theme={activeTheme}>
@@ -1967,6 +2096,15 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
           accept="image/*"
           style={{ display: 'none' }}
           onChange={handleFileInputChange}
+        />
+        {/* Hidden input for "Import Photo" (photo becomes the canvas) */}
+        <input
+          id="paint-photo-input"
+          type="file"
+          ref={photoInputRef}
+          accept="image/*"
+          style={{ display: 'none' }}
+          onChange={handlePhotoInputChange}
         />
 
         {/* ─── Top Ribbon Toolbar ─── */}
@@ -3170,20 +3308,20 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
 
         {/* ─── Bottom Status Bar ─── */}
         <footer className="paint-status-bar">
-          <div className="paint-status-item">
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          <div className="paint-status-item" title={t.status.cursor}>
+            <span className="paint-status-label-group">
               <IconCrosshair size={13} aria-hidden="true" />
-              {t.status.cursor}:
+              <span className="paint-status-label">{t.status.cursor}:</span>
             </span>
-            <strong>
+            <strong className="paint-status-cursor">
               {cursorPos.x}, {cursorPos.y} px
             </strong>
           </div>
 
-          <div className="paint-status-item">
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          <div className="paint-status-item" title={t.status.canvasSize}>
+            <span className="paint-status-label-group">
               <IconMaximize2 size={13} aria-hidden="true" />
-              {t.status.canvasSize}:
+              <span className="paint-status-label">{t.status.canvasSize}:</span>
             </span>
             <strong>
               {canvasDim.width} × {canvasDim.height} px
@@ -3191,10 +3329,10 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
           </div>
 
           {selectionRect && (
-            <div className="paint-status-item">
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <div className="paint-status-item" title={locale === 'pl' ? 'Zaznaczenie' : 'Selection'}>
+              <span className="paint-status-label-group">
                 <IconSelect size={13} aria-hidden="true" />
-                {locale === 'pl' ? 'Zaznaczenie:' : 'Selection:'}
+                <span className="paint-status-label">{locale === 'pl' ? 'Zaznaczenie:' : 'Selection:'}</span>
               </span>
               <strong>
                 {selectionRect.width} × {selectionRect.height} px
@@ -3204,17 +3342,19 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
 
           {polygonPoints.length > 0 && (
             <div className="paint-status-item" style={{ color: 'var(--all-accent)' }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <span className="paint-status-label-group">
                 <IconPolygonLasso size={13} aria-hidden="true" />
                 {polygonPoints.length} {t.dynamicProps.polygonPointsLabel}
               </span>
-              <span style={{ fontSize: 10, opacity: 0.85 }}>({t.dynamicProps.polygonCloseTip})</span>
+              <span className="paint-status-tip" style={{ fontSize: 10, opacity: 0.85 }}>
+                ({t.dynamicProps.polygonCloseTip})
+              </span>
             </div>
           )}
 
           {statusMessage && (
             <div
-              className="paint-status-item"
+              className="paint-status-item paint-status-message"
               style={{
                 color: 'var(--all-accent)',
                 fontWeight: 600,
@@ -3227,14 +3367,14 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
             </div>
           )}
 
-          <div className="paint-status-zoom">
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          <div className="paint-status-zoom" title={t.status.zoom}>
+            <span className="paint-status-label-group">
               <IconZoomIn size={13} aria-hidden="true" />
-              {t.status.zoom}:
+              <span className="paint-status-label">{t.status.zoom}:</span>
             </span>
             <button
               className="paint-zoom-btn"
-              onClick={() => setZoom((z) => Math.max(0.5, Number((z - 0.25).toFixed(2))))}
+              onClick={() => setZoom((z) => Math.max(0.1, Number((z > 0.5 ? z - 0.25 : z / 2).toFixed(2))))}
               title={t.actions.zoomOut}
             >
               -
@@ -3286,8 +3426,8 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                     className="paint-file-dialog-item"
                     onClick={() => {
                       setIsFileDialogOpen(false)
-                      setTempWidth(canvasDim.width)
-                      setTempHeight(canvasDim.height)
+                      setTempWidth(String(canvasDim.width))
+                      setTempHeight(String(canvasDim.height))
                       setIsNewCanvasDialogOpen(true)
                     }}
                   >
@@ -3315,6 +3455,19 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                     </div>
                   </button>
                   <button
+                    id="paint-import-photo-btn"
+                    className="paint-file-dialog-item"
+                    onClick={handleImportPhotoClick}
+                  >
+                    <span className="paint-file-dialog-icon">
+                      <IconPhoto size={18} aria-hidden="true" />
+                    </span>
+                    <div className="paint-file-dialog-info">
+                      <strong>{t.fileMenu.importPhoto}</strong>
+                      <span>{t.fileMenu.importPhotoDesc}</span>
+                    </div>
+                  </button>
+                  <button
                     className="paint-file-dialog-item"
                     onClick={() => {
                       setIsFileDialogOpen(false)
@@ -3333,8 +3486,8 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                     className="paint-file-dialog-item"
                     onClick={() => {
                       setIsFileDialogOpen(false)
-                      setTempWidth(canvasDim.width)
-                      setTempHeight(canvasDim.height)
+                      setTempWidth(String(canvasDim.width))
+                      setTempHeight(String(canvasDim.height))
                       setIsResizeDialogOpen(true)
                     }}
                   >
@@ -3394,15 +3547,15 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
             <span style={{ fontSize: 12, fontWeight: 600 }}>{t.dialogs.presets}:</span>
             <div className="paint-presets-grid">
               {PRESET_RESOLUTIONS.map((preset) => {
-                const isSelected = tempWidth === preset.width && tempHeight === preset.height
+                const isSelected = parsedTempWidth === preset.width && parsedTempHeight === preset.height
                 return (
                   <Button
                     key={preset.label}
                     variant={isSelected ? 'primary' : 'secondary'}
                     size="sm"
                     onClick={() => {
-                      setTempWidth(preset.width)
-                      setTempHeight(preset.height)
+                      setTempWidth(String(preset.width))
+                      setTempHeight(String(preset.height))
                     }}
                   >
                     {preset.width} × {preset.height}
@@ -3411,32 +3564,13 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
               })}
             </div>
 
-            <div className="paint-dialog-row">
-              <Input
-                label={t.dialogs.width}
-                type="number"
-                value={tempWidth}
-                min={100}
-                max={4096}
-                onChange={(e) => setTempWidth(Math.max(100, Math.min(4096, Number(e.target.value))))}
-                fullWidth
-              />
-              <Input
-                label={t.dialogs.height}
-                type="number"
-                value={tempHeight}
-                min={100}
-                max={4096}
-                onChange={(e) => setTempHeight(Math.max(100, Math.min(4096, Number(e.target.value))))}
-                fullWidth
-              />
-            </div>
+            {canvasSizeFields}
 
             <div className="paint-dialog-actions">
               <Button variant="secondary" onClick={() => setIsNewCanvasDialogOpen(false)}>
                 {t.dialogs.cancelBtn}
               </Button>
-              <Button variant="primary" onClick={handleCreateNewCanvas}>
+              <Button variant="primary" onClick={handleCreateNewCanvas} disabled={!isTempSizeValid}>
                 {t.dialogs.createBtn}
               </Button>
             </div>
@@ -3455,15 +3589,15 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
             <span style={{ fontSize: 12, fontWeight: 600 }}>{t.dialogs.presets}:</span>
             <div className="paint-presets-grid">
               {PRESET_RESOLUTIONS.map((preset) => {
-                const isSelected = tempWidth === preset.width && tempHeight === preset.height
+                const isSelected = parsedTempWidth === preset.width && parsedTempHeight === preset.height
                 return (
                   <Button
                     key={preset.label}
                     variant={isSelected ? 'primary' : 'secondary'}
                     size="sm"
                     onClick={() => {
-                      setTempWidth(preset.width)
-                      setTempHeight(preset.height)
+                      setTempWidth(String(preset.width))
+                      setTempHeight(String(preset.height))
                     }}
                   >
                     {preset.width} × {preset.height}
@@ -3472,32 +3606,13 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
               })}
             </div>
 
-            <div className="paint-dialog-row">
-              <Input
-                label={t.dialogs.width}
-                type="number"
-                value={tempWidth}
-                min={100}
-                max={4096}
-                onChange={(e) => setTempWidth(Math.max(100, Math.min(4096, Number(e.target.value))))}
-                fullWidth
-              />
-              <Input
-                label={t.dialogs.height}
-                type="number"
-                value={tempHeight}
-                min={100}
-                max={4096}
-                onChange={(e) => setTempHeight(Math.max(100, Math.min(4096, Number(e.target.value))))}
-                fullWidth
-              />
-            </div>
+            {canvasSizeFields}
 
             <div className="paint-dialog-actions">
               <Button variant="secondary" onClick={() => setIsResizeDialogOpen(false)}>
                 {t.dialogs.cancelBtn}
               </Button>
-              <Button variant="primary" onClick={handleApplyResize}>
+              <Button variant="primary" onClick={handleApplyResize} disabled={!isTempSizeValid}>
                 {t.dialogs.resizeBtn}
               </Button>
             </div>

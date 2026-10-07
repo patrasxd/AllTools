@@ -1530,6 +1530,7 @@ body.is-panning * {
 /* ─── Bottom Status Bar ─── */
 .paint-status-bar {
   display: flex;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: space-between;
   padding: 4px 16px;
@@ -1539,6 +1540,17 @@ body.is-panning * {
   color: var(--all-text-muted, #71717a);
   flex-shrink: 0;
   gap: 12px;
+  /* Fixed single-line height: text never wraps, so the bar can't grow while the cursor moves.
+     If something does not fit, the bar scrolls sideways instead of getting taller. */
+  height: 32px;
+  box-sizing: border-box;
+  white-space: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+.paint-status-bar::-webkit-scrollbar {
+  display: none;
 }
 
 [data-theme='light'] .paint-status-bar {
@@ -1552,6 +1564,28 @@ body.is-panning * {
   align-items: center;
   gap: 6px;
   font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.paint-status-label-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Reserve the width of the widest cursor reading ("4096, 4096 px") so neighbours don't shift */
+.paint-status-cursor {
+  display: inline-block;
+  min-width: 13ch;
+}
+
+/* Transient notice: takes the leftover space and is cut with an ellipsis instead of wrapping */
+.paint-status-message {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .paint-status-item svg,
@@ -1565,6 +1599,21 @@ body.is-panning * {
   display: flex;
   align-items: center;
   gap: 4px;
+  flex-shrink: 0;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+/* Phones: keep only icons + values (the label text is also in each item's tooltip) */
+@media (max-width: 768px) {
+  .paint-status-bar {
+    padding: 4px 8px;
+    gap: 8px;
+  }
+  .paint-status-label,
+  .paint-status-tip {
+    display: none;
+  }
 }
 
 .paint-zoom-btn {

@@ -68,6 +68,14 @@ beforeEach(() => {
   })
 })
 
+// Loads an image through the real (hidden) file input, like a user picking a file
+function loadImageViaFileInput(name = 'photo.jpg') {
+  const input = document.querySelector('input[type="file"]') as HTMLInputElement
+  expect(input).not.toBeNull()
+  const file = new File([new Uint8Array([1, 2, 3])], name, { type: 'image/jpeg' })
+  fireEvent.change(input, { target: { files: [file] } })
+}
+
 describe('ImageStudio Component', () => {
   it('renders dropzone with From Clipboard button in English', () => {
     render(<ImageStudio locale="en" />)
@@ -113,6 +121,13 @@ describe('ImageStudio Component', () => {
     expect(setIsDirtyMock).toHaveBeenCalledWith(false)
   })
 
+  it('does not offer a demo image button on the empty state', () => {
+    render(<ImageStudio locale="en" />)
+    expect(document.getElementById('img-browse-btn')).not.toBeNull()
+    expect(document.getElementById('img-demo-btn')).toBeNull()
+    expect(screen.queryByText(/demo/i)).toBeNull()
+  })
+
   it('supports global Ctrl+V paste event without crashing', () => {
     render(<ImageStudio locale="en" />)
     const pasteEvent = new Event('paste') as any
@@ -127,14 +142,10 @@ describe('ImageStudio Component', () => {
 
   it('does not render redundant reset or toolbar clipboard buttons after image is loaded', async () => {
     render(<ImageStudio locale="en" />)
-    const demoBtn = document.getElementById('img-demo-btn')
-    expect(demoBtn).toBeDefined()
-    if (demoBtn) {
-      fireEvent.click(demoBtn)
-    }
+    loadImageViaFileInput()
 
     await waitFor(() => {
-      expect(document.getElementById('img-download-btn')).toBeDefined()
+      expect(document.getElementById('img-download-btn')).not.toBeNull()
     })
 
     // Reset button must not exist
@@ -142,16 +153,15 @@ describe('ImageStudio Component', () => {
     // Toolbar paste button must not exist
     expect(document.getElementById('img-paste-toolbar-btn')).toBeNull()
     // Canvas must be present
-    expect(document.querySelector('.img-preview-canvas')).toBeDefined()
+    expect(document.querySelector('.img-preview-canvas')).not.toBeNull()
   })
 
   it('renders remove-bg tab and allows toggling background removal', async () => {
     render(<ImageStudio locale="en" />)
-    const demoBtn = document.getElementById('img-demo-btn')
-    if (demoBtn) fireEvent.click(demoBtn)
+    loadImageViaFileInput()
 
     await waitFor(() => {
-      expect(document.getElementById('img-download-btn')).toBeDefined()
+      expect(document.getElementById('img-download-btn')).not.toBeNull()
     })
 
     // Click on No BG tab in PillGroup
@@ -172,4 +182,3 @@ describe('ImageStudio Component', () => {
     expect(document.getElementById('img-tolerance-slider')).toBeDefined()
   })
 })
-

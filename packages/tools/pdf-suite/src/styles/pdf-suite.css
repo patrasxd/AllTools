@@ -414,6 +414,69 @@
   justify-content: center;
 }
 
+/* ─── Full-screen page preview ────────────────────────────── */
+.pdf-page-expand-btn {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  z-index: 2;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: var(--all-radius-sm, 6px);
+  cursor: pointer;
+}
+.pdf-page-expand-btn:hover,
+.pdf-page-expand-btn:focus-visible {
+  background: var(--all-accent, #3b82f6);
+}
+
+.all-dialog.pdf-fullscreen-dialog {
+  height: calc(100dvh - 32px);
+}
+.pdf-fullscreen-stage {
+  flex: 1;
+  min-height: 0;
+  height: calc(100dvh - 190px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  container-type: size;
+  background: var(--all-surface-2, #2a2a32);
+  border-radius: var(--all-radius-sm, 6px);
+}
+.pdf-fullscreen-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  background: #fff;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+  user-select: none;
+}
+/* Rotated by 90°/270°: swap the box limits so the turned page still fits the stage */
+.pdf-fullscreen-img--turned {
+  max-width: 100cqh;
+  max-height: 100cqw;
+}
+.pdf-fullscreen-fallback {
+  width: min(60%, 360px);
+  aspect-ratio: 1 / 1.414;
+}
+.pdf-fullscreen-footer {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
 /* ─── Signature Dialog Modal ──────────────────────────────── */
 .pdf-signature-modal {
   display: flex;

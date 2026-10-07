@@ -666,41 +666,6 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false, setIsDir
     }
   }
 
-  const loadDemoImage = () => {
-    const canvas = document.createElement('canvas')
-    canvas.width = 1200
-    canvas.height = 800
-    const ctx = canvas.getContext('2d')
-    if (ctx) {
-      const grad = ctx.createLinearGradient(0, 0, 1200, 800)
-      grad.addColorStop(0, '#1e293b')
-      grad.addColorStop(1, '#0f172a')
-      ctx.fillStyle = grad
-      ctx.fillRect(0, 0, 1200, 800)
-
-      ctx.fillStyle = '#38bdf8'
-      ctx.font = 'bold 50px sans-serif'
-      ctx.textAlign = 'center'
-      ctx.fillText('AllTools Image Studio', 600, 360)
-
-      ctx.fillStyle = '#94a3b8'
-      ctx.font = '26px sans-serif'
-      ctx.fillText('Demo Photograph (1200x800)', 600, 430)
-
-      canvas.toBlob(
-        (blob) => {
-          if (blob) {
-            const file = new File([blob], 'sample_demo.jpg', { type: 'image/jpeg' })
-            handleFileSelect(file)
-          }
-        },
-        'image/jpeg',
-        0.95,
-      )
-    }
-  }
-
-
   // ─── Status Title & Stats Computation ───────────────────────
   const statusTitle = useMemo(() => {
     if (!loadedImage) return t.titleUpload
@@ -785,9 +750,6 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false, setIsDir
                       icon={<ClipboardIcon />}
                     >
                       {t.fromClipboard}
-                    </Button>
-                    <Button id="img-demo-btn" variant="secondary" size="sm" onClick={loadDemoImage}>
-                      {t.demoImage}
                     </Button>
                   </div>
                 </div>

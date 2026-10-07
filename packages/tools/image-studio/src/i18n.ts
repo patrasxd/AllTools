@@ -21,7 +21,6 @@ export interface ImageStudioTranslations {
   browseFiles: string
   fromClipboard: string
   pasteImage: string
-  demoImage: string
   noClipboardImage: string
   clipboardError: string
 
@@ -149,7 +148,6 @@ export const imageStudioTranslations: Record<'en' | 'pl', ImageStudioTranslation
     browseFiles: 'Browse File',
     fromClipboard: 'From Clipboard',
     pasteImage: 'Paste from Clipboard',
-    demoImage: 'Demo Image',
     noClipboardImage: 'No image found in clipboard. You can also press Ctrl+V to paste.',
     clipboardError: 'Unable to access clipboard. Please grant clipboard permissions or use Ctrl+V.',
 
@@ -269,7 +267,6 @@ export const imageStudioTranslations: Record<'en' | 'pl', ImageStudioTranslation
     browseFiles: 'Wybierz plik',
     fromClipboard: 'Ze schowka',
     pasteImage: 'Wklej ze schowka',
-    demoImage: 'Zdjęcie demo',
     noClipboardImage: 'Brak obrazu w schowku. Możesz również użyć skrótu Ctrl+V.',
     clipboardError: 'Brak dostępu do schowka. Zezwól na dostęp lub użyj skrótu Ctrl+V.',
 

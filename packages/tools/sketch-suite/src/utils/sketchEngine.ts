@@ -439,3 +439,60 @@ export function drawPencilDot(
 
   ctx.restore()
 }
+
+/** Largest canvas side (px) the New/Resize dialogs allow; photo imports respect the same limit. */
+export const MAX_CANVAS_SIZE = 4096
+
+/**
+ * Size a photo gets when it becomes the canvas: its own pixel size, scaled down proportionally
+ * only if the longest side exceeds `max`.
+ */
+export function fitImageToCanvasLimit(
+  width: number,
+  height: number,
+  max: number = MAX_CANVAS_SIZE,
+): { width: number; height: number; wasScaled: boolean } {
+  const w = Math.max(1, Math.round(width))
+  const h = Math.max(1, Math.round(height))
+  const longest = Math.max(w, h)
+  if (longest <= max) return { width: w, height: h, wasScaled: false }
+
+  const ratio = max / longest
+  return {
+    width: Math.max(1, Math.round(w * ratio)),
+    height: Math.max(1, Math.round(h * ratio)),
+    wasScaled: true,
+  }
+}
+
+/**
+ * Zoom level (0.1 - 1) at which a whole canvas is visible inside a viewport.
+ * Never zooms in past 100%; returns 1 when the viewport size is unknown.
+ */
+export function calculateFitZoom(
+  contentWidth: number,
+  contentHeight: number,
+  viewportWidth: number,
+  viewportHeight: number,
+  min: number = 0.1,
+  max: number = 1,
+): number {
+  if (!(contentWidth > 0) || !(contentHeight > 0) || !(viewportWidth > 0) || !(viewportHeight > 0)) return 1
+  const fit = Math.min(viewportWidth / contentWidth, viewportHeight / contentHeight)
+  return Math.max(min, Math.min(max, Math.floor(fit * 100) / 100))
+}
+
+/**
+ * Parses the text of a canvas width/height field.
+ * Returns a whole number of pixels in 1..max, or null when the text is empty, not a number or out of range.
+ * The fields themselves never clamp what the user types; callers disable "Create" while this returns null.
+ */
+export function parseCanvasDimension(text: string, max: number = MAX_CANVAS_SIZE): number | null {
+  const trimmed = text.trim()
+  if (trimmed === '') return null
+  const value = Number(trimmed)
+  if (!Number.isFinite(value)) return null
+  const rounded = Math.round(value)
+  if (rounded < 1 || rounded > max) return null
+  return rounded
+}

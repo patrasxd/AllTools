@@ -15,6 +15,7 @@ import {
   CheckIcon,
   TrashIcon,
 } from '@all/ui'
+import { IconMaximize2 } from '@alltools/ui'
 import type {
   GuidedStep,
   PdfFileItem,
@@ -26,7 +27,15 @@ import type {
   Point2D,
 } from './types'
 import { pdfSuiteTranslations } from './i18n'
-import { loadPdfInfo, mergePdfs, extractAndRotatePages, imagesToPdf, signPdf } from './utils/pdfEngine'
+import {
+  loadPdfInfo,
+  mergePdfs,
+  assemblePdfFromPages,
+  renderPdfThumbnails,
+  renderPdfPagePreview,
+  imagesToPdf,
+  signPdf,
+} from './utils/pdfEngine'
 import { loadImageElement, rotateCanvas, applyDocumentFilter, processEditableImage } from './utils/imageEngine'
 import './styles/pdf-suite.css'
 
@@ -167,6 +176,9 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme, setI
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [downloadSuccess, setDownloadSuccess] = useState<boolean>(false)
   const [draggedPageIndex, setDraggedPageIndex] = useState<number | null>(null)
+  // Full-screen page preview (id of the page being previewed) and its sharper re-render
+  const [previewPageId, setPreviewPageId] = useState<string | null>(null)
+  const [previewHiRes, setPreviewHiRes] = useState<{ id: string; url: string } | null>(null)
 
   // Signature modal state
   const [isSignOpen, setIsSignOpen] = useState<boolean>(false)
@@ -266,9 +278,10 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme, setI
         const file = files[i]
 
         if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) {
-          const info = await loadPdfInfo(file)
+          const fileId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+          const info = await loadPdfInfo(file, fileId)
           newPdfFiles.push({
-            id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+            id: fileId,
             name: file.name,
             sizeBytes: file.size,
             pageCount: info.pageCount,
@@ -547,11 +560,12 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme, setI
 
       const pdfBlob = await imagesToPdf(processedFiles)
       const pdfFile = new File([pdfBlob], 'scanned_document.pdf', { type: 'application/pdf' })
-      const info = await loadPdfInfo(pdfFile)
+      const scannedId = `${Date.now()}-scanned`
+      const info = await loadPdfInfo(pdfFile, scannedId)
 
       setPdfFiles([
         {
-          id: `${Date.now()}-scanned`,
+          id: scannedId,
           name: 'scanned_document.pdf',
           sizeBytes: pdfBlob.size,
           pageCount: info.pageCount,
@@ -579,11 +593,12 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme, setI
     try {
       const mergedBlob = await mergePdfs(pdfFiles.map((f) => f.file))
       const mergedFile = new File([mergedBlob], 'merged_document.pdf', { type: 'application/pdf' })
-      const info = await loadPdfInfo(mergedFile)
+      const mergedId = `${Date.now()}-merged`
+      const info = await loadPdfInfo(mergedFile, mergedId)
 
       setPdfFiles([
         {
-          id: `${Date.now()}-merged`,
+          id: mergedId,
           name: 'merged_document.pdf',
           sizeBytes: mergedBlob.size,
           pageCount: info.pageCount,
@@ -594,63 +609,6 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme, setI
       setStep('edit_pages')
     } catch {
       alert(t.errorGenerating)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  // Demo sample PDF
-  const loadDemoPdf = async () => {
-    setIsLoading(true)
-    try {
-      const { PDFDocument, StandardFonts, rgb } = await import('pdf-lib')
-      const doc = await PDFDocument.create()
-      const font = await doc.embedFont(StandardFonts.HelveticaBold)
-      const fontRegular = await doc.embedFont(StandardFonts.Helvetica)
-
-      // Page 1
-      const page1 = doc.addPage([595, 842])
-      page1.drawText('AllTools PDF Suite — Document Demo', { x: 50, y: 760, size: 20, font, color: rgb(0.1, 0.1, 0.1) })
-      page1.drawText('Page 1: Overview & Executive Summary', {
-        x: 50,
-        y: 720,
-        size: 14,
-        font: fontRegular,
-        color: rgb(0.3, 0.3, 0.3),
-      })
-
-      // Page 2
-      const page2 = doc.addPage([595, 842])
-      page2.drawText('Page 2: Specifications & Project Roadmap', {
-        x: 50,
-        y: 760,
-        size: 18,
-        font,
-        color: rgb(0.1, 0.1, 0.1),
-      })
-
-      // Page 3
-      const page3 = doc.addPage([595, 842])
-      page3.drawText('Page 3: Signatures & Verification Clause', {
-        x: 50,
-        y: 760,
-        size: 18,
-        font,
-        color: rgb(0.1, 0.1, 0.1),
-      })
-      page3.drawText('Sign here at the bottom to verify document integrity.', {
-        x: 50,
-        y: 720,
-        size: 12,
-        font: fontRegular,
-        color: rgb(0.4, 0.4, 0.4),
-      })
-
-      const pdfBytes = await doc.save()
-      const demoFile = new File([pdfBytes.buffer as ArrayBuffer], 'sample_document.pdf', { type: 'application/pdf' })
-      handleFilesAdded([demoFile])
-    } catch (err) {
-      console.error(err)
     } finally {
       setIsLoading(false)
     }
@@ -667,19 +625,26 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme, setI
         if (imageFiles.length === 0) return
         finalBlob = await imagesToPdf(imageFiles)
         exportFileName = 'images_converted.pdf'
-      } else if (pdfFiles.length === 1 && pdfPages.length > 0) {
-        const sourceFile = pdfFiles[0].file
-        const pagesToExport = pdfPages
-          .filter((p) => p.selected)
-          .map((p) => ({ pageIndex: p.pageIndex, rotation: p.rotation }))
-
-        if (pagesToExport.length === 0) {
+      } else if (step === 'edit_pages' && pdfPages.length > 0) {
+        // Export exactly what the page grid shows: only the selected pages, in grid order, with their rotation.
+        const selectedPages = pdfPages.filter((p) => p.selected)
+        if (selectedPages.length === 0) {
           alert(t.selectAtLeastOnePage)
           return
         }
 
-        finalBlob = await extractAndRotatePages(sourceFile, pagesToExport)
-        exportFileName = `${pdfFiles[0].name.replace(/\.pdf$/i, '')}_edited.pdf`
+        const sources: Record<string, File> = {}
+        for (const f of pdfFiles) sources[f.id] = f.file
+        finalBlob = await assemblePdfFromPages(
+          sources,
+          selectedPages.map((p) => ({ fileId: p.fileId, pageIndex: p.pageIndex, rotation: p.rotation })),
+        )
+
+        const usedFileIds = new Set(selectedPages.map((p) => p.fileId))
+        exportFileName =
+          usedFileIds.size === 1 && pdfFiles.length > 0
+            ? `${(pdfFiles.find((f) => usedFileIds.has(f.id)) ?? pdfFiles[0]).name.replace(/\.pdf$/i, '')}_edited.pdf`
+            : 'merged_documents.pdf'
       } else if (pdfFiles.length > 1) {
         finalBlob = await mergePdfs(pdfFiles.map((f) => f.file))
         exportFileName = 'merged_documents.pdf'
@@ -885,6 +850,53 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme, setI
     [customCoords.xPercent, customCoords.yPercent],
   )
 
+  // ─── Full-screen page preview ───────────────────────────────
+  const previewIndex = previewPageId ? pdfPages.findIndex((p) => p.id === previewPageId) : -1
+  const previewPage = previewIndex >= 0 ? pdfPages[previewIndex] : null
+
+  // Close the preview if its page disappeared (e.g. the document was reset)
+  useEffect(() => {
+    if (previewPageId && previewIndex === -1) setPreviewPageId(null)
+  }, [previewPageId, previewIndex])
+
+  // Show the thumbnail instantly, then swap in a sharper render of the same page
+  useEffect(() => {
+    if (!previewPage) {
+      setPreviewHiRes(null)
+      return
+    }
+    const source = pdfFiles.find((f) => f.id === previewPage.fileId)
+    if (!source) return
+    let cancelled = false
+    const { id, pageIndex } = previewPage
+    renderPdfPagePreview(source.file, pageIndex).then((url) => {
+      if (!cancelled && url) setPreviewHiRes({ id, url })
+    })
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [previewPage?.id, previewPage?.pageIndex, previewPage?.fileId, pdfFiles])
+
+  const stepPreview = useCallback(
+    (delta: number) => {
+      if (previewIndex < 0) return
+      const next = pdfPages[previewIndex + delta]
+      if (next) setPreviewPageId(next.id)
+    },
+    [previewIndex, pdfPages],
+  )
+
+  useEffect(() => {
+    if (!previewPageId) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') stepPreview(-1)
+      else if (e.key === 'ArrowRight') stepPreview(1)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [previewPageId, stepPreview])
+
   const resolvedPageIndex = useMemo(() => {
     const pageCount = pdfPages.length
     if (pageCount === 0) return 0
@@ -954,14 +966,15 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme, setI
         signatureDataUrl = await renderTypedSignaturePng(typedName, selectedFont)
       }
 
-      // Determine target page index (0-indexed)
-      const pageIdx = resolvedPageIndex
+      // The target is the page as shown in the grid (current order); sign it in its own source file.
+      const targetPage = pdfPages[resolvedPageIndex]
+      const sourceItem = pdfFiles.find((f) => f.id === targetPage?.fileId) ?? pdfFiles[0]
+      if (!targetPage || !sourceItem) return
 
-      const sourceFile = pdfFiles[0].file
       const signedBlob = await signPdf(
-        sourceFile,
+        sourceItem.file,
         signatureDataUrl,
-        pageIdx,
+        targetPage.pageIndex,
         sigPosition,
         {
           xPercent: customCoords.xPercent,
@@ -971,21 +984,24 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme, setI
         },
         1,
       )
-      const signedFile = new File([signedBlob], `${pdfFiles[0].name.replace(/\.pdf$/i, '')}_signed.pdf`, {
+      const signedFile = new File([signedBlob], `${sourceItem.name.replace(/\.pdf$/i, '')}_signed.pdf`, {
         type: 'application/pdf',
       })
 
-      const info = await loadPdfInfo(signedFile)
-      setPdfFiles([
-        {
-          id: `${Date.now()}-signed`,
-          name: signedFile.name,
-          sizeBytes: signedBlob.size,
-          pageCount: info.pageCount,
-          file: signedFile,
-        },
-      ])
-      setPdfPages(info.pages)
+      // Refresh only this file's thumbnails. Page ids, selection, order and rotation all stay as they are.
+      const thumbs = await renderPdfThumbnails(signedFile)
+      setPdfFiles((prev) =>
+        prev.map((f) =>
+          f.id === sourceItem.id ? { ...f, name: signedFile.name, file: signedFile, sizeBytes: signedBlob.size } : f,
+        ),
+      )
+      setPdfPages((prev) =>
+        prev.map((p) =>
+          p.fileId === sourceItem.id
+            ? { ...p, fileName: signedFile.name, thumbnailUrl: thumbs[p.pageIndex]?.url || p.thumbnailUrl }
+            : p,
+        ),
+      )
       setIsSignOpen(false)
       setSigStep('create')
     } catch (err) {
@@ -1059,9 +1075,6 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme, setI
                       icon={<UploadIcon />}
                     >
                       {t.browseFiles}
-                    </Button>
-                    <Button id="pdf-demo-btn" variant="secondary" size="sm" onClick={loadDemoPdf}>
-                      {t.demoDocument}
                     </Button>
                   </div>
                 </div>
@@ -1211,6 +1224,21 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme, setI
                               </div>
                             )}
                           </div>
+
+                          <button
+                            type="button"
+                            className="pdf-page-expand-btn"
+                            draggable={false}
+                            onDragStart={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setPreviewPageId(page.id)
+                            }}
+                            title={t.fullscreenPreview}
+                            aria-label={`${t.fullscreenPreview}: ${t.pagePrefix} ${page.displayNumber}`}
+                          >
+                            <IconMaximize2 size={16} />
+                          </button>
 
                           <div className="pdf-page-footer">
                             <div className="pdf-page-reorder-nav">
@@ -1485,6 +1513,66 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme, setI
           ) : undefined
         }
       />
+
+      {/* ─── FULL-SCREEN PAGE PREVIEW ───────────────────────────── */}
+      <Dialog
+        open={previewPage !== null}
+        onClose={() => setPreviewPageId(null)}
+        title={previewPage ? `${t.pagePrefix} ${previewPage.displayNumber} / ${pdfPages.length}` : undefined}
+        maxWidth="full"
+        className="pdf-fullscreen-dialog"
+        footer={
+          previewPage ? (
+            <div className="pdf-fullscreen-footer">
+              <Button
+                id="pdf-preview-prev-btn"
+                variant="secondary"
+                size="sm"
+                disabled={previewIndex <= 0}
+                onClick={() => stepPreview(-1)}
+                aria-label={t.previousPage}
+              >
+                ◀
+              </Button>
+              <Button
+                id="pdf-preview-toggle-btn"
+                variant={previewPage.selected ? 'secondary' : 'primary'}
+                size="sm"
+                onClick={() => togglePageSelection(previewPage.id)}
+              >
+                {previewPage.selected ? t.excludePage : t.includePage}
+              </Button>
+              <Button
+                id="pdf-preview-next-btn"
+                variant="secondary"
+                size="sm"
+                disabled={previewIndex >= pdfPages.length - 1}
+                onClick={() => stepPreview(1)}
+                aria-label={t.nextPage}
+              >
+                ▶
+              </Button>
+            </div>
+          ) : undefined
+        }
+      >
+        {previewPage && (
+          <div className="pdf-fullscreen-stage">
+            {(previewHiRes?.id === previewPage.id ? previewHiRes.url : previewPage.thumbnailUrl) ? (
+              <img
+                id="pdf-preview-image"
+                className={`pdf-fullscreen-img ${previewPage.rotation % 180 !== 0 ? 'pdf-fullscreen-img--turned' : ''}`}
+                src={previewHiRes?.id === previewPage.id ? previewHiRes.url : previewPage.thumbnailUrl}
+                alt={`${t.pagePrefix} ${previewPage.displayNumber}`}
+                style={{ transform: `rotate(${previewPage.rotation}deg)` }}
+                draggable={false}
+              />
+            ) : (
+              <div className="pdf-page-fallback-sheet pdf-fullscreen-fallback">{previewPage.displayNumber}</div>
+            )}
+          </div>
+        )}
+      </Dialog>
 
       {/* ─── SIGNATURE DIALOG MODAL ─────────────────────────────── */}
       <Dialog

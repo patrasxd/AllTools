@@ -1,6 +1,6 @@
 import React from 'react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { SketchSuite } from '../SketchSuite'
 
 // Mock canvas getContext for jsdom
@@ -57,7 +57,7 @@ describe('SketchSuite UI Component', () => {
     const customColorLabel = container.querySelector('.paint-custom-color-btn')
     expect(customColorLabel).toBeDefined()
     expect(customColorLabel?.querySelector('.paint-color-wheel-icon')).toBeDefined()
-    
+
     const colorInput = customColorLabel?.querySelector('input[type="color"]') as HTMLInputElement
     expect(colorInput).toBeDefined()
     expect(colorInput.classList.contains('paint-hidden-color-input')).toBe(true)
@@ -230,7 +230,7 @@ describe('SketchSuite UI Component', () => {
 
   it('renders MS Paint-style inline on-canvas text box with repositioning drag handle', () => {
     const { container } = render(<SketchSuite locale="en" />)
-    
+
     // Select Text tool
     const textToolBtn = screen.getByTitle('Text Tool')
     fireEvent.click(textToolBtn)
@@ -521,4 +521,176 @@ describe('SketchSuite UI Component', () => {
   })
 })
 
+describe('SketchSuite: import photo as canvas', () => {
+  let drawImage: ReturnType<typeof vi.fn>
 
+  function stubImage(naturalWidth: number, naturalHeight: number, fail = false) {
+    class MockImage {
+      onload: (() => void) | null = null
+      onerror: (() => void) | null = null
+      naturalWidth = naturalWidth
+      naturalHeight = naturalHeight
+      width = naturalWidth
+      height = naturalHeight
+      private _src = ''
+      get src() {
+        return this._src
+      }
+      set src(val: string) {
+        this._src = val
+        setTimeout(() => (fail ? this.onerror?.() : this.onload?.()), 0)
+      }
+    }
+    vi.stubGlobal('Image', MockImage)
+  }
+
+  beforeEach(() => {
+    drawImage = vi.fn()
+    const base = HTMLCanvasElement.prototype.getContext as unknown as (id: string) => Record<string, unknown>
+    HTMLCanvasElement.prototype.getContext = vi.fn().mockImplementation((id: string) => {
+      const ctx = base(id)
+      return ctx ? { ...ctx, drawImage } : ctx
+    })
+    URL.createObjectURL = vi.fn(() => 'blob:photo')
+    URL.revokeObjectURL = vi.fn()
+  })
+
+  function pickPhoto(name = 'photo.jpg') {
+    const input = document.getElementById('paint-photo-input') as HTMLInputElement
+    expect(input).not.toBeNull()
+    const file = new File([new Uint8Array([1, 2, 3])], name, { type: 'image/jpeg' })
+    fireEvent.change(input, { target: { files: [file] } })
+  }
+
+  function canvasSize(): [number, number] {
+    const canvases = document.querySelectorAll<HTMLCanvasElement>('canvas')
+    const main = canvases[0]
+    return [main.width, main.height]
+  }
+
+  it('offers an "Import Photo" action in the File menu', () => {
+    render(<SketchSuite locale="en" />)
+    fireEvent.click(screen.getByRole('button', { name: /file/i }))
+    expect(document.getElementById('paint-import-photo-btn')).not.toBeNull()
+    expect(screen.getByText('Import Photo...')).toBeDefined()
+  })
+
+  it('makes the canvas exactly as big as the photo and draws it 1:1 over the whole canvas', async () => {
+    stubImage(1600, 1200)
+    render(<SketchSuite locale="en" />)
+    expect(canvasSize()).toEqual([900, 600])
+
+    pickPhoto()
+    await waitFor(() => expect(canvasSize()).toEqual([1600, 1200]))
+
+    // every canvas layer follows the new size
+    document.querySelectorAll<HTMLCanvasElement>('canvas').forEach((c) => {
+      expect([c.width, c.height]).toEqual([1600, 1200])
+    })
+    // photo drawn at the origin at full canvas size (no floating overlay, no 85% fitting)
+    expect(drawImage).toHaveBeenCalledWith(expect.anything(), 0, 0, 1600, 1200)
+    expect(screen.queryByText(/fitted/i)).toBeNull()
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:photo')
+  })
+
+  it('scales a huge photo down to the 4096 px limit, keeping the aspect ratio', async () => {
+    stubImage(8000, 6000)
+    render(<SketchSuite locale="en" />)
+
+    pickPhoto()
+    await waitFor(() => expect(canvasSize()).toEqual([4096, 3072]))
+    expect(drawImage).toHaveBeenCalledWith(expect.anything(), 0, 0, 4096, 3072)
+    expect(await screen.findByText(/scaled down to 4096×3072 px/)).toBeDefined()
+  })
+
+  it('shows an error notice and keeps the canvas when the image cannot be decoded', async () => {
+    stubImage(100, 100, true)
+    render(<SketchSuite locale="en" />)
+
+    pickPhoto('broken.jpg')
+    expect(await screen.findByText('Could not load this image')).toBeDefined()
+    expect(canvasSize()).toEqual([900, 600])
+    expect(drawImage).not.toHaveBeenCalled()
+  })
+})
+
+describe('SketchSuite: canvas size dialogs', () => {
+  function openNewCanvasDialog() {
+    render(<SketchSuite locale="en" />)
+    fireEvent.click(screen.getByRole('button', { name: /file/i }))
+    fireEvent.click(screen.getByText('New Canvas...'))
+    return screen.getByRole('dialog')
+  }
+  const widthField = () => screen.getByLabelText('Width (px)') as HTMLInputElement
+  const heightField = () => screen.getByLabelText('Height (px)') as HTMLInputElement
+  const createBtn = () => screen.getByRole('button', { name: 'Create Canvas' }) as HTMLButtonElement
+
+  it('lets you type small values without forcing a minimum', () => {
+    openNewCanvasDialog()
+    fireEvent.change(widthField(), { target: { value: '2' } })
+    expect(widthField().value).toBe('2')
+    fireEvent.change(widthField(), { target: { value: '20' } })
+    fireEvent.change(widthField(), { target: { value: '200' } })
+    expect(widthField().value).toBe('200')
+    expect(createBtn().disabled).toBe(false)
+  })
+
+  it('allows typing 0 or clearing the field, but disables Create while the size is invalid', () => {
+    openNewCanvasDialog()
+
+    fireEvent.change(widthField(), { target: { value: '0' } })
+    expect(widthField().value).toBe('0')
+    expect(createBtn().disabled).toBe(true)
+
+    fireEvent.change(widthField(), { target: { value: '' } })
+    expect(widthField().value).toBe('')
+    expect(createBtn().disabled).toBe(true)
+
+    fireEvent.change(widthField(), { target: { value: '5000' } })
+    expect(widthField().value).toBe('5000')
+    expect(createBtn().disabled).toBe(true)
+
+    fireEvent.change(widthField(), { target: { value: '300' } })
+    expect(createBtn().disabled).toBe(false)
+  })
+
+  it('creates a canvas with exactly the typed (small) size', () => {
+    openNewCanvasDialog()
+
+    fireEvent.change(widthField(), { target: { value: '200' } })
+    fireEvent.change(heightField(), { target: { value: '150' } })
+    fireEvent.click(createBtn())
+
+    const canvas = document.querySelector('canvas') as HTMLCanvasElement
+    expect([canvas.width, canvas.height]).toEqual([200, 150])
+  })
+
+  it('applies the same rules in the Resize Canvas dialog', () => {
+    render(<SketchSuite locale="en" />)
+    fireEvent.click(screen.getByRole('button', { name: /file/i }))
+    fireEvent.click(screen.getByText('Resize Canvas...'))
+
+    fireEvent.change(widthField(), { target: { value: '0' } })
+    const applyBtn = screen.getByRole('button', { name: 'Apply Dimensions' }) as HTMLButtonElement
+    expect(applyBtn.disabled).toBe(true)
+
+    fireEvent.change(widthField(), { target: { value: '120' } })
+    expect(applyBtn.disabled).toBe(false)
+  })
+})
+
+describe('SketchSuite: bottom status bar', () => {
+  it('keeps every status label inside a hideable label span so phones can show icons + values only', () => {
+    const { container } = render(<SketchSuite locale="en" />)
+    const bar = container.querySelector('.paint-status-bar') as HTMLElement
+    expect(bar).not.toBeNull()
+
+    const items = bar.querySelectorAll('.paint-status-item')
+    expect(items.length).toBeGreaterThanOrEqual(2)
+    items.forEach((item) => {
+      expect(item.getAttribute('title')).toBeTruthy() // label stays reachable when the text is hidden
+      expect(item.querySelector('.paint-status-label')).not.toBeNull()
+    })
+    expect(bar.querySelector('.paint-status-cursor')).not.toBeNull()
+  })
+})

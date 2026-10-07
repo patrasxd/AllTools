@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import { PDFDocument } from 'pdf-lib'
-import { mergePdfs, extractAndRotatePages, imagesToPdf, signPdf } from '../utils/pdfEngine'
+import { mergePdfs, assemblePdfFromPages, imagesToPdf, signPdf } from '../utils/pdfEngine'
 
 // Helper to create a minimal in-memory PDF Document for testing
-async function createMockPdf(pageCount: number = 1, text: string = 'Test'): Promise<File> {
+async function createMockPdf(pageCount: number = 1, text: string = 'Test', width: number = 400): Promise<File> {
   const doc = await PDFDocument.create()
   for (let i = 0; i < pageCount; i++) {
-    const page = doc.addPage([400, 600])
+    const page = doc.addPage([width, 600 + i])
     page.drawText(`${text} Page ${i + 1}`)
   }
   const bytes = await doc.save()
@@ -33,21 +33,56 @@ describe('PDF Suite pdfEngine', () => {
     })
   })
 
-  describe('extractAndRotatePages', () => {
-    it('extracts specific pages and applies custom rotation', async () => {
+  describe('assemblePdfFromPages', () => {
+    // Every mock page has a unique size: width = file width, height = 600 + page index.
+    async function pageSizes(blob: Blob): Promise<Array<[number, number]>> {
+      const doc = await PDFDocument.load(await blob.arrayBuffer())
+      return doc.getPages().map((p) => [p.getWidth(), p.getHeight()] as [number, number])
+    }
+
+    it('extracts only the given pages, in the given order, with custom rotation', async () => {
       const source = await createMockPdf(4, 'Source')
-      const pagesToExport = [
-        { pageIndex: 0, rotation: 90 },
-        { pageIndex: 2, rotation: 180 },
-      ]
+      const result = await assemblePdfFromPages({ a: source }, [
+        { fileId: 'a', pageIndex: 2, rotation: 180 },
+        { fileId: 'a', pageIndex: 0, rotation: 90 },
+      ])
+      const doc = await PDFDocument.load(await result.arrayBuffer())
 
-      const resultBlob = await extractAndRotatePages(source, pagesToExport)
-      const buffer = await resultBlob.arrayBuffer()
-      const resultDoc = await PDFDocument.load(buffer)
+      expect(doc.getPageCount()).toBe(2)
+      expect(doc.getPage(0).getHeight()).toBe(602) // original page 3
+      expect(doc.getPage(0).getRotation().angle).toBe(180)
+      expect(doc.getPage(1).getHeight()).toBe(600) // original page 1
+      expect(doc.getPage(1).getRotation().angle).toBe(90)
+    })
 
-      expect(resultDoc.getPageCount()).toBe(2)
-      expect(resultDoc.getPage(0).getRotation().angle).toBe(90)
-      expect(resultDoc.getPage(1).getRotation().angle).toBe(180)
+    it('combines pages from several source files, keeping only the requested ones', async () => {
+      const a = await createMockPdf(3, 'A', 400)
+      const b = await createMockPdf(2, 'B', 500)
+      const result = await assemblePdfFromPages({ a, b }, [
+        { fileId: 'b', pageIndex: 1, rotation: 0 },
+        { fileId: 'a', pageIndex: 0, rotation: 0 },
+        { fileId: 'a', pageIndex: 2, rotation: 270 },
+        { fileId: 'b', pageIndex: 0, rotation: 0 },
+      ])
+
+      expect(await pageSizes(result)).toEqual([
+        [500, 601],
+        [400, 600],
+        [400, 602],
+        [500, 600],
+      ])
+      const doc = await PDFDocument.load(await result.arrayBuffer())
+      expect(doc.getPage(2).getRotation().angle).toBe(270)
+    })
+
+    it('does not include pages that are not listed (deselected pages are dropped)', async () => {
+      const a = await createMockPdf(5, 'A')
+      const result = await assemblePdfFromPages({ a }, [{ fileId: 'a', pageIndex: 3, rotation: 0 }])
+      expect(await pageSizes(result)).toEqual([[400, 603]])
+    })
+
+    it('throws a clear error when a source file is missing', async () => {
+      await expect(assemblePdfFromPages({}, [{ fileId: 'ghost', pageIndex: 0, rotation: 0 }])).rejects.toThrow(/ghost/)
     })
   })
 

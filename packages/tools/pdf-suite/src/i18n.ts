@@ -24,8 +24,6 @@ export interface PdfSuiteTranslations {
   dropTitle: string
   dropSubtitle: string
   browseFiles: string
-  demoDocument: string
-  demoLoaded: string
 
   // File Merge Queue
   mergeQueueTitle: string
@@ -97,6 +95,11 @@ export interface PdfSuiteTranslations {
   errorReading: string
   errorGenerating: string
   selectAtLeastOnePage: string
+  fullscreenPreview: string
+  previousPage: string
+  nextPage: string
+  includePage: string
+  excludePage: string
 
   // Edit Images & Scanner
   stepEditImages: string
@@ -135,8 +138,6 @@ export const pdfSuiteTranslations: Record<'en' | 'pl', PdfSuiteTranslations> = {
     dropTitle: 'Drop or browse PDF documents',
     dropSubtitle: 'PDF, JPG, PNG, WebP & Scanned Documents',
     browseFiles: 'Browse File',
-    demoDocument: 'Demo Document',
-    demoLoaded: 'Sample document loaded',
 
     mergeQueueTitle: 'Arrange Document Order',
     mergeQueueHint: 'Files will be merged in the order shown below. Reorder with arrows before continuing.',
@@ -204,6 +205,11 @@ export const pdfSuiteTranslations: Record<'en' | 'pl', PdfSuiteTranslations> = {
     errorReading: 'Failed to read PDF file',
     errorGenerating: 'Failed to generate PDF document',
     selectAtLeastOnePage: 'Please select at least one page to export',
+    fullscreenPreview: 'Full screen preview',
+    previousPage: 'Previous page',
+    nextPage: 'Next page',
+    includePage: 'Include in PDF',
+    excludePage: 'Exclude from PDF',
 
     stepEditImages: 'Edit Images',
     titleEditImages: 'Edit Scanned Images',
@@ -239,8 +245,6 @@ export const pdfSuiteTranslations: Record<'en' | 'pl', PdfSuiteTranslations> = {
     dropTitle: 'Upuść lub wybierz dokument PDF',
     dropSubtitle: 'PDF, JPG, PNG, WebP i skany dokumentów',
     browseFiles: 'Wybierz plik',
-    demoDocument: 'Dokument demo',
-    demoLoaded: 'Wczytano dokument testowy',
 
     mergeQueueTitle: 'Ustal kolejność plików do scalenia',
     mergeQueueHint: 'Pliki zostaną połączone w kolejności poniżej. Użyj strzałek, aby zmienić kolejność.',
@@ -308,6 +312,11 @@ export const pdfSuiteTranslations: Record<'en' | 'pl', PdfSuiteTranslations> = {
     errorReading: 'Błąd podczas odczytu pliku PDF',
     errorGenerating: 'Błąd podczas generowania pliku PDF',
     selectAtLeastOnePage: 'Zaznacz co najmniej jedną stronę do eksportu',
+    fullscreenPreview: 'Podgląd na pełnym ekranie',
+    previousPage: 'Poprzednia strona',
+    nextPage: 'Następna strona',
+    includePage: 'Dodaj do PDF',
+    excludePage: 'Pomiń w PDF',
 
     stepEditImages: 'Edycja zdjęć',
     titleEditImages: 'Edycja zeskanowanych zdjęć',
