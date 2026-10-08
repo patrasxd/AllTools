@@ -496,3 +496,14 @@ export function parseCanvasDimension(text: string, max: number = MAX_CANVAS_SIZE
   if (rounded < 1 || rounded > max) return null
   return rounded
 }
+
+/**
+ * Stroke metrics for the selection outline ("marching ants"), in canvas pixels.
+ * The overlay is scaled by the view zoom, so below 100% the lines are made proportionally thicker
+ * to stay about one screen pixel wide (otherwise they fade to a faint hairline on photos).
+ */
+export function getMarqueeStroke(zoom: number): { lineWidth: number; dash: number } {
+  const safeZoom = Number.isFinite(zoom) && zoom > 0 ? zoom : 1
+  const lineWidth = Math.max(1, 1 / safeZoom)
+  return { lineWidth, dash: 4 * lineWidth }
+}

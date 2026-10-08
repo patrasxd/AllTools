@@ -7,6 +7,7 @@ import {
   fitImageToCanvasLimit,
   calculateFitZoom,
   parseCanvasDimension,
+  getMarqueeStroke,
   MAX_CANVAS_SIZE,
 } from '../utils/sketchEngine'
 
@@ -267,5 +268,23 @@ describe('parseCanvasDimension', () => {
     expect(parseCanvasDimension('4097')).toBeNull()
     expect(parseCanvasDimension('100000')).toBeNull()
     expect(parseCanvasDimension('300', 200)).toBeNull()
+  })
+})
+
+describe('getMarqueeStroke', () => {
+  it('uses a 1 px line and 4 px dashes at 100% and above', () => {
+    expect(getMarqueeStroke(1)).toEqual({ lineWidth: 1, dash: 4 })
+    expect(getMarqueeStroke(3)).toEqual({ lineWidth: 1, dash: 4 })
+  })
+
+  it('thickens the outline when zoomed out so it stays ~1 screen pixel', () => {
+    expect(getMarqueeStroke(0.5)).toEqual({ lineWidth: 2, dash: 8 })
+    expect(getMarqueeStroke(0.25)).toEqual({ lineWidth: 4, dash: 16 })
+  })
+
+  it('falls back to defaults for invalid zoom values', () => {
+    expect(getMarqueeStroke(0)).toEqual({ lineWidth: 1, dash: 4 })
+    expect(getMarqueeStroke(Number.NaN)).toEqual({ lineWidth: 1, dash: 4 })
+    expect(getMarqueeStroke(-2)).toEqual({ lineWidth: 1, dash: 4 })
   })
 })

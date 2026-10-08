@@ -45,6 +45,7 @@ import {
   fitImageToCanvasLimit,
   calculateFitZoom,
   parseCanvasDimension,
+  getMarqueeStroke,
 } from './utils/sketchEngine'
 import './styles/sketch-suite.css'
 
@@ -179,6 +180,8 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
   // Canvas refs
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const previewCanvasRef = useRef<HTMLCanvasElement | null>(null)
+  // Overlay blended with `difference`: white strokes here invert whatever is underneath
+  const invertCanvasRef = useRef<HTMLCanvasElement | null>(null)
   const canvasViewportRef = useRef<HTMLElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const photoInputRef = useRef<HTMLInputElement | null>(null)
@@ -191,6 +194,10 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
     height: 600,
   })
   const [zoom, setZoom] = useState<number>(1)
+  const zoomRef = useRef(zoom)
+  useEffect(() => {
+    zoomRef.current = zoom
+  }, [zoom])
   const [cursorPos, setCursorPos] = useState<Point>({ x: 0, y: 0 })
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
 
@@ -507,53 +514,69 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
     }, 3000)
   }, [])
 
-  // Draw or clear dashed marquee on preview canvas
+  // Draw or clear the selection outline.
+  // Two layers make it readable on any background:
+  //  - white dashes on the `difference`-blended overlay: they show the INVERSE of the colours beneath
+  //  - black dashes (offset by one dash) on the normal preview canvas: they cover mid-greys, where an
+  //    inverted colour is nearly identical to the original and would vanish
   const drawMarquee = useCallback(
-    (
-      rect: SelectionRect | null,
-      points?: Point[] | null,
-      rubberBandTo?: Point | null,
-    ) => {
+    (rect: SelectionRect | null, points?: Point[] | null, rubberBandTo?: Point | null) => {
       const previewCanvas = previewCanvasRef.current
       if (!previewCanvas) return
       const pCtx = previewCanvas.getContext('2d')
       if (!pCtx) return
       pCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height)
 
+      const invertCanvas = invertCanvasRef.current
+      const iCtx = invertCanvas ? invertCanvas.getContext('2d') : null
+      if (invertCanvas && iCtx) iCtx.clearRect(0, 0, invertCanvas.width, invertCanvas.height)
+
+      const { lineWidth, dash } = getMarqueeStroke(zoomRef.current)
+
+      // Strokes one dashed outline on a context; `phase` shifts the dash pattern
+      const strokeOutline = (
+        ctx: CanvasRenderingContext2D,
+        color: string,
+        phase: number,
+        trace: (c: CanvasRenderingContext2D) => void,
+      ) => {
+        ctx.save()
+        ctx.strokeStyle = color
+        ctx.lineWidth = lineWidth
+        ctx.lineCap = 'butt'
+        ctx.lineJoin = 'round'
+        ctx.setLineDash([dash, dash])
+        ctx.lineDashOffset = phase
+        trace(ctx)
+        ctx.restore()
+      }
+
       // 1. Points-based marquee (Lasso / Polygon)
       if (points && points.length > 0) {
-        pCtx.save()
-        pCtx.lineWidth = 1
-        pCtx.lineCap = 'round'
-        pCtx.lineJoin = 'round'
-
-        const tracePath = () => {
-          pCtx.beginPath()
-          pCtx.moveTo(points[0].x + 0.5, points[0].y + 0.5)
+        const tracePath = (c: CanvasRenderingContext2D) => {
+          c.beginPath()
+          c.moveTo(points[0].x + 0.5, points[0].y + 0.5)
           for (let i = 1; i < points.length; i++) {
-            pCtx.lineTo(points[i].x + 0.5, points[i].y + 0.5)
+            c.lineTo(points[i].x + 0.5, points[i].y + 0.5)
           }
           if (rubberBandTo) {
-            pCtx.lineTo(rubberBandTo.x + 0.5, rubberBandTo.y + 0.5)
+            c.lineTo(rubberBandTo.x + 0.5, rubberBandTo.y + 0.5)
           } else if (points.length >= 3) {
-            pCtx.closePath?.()
+            c.closePath?.()
           }
+          c.stroke()
         }
 
-        // Black dash
-        pCtx.strokeStyle = '#000000'
-        pCtx.setLineDash([4, 4])
-        tracePath()
-        pCtx.stroke()
-
-        // White dash overlay
-        pCtx.strokeStyle = '#ffffff'
-        pCtx.lineDashOffset = 4
-        tracePath()
-        pCtx.stroke()
+        strokeOutline(pCtx, '#000000', 0, tracePath)
+        if (iCtx) {
+          strokeOutline(iCtx, '#ffffff', dash, tracePath)
+        } else {
+          strokeOutline(pCtx, '#ffffff', dash, tracePath)
+        }
 
         // Draw small anchor handles at points if in-progress polygon
         if (rubberBandTo || points.length < 3) {
+          pCtx.save()
           pCtx.setLineDash([])
           pCtx.lineWidth = 1
           points.forEach((pt, idx) => {
@@ -568,27 +591,35 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
               pCtx.strokeRect(pt.x - 3.5, pt.y - 3.5, 7, 7)
             }
           })
+          pCtx.restore()
         }
-
-        pCtx.restore()
         return
       }
 
       // 2. Standard Rectangular Marquee
       if (!rect || rect.width <= 0 || rect.height <= 0) return
 
-      pCtx.save()
-      pCtx.strokeStyle = '#000000'
-      pCtx.lineWidth = 1
-      pCtx.setLineDash([4, 4])
-      pCtx.strokeRect(rect.x + 0.5, rect.y + 0.5, rect.width, rect.height)
-      pCtx.strokeStyle = '#ffffff'
-      pCtx.lineDashOffset = 4
-      pCtx.strokeRect(rect.x + 0.5, rect.y + 0.5, rect.width, rect.height)
-      pCtx.restore()
+      const traceRect = (c: CanvasRenderingContext2D) =>
+        c.strokeRect(rect.x + 0.5, rect.y + 0.5, rect.width, rect.height)
+      strokeOutline(pCtx, '#000000', 0, traceRect)
+      if (iCtx) {
+        strokeOutline(iCtx, '#ffffff', dash, traceRect)
+      } else {
+        strokeOutline(pCtx, '#ffffff', dash, traceRect)
+      }
     },
     [],
   )
+
+  // The outline thickness depends on the zoom level: redraw it when zoom changes
+  useEffect(() => {
+    if (polygonPointsRef.current.length > 0) {
+      drawMarquee(null, polygonPointsRef.current)
+    } else if (selectionRect) {
+      drawMarquee(selectionRect, selectionPoints)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zoom])
 
   const clearSelection = useCallback(() => {
     setSelectionRect(null)
@@ -633,6 +664,8 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
 
     if (!selectionRect) {
       pCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height)
+      const invertCanvas = invertCanvasRef.current
+      invertCanvas?.getContext('2d')?.clearRect(0, 0, invertCanvas.width, invertCanvas.height)
     }
   }, [selectionRect])
 
@@ -2953,6 +2986,18 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
             <canvas
               ref={previewCanvasRef}
               className="paint-preview-canvas"
+              style={{
+                width: canvasDim.width * zoom,
+                height: canvasDim.height * zoom,
+                imageRendering: zoom > 1 ? 'pixelated' : 'auto',
+              }}
+            />
+            <canvas
+              ref={invertCanvasRef}
+              className="paint-marquee-invert"
+              width={canvasDim.width}
+              height={canvasDim.height}
+              aria-hidden="true"
               style={{
                 width: canvasDim.width * zoom,
                 height: canvasDim.height * zoom,

@@ -1,6 +1,8 @@
 import React from 'react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { SketchSuite } from '../SketchSuite'
 
 // Mock canvas getContext for jsdom
@@ -692,5 +694,77 @@ describe('SketchSuite: bottom status bar', () => {
       expect(item.querySelector('.paint-status-label')).not.toBeNull()
     })
     expect(bar.querySelector('.paint-status-cursor')).not.toBeNull()
+  })
+})
+
+describe('SketchSuite: selection outline visibility', () => {
+  it('has a dedicated overlay for the inverted outline, sized like the canvas', () => {
+    const { container } = render(<SketchSuite locale="en" />)
+    const overlay = container.querySelector('canvas.paint-marquee-invert') as HTMLCanvasElement
+    expect(overlay).not.toBeNull()
+    expect([overlay.width, overlay.height]).toEqual([900, 600])
+    expect(overlay.getAttribute('aria-hidden')).toBe('true')
+  })
+
+  it('blends that overlay with `difference` so white strokes invert the colours beneath', () => {
+    const css = readFileSync(resolve(__dirname, '../styles/sketch-suite.css'), 'utf8')
+    const rule = css.match(/\.paint-marquee-invert\s*\{[^}]*\}/)
+    expect(rule).not.toBeNull()
+    expect(rule![0]).toContain('mix-blend-mode: difference')
+    expect(rule![0]).toContain('pointer-events: none')
+  })
+
+  it('keeps the overlay in step with the canvas size after resizing', () => {
+    const { container } = render(<SketchSuite locale="en" />)
+    fireEvent.click(screen.getByRole('button', { name: /file/i }))
+    fireEvent.click(screen.getByText('New Canvas...'))
+    fireEvent.change(screen.getByLabelText('Width (px)'), { target: { value: '320' } })
+    fireEvent.change(screen.getByLabelText('Height (px)'), { target: { value: '240' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Create Canvas' }))
+
+    const overlay = container.querySelector('canvas.paint-marquee-invert') as HTMLCanvasElement
+    expect([overlay.width, overlay.height]).toEqual([320, 240])
+  })
+})
+
+describe('SketchSuite: selection outline drawing', () => {
+  // Records, per canvas element, every stroke colour used for strokeRect calls
+  function recordStrokes() {
+    const calls = new Map<HTMLCanvasElement, string[]>()
+    const base = HTMLCanvasElement.prototype.getContext as unknown as (
+      this: HTMLCanvasElement,
+      id: string,
+    ) => Record<string, unknown>
+    const cache = new Map<HTMLCanvasElement, Record<string, unknown>>()
+    HTMLCanvasElement.prototype.getContext = vi.fn().mockImplementation(function (this: HTMLCanvasElement, id: string) {
+      if (cache.has(this)) return cache.get(this)
+      const ctx = { ...base.call(this, id) } as Record<string, unknown> & { strokeStyle: string }
+      ctx.strokeStyle = ''
+      ctx.strokeRect = vi.fn(() => {
+        const list = calls.get(this) ?? []
+        list.push(ctx.strokeStyle)
+        calls.set(this, list)
+      })
+      cache.set(this, ctx)
+      return ctx
+    }) as unknown as typeof HTMLCanvasElement.prototype.getContext
+    return calls
+  }
+
+  it('draws white dashes on the inverting overlay and black dashes on the normal preview canvas', () => {
+    const strokes = recordStrokes()
+    const { container } = render(<SketchSuite locale="en" />)
+    fireEvent.click(screen.getByRole('button', { name: /select \(rectangle\)/i }))
+
+    const canvas = container.querySelector('.paint-canvas') as HTMLCanvasElement
+    fireEvent.pointerDown(canvas, { clientX: 20, clientY: 20, pointerId: 1 })
+    fireEvent.pointerMove(canvas, { clientX: 120, clientY: 90, pointerId: 1 })
+
+    const overlay = container.querySelector('canvas.paint-marquee-invert') as HTMLCanvasElement
+    const preview = container.querySelector('canvas.paint-preview-canvas') as HTMLCanvasElement
+    expect(strokes.get(overlay)?.length).toBeGreaterThan(0)
+    expect(strokes.get(overlay)?.every((c) => c === '#ffffff')).toBe(true)
+    expect(strokes.get(preview)?.length).toBeGreaterThan(0)
+    expect(strokes.get(preview)?.every((c) => c === '#000000')).toBe(true)
   })
 })

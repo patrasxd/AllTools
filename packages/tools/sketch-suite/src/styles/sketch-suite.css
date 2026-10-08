@@ -1117,6 +1117,16 @@ body.is-panning * {
   background-color: transparent;
 }
 
+/* Selection outline layer: white strokes blended with `difference` show the inverse of the colours beneath */
+.paint-marquee-invert {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  background-color: transparent;
+  mix-blend-mode: difference;
+}
+
 /* ─── MS Paint Style Inline On-Canvas Text Selection Box (Selection Marquee Style) ─── */
 .paint-canvas-text-box {
   position: absolute;
