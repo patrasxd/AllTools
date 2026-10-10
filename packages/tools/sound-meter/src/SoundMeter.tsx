@@ -3,7 +3,6 @@ import {
   BoardLayout,
   Button,
   PillGroup,
-  StatsHeader,
   ControlsBar,
   Dialog,
   PlayIcon,

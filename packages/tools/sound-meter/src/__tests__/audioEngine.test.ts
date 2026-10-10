@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { REFERENCE_LEVELS, getSoundReference, DecibelMeterEngine } from '../utils/audioEngine'
+import { getSoundReference, DecibelMeterEngine } from '../utils/audioEngine'
 import { soundMeterTranslations } from '../i18n'
 
 describe('sound-meter / audioEngine', () => {

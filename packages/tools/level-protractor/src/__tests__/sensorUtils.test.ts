@@ -6,7 +6,6 @@ import {
   angleDelta,
   smoothHeading,
   getCardinalDirection,
-  requiresOrientationPermission,
   detectPhoneOrientation,
   calculateSlopePercent,
   calculateEdgeLevel,

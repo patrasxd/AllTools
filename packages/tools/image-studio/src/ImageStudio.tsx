@@ -20,7 +20,6 @@ import type {
   ResizeConfig,
   CompressionConfig,
   VectorizeConfig,
-  VectorizeMode,
   BgRemovalConfig,
 } from './types'
 import { loadFileToImage, renderProcessedCanvas, exportCompressedBlob, calculateDimensions } from './utils/imageEngine'

@@ -1,14 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import {
-  BoardLayout,
-  FullBleedLayout,
-  Button,
-  Slider,
-  PillGroup,
-  StatsHeader,
-  ControlsBar,
-  RotateCcwIcon,
-} from '@all/ui'
+import { FullBleedLayout, Button, Slider, PillGroup, StatsHeader, ControlsBar } from '@all/ui'
 import type {
   ToolComponentProps,
   Locale,

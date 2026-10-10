@@ -4,7 +4,6 @@ import {
   freqToNote,
   autoCorrelate,
   TUNING_PRESETS,
-  DEFAULT_A4,
   NOISE_GATE_THRESHOLDS,
   getCalibratedStrings,
 } from '../audio/pitchDetection'

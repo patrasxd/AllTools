@@ -29,13 +29,7 @@ import type { ToolComponentProps, NoiseGateLevel } from './types'
 import { tunerTranslations } from './i18n'
 import './styles/tuner.css'
 
-export function GuitarTuner({ setHeader, locale = 'en', isEink = false, theme }: ToolComponentProps) {
-  const isDark = theme
-    ? theme.includes('dark')
-    : typeof document !== 'undefined'
-      ? (document.documentElement.getAttribute('data-theme')?.includes('dark') ?? true)
-      : true
-
+export function GuitarTuner({ setHeader, locale = 'en', isEink = false }: ToolComponentProps) {
   const t = tunerTranslations[locale] || tunerTranslations.en
   const a4SliderId = useId()
 

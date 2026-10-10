@@ -19,8 +19,6 @@ import {
   type TiltResult,
   type ProtractorAngleResult,
   type EdgeLevelResult,
-  type PhoneOrientation,
-  detectPhoneOrientation,
   calculateSlopePercent,
   requiresOrientationPermission,
   requestOrientationPermission,
@@ -36,7 +34,7 @@ import type {
 } from './types'
 import './styles/level-protractor.css'
 
-export function LevelProtractor({ locale = 'en', setHeader, isEink = false, theme }: ToolComponentProps) {
+export function LevelProtractor({ locale = 'en', setHeader, isEink = false }: ToolComponentProps) {
   const t = levelTranslations[locale] || levelTranslations.en
 
   const [activeTab, setActiveTab] = useState<LevelProtractorTab>(() => {
@@ -297,15 +295,6 @@ export function LevelProtractor({ locale = 'en', setHeader, isEink = false, them
       { value: 'edge' as const, label: t.edge.edgeRuler, id: 'vmode-edge' },
     ],
     [t.edge],
-  )
-
-  const toleranceOptions = useMemo(
-    () => [
-      { value: '0.2', label: t.settings.toleranceHigh, id: 'tol-02' },
-      { value: '0.5', label: t.settings.toleranceNormal, id: 'tol-05' },
-      { value: '1.0', label: t.settings.toleranceCoarse, id: 'tol-10' },
-    ],
-    [t.settings],
   )
 
   const calibrateLevel = () => {

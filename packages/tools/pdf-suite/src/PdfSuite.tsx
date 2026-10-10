@@ -8,7 +8,6 @@ import {
   Dialog,
   Select,
   Input,
-  Badge,
   DownloadIcon,
   UploadIcon,
   RestartIcon,
@@ -165,7 +164,7 @@ export async function renderTypedSignaturePng(text: string, font: SignatureFont)
   return trimCanvas(offscreen)
 }
 
-export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme, setIsDirty }: ToolComponentProps) {
+export function PdfSuite({ locale = 'en', setHeader, isEink = false, setIsDirty }: ToolComponentProps) {
   const t = pdfSuiteTranslations[locale] || pdfSuiteTranslations.en
   const fileInputId = useId()
 
@@ -773,9 +772,6 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme, setI
     setDrawSigDataUrl('')
   }
 
-  const numericScale = typeof sigScale === 'number' ? sigScale : parseInt(sigScale, 10) || 100
-  const effectiveScale = Math.max(10, Math.min(500, numericScale))
-
   const halfW = Math.max(1, Math.round(boxWidthPercent / 2))
   const halfH = Math.max(1, Math.round(boxHeightPercent / 2))
 
@@ -791,17 +787,6 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, theme, setI
       setBoxWidthPercent(Math.max(10, Math.min(95, Math.round(32 * (clamped / 100)))))
       setBoxHeightPercent(Math.max(4, Math.min(60, Math.round(12 * (clamped / 100)))))
     }
-  }
-
-  // Preset position selector (clamped safely inside margins to prevent overflow)
-  const handleSelectPreset = (pos: SignaturePosition) => {
-    setSigPosition(pos)
-    const margin = 3
-    if (pos === 'bottom-right') setCustomCoords({ xPercent: 100 - halfW - margin, yPercent: 100 - halfH - margin })
-    else if (pos === 'bottom-left') setCustomCoords({ xPercent: halfW + margin, yPercent: 100 - halfH - margin })
-    else if (pos === 'bottom-center') setCustomCoords({ xPercent: 50, yPercent: 100 - halfH - margin })
-    else if (pos === 'top-right') setCustomCoords({ xPercent: 100 - halfW - margin, yPercent: halfH + margin })
-    else if (pos === 'center') setCustomCoords({ xPercent: 50, yPercent: 50 })
   }
 
   // Manual interactive click / drag handler on document preview (safely clamped so box never overflows paper edges)

@@ -33,7 +33,7 @@ export async function loadFileToImage(file: File): Promise<{ image: HTMLImageEle
         sizeBytes: file.size,
       })
     }
-    img.onerror = (e) => {
+    img.onerror = () => {
       URL.revokeObjectURL(objectUrl)
       reject(new Error('Failed to load image'))
     }

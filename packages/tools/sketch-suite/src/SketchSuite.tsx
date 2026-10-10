@@ -147,8 +147,6 @@ const SWATCH_PALETTE = [
   '#c8bfe7',
 ]
 
-const STROKE_SIZES = [1, 2, 4, 8, 14, 24]
-
 const PRESET_RESOLUTIONS = [
   { label: 'Full HD (1920×1080)', width: 1920, height: 1080 },
   { label: 'HD (1280×720)', width: 1280, height: 720 },
@@ -203,7 +201,6 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
 
   // Tools & Colors
   const [currentTool, setCurrentTool] = useState<SketchTool>('brush')
-  const [strokeWidth, setStrokeWidth] = useState<number>(6)
   const [brushSize, setBrushSize] = useState<number>(6)
   const [pencilSize, setPencilSize] = useState<number>(2)
   const [eraserSize, setEraserSize] = useState<number>(16)
@@ -1801,7 +1798,6 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
     isDrawingRef.current = true
 
     const primaryColor = activeColorSlot === 1 ? color1 : color2
-    const secondaryColor = activeColorSlot === 1 ? color2 : color1
 
     // Selection Tool: start rect, freehand, or handle polygon point
     if (currentTool === 'select') {
