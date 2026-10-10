@@ -441,7 +441,9 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, setIsDirty 
     setActivePinIndex(pinIdx)
     try {
       e.currentTarget.setPointerCapture(e.pointerId)
-    } catch {}
+    } catch {
+      // Pointer capture can fail if the pointer is no longer active
+    }
   }
 
   const handlePinPointerMove = (e: React.PointerEvent) => {
@@ -473,7 +475,9 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, setIsDirty 
     if (activePinIndex !== null) {
       try {
         e.currentTarget.releasePointerCapture(e.pointerId)
-      } catch {}
+      } catch {
+        // Pointer capture can fail if the pointer is no longer active
+      }
       setActivePinIndex(null)
     }
   }

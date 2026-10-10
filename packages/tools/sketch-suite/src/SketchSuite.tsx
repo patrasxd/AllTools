@@ -1749,7 +1749,9 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
       if (captureEl && pointerId !== undefined && 'setPointerCapture' in captureEl) {
         try {
           ;(captureEl as HTMLElement).setPointerCapture(pointerId)
-        } catch {}
+        } catch {
+          // Pointer capture can fail if the pointer is no longer active
+        }
       }
       const handleGlobalPointerMove = (moveEvt: PointerEvent) => {
         if (!isPanningRef.current) return
@@ -2732,7 +2734,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                       <select
                         className="paint-select paint-select--font"
                         value={fontFamily}
-                        onChange={(e) => setFontFamily(e.target.value as any)}
+                        onChange={(e) => setFontFamily(e.target.value as typeof fontFamily)}
                         title={t.textTool.fontFamily}
                       >
                         <option value="sans-serif">Inter</option>

@@ -49,7 +49,9 @@ export function GuitarTuner({ setHeader, locale = 'en', isEink = false }: ToolCo
         const val = parseInt(saved, 10)
         if (Number.isFinite(val) && val >= 420 && val <= 460) return val
       }
-    } catch {}
+    } catch {
+      // Storage unavailable or invalid saved value: fall back to defaults
+    }
     return DEFAULT_A4
   })
 
@@ -57,7 +59,9 @@ export function GuitarTuner({ setHeader, locale = 'en', isEink = false }: ToolCo
     try {
       const saved = localStorage.getItem('alltools:tuner:gate') as NoiseGateLevel
       if (saved && (saved === 'low' || saved === 'medium' || saved === 'high')) return saved
-    } catch {}
+    } catch {
+      // Storage unavailable or invalid saved value: fall back to defaults
+    }
     return 'medium'
   })
 
@@ -70,19 +74,25 @@ export function GuitarTuner({ setHeader, locale = 'en', isEink = false }: ToolCo
   useEffect(() => {
     try {
       localStorage.setItem('alltools:tuner:preset', selectedPresetId)
-    } catch {}
+    } catch {
+      // Storage unavailable or full: the setting is simply not persisted
+    }
   }, [selectedPresetId])
 
   useEffect(() => {
     try {
       localStorage.setItem('alltools:tuner:a4', String(a4Calibration))
-    } catch {}
+    } catch {
+      // Storage unavailable or full: the setting is simply not persisted
+    }
   }, [a4Calibration])
 
   useEffect(() => {
     try {
       localStorage.setItem('alltools:tuner:gate', noiseGate)
-    } catch {}
+    } catch {
+      // Storage unavailable or full: the setting is simply not persisted
+    }
   }, [noiseGate])
 
   // ─── Detected Pitch State ───

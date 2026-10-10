@@ -4,5 +4,7 @@ import { MotionGlobalConfig } from 'framer-motion'
 MotionGlobalConfig.skipAnimations = true
 
 if (typeof HTMLCanvasElement !== 'undefined') {
-  HTMLCanvasElement.prototype.getContext = vi.fn().mockReturnValue(null) as any
+  HTMLCanvasElement.prototype.getContext = vi
+    .fn()
+    .mockReturnValue(null) as unknown as typeof HTMLCanvasElement.prototype.getContext
 }

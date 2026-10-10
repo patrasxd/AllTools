@@ -5,7 +5,9 @@ import type { PdfPageItem, SignaturePosition, SignatureCoordinates } from '../ty
 // Set worker source for offline PDF.js rendering using standard URL resolution
 try {
   pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString()
-} catch {}
+} catch {
+  // The worker URL may not resolve outside a browser (e.g. in tests)
+}
 
 /**
  * Renders small JPEG thumbnails for each page of a PDF document using PDF.js.

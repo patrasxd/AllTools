@@ -167,7 +167,9 @@ export function StopwatchInterval({ locale = 'en', isEink = false, setHeader, se
           },
         ]
       }
-    } catch {}
+    } catch {
+      // Storage unavailable or invalid saved value: fall back to defaults
+    }
     return [
       { id: 'step-1', cycles: 2, sets: 8, workSec: 30, restSec: 15 },
       { id: 'step-2', cycles: 1, sets: 5, workSec: 20, restSec: 10 },
@@ -427,7 +429,9 @@ export function StopwatchInterval({ locale = 'en', isEink = false, setHeader, se
         localStorage.setItem('alltools:interval:customRestSec', String(cleaned[0].restSec))
         localStorage.setItem('alltools:interval:customSetsTotal', String(cleaned[0].sets))
       }
-    } catch {}
+    } catch {
+      // Storage unavailable or full: the setting is simply not persisted
+    }
 
     setIsCustomDialogOpen(false)
     resetInterval()

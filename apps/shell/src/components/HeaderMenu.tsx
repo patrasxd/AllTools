@@ -11,9 +11,9 @@ export function HeaderMenu() {
   return (
     <UiHeaderMenu
       locale={locale}
-      onLocaleChange={(loc) => setLocale(loc as any)}
+      onLocaleChange={(loc) => setLocale(loc as Parameters<typeof setLocale>[0])}
       theme={theme}
-      onThemeChange={(th) => setTheme(th as any)}
+      onThemeChange={(th) => setTheme(th as Parameters<typeof setTheme>[0])}
       isEink={isEink}
       onEinkChange={(enable) => setTheme(enable ? (isDark ? 'e-ink-dark' : 'e-ink-light') : isDark ? 'dark' : 'light')}
       canInstall={canInstall}

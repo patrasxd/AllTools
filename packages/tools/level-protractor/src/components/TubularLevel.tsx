@@ -38,14 +38,18 @@ export const TubularLevel: React.FC<TubularLevelProps> = ({
     try {
       const saved = localStorage.getItem('alltools:level:selectedEdge')
       if (saved === 'bottom' || saved === 'left') return saved
-    } catch {}
+    } catch {
+      // Storage unavailable or invalid saved value: fall back to defaults
+    }
     return 'bottom'
   })
 
   useEffect(() => {
     try {
       localStorage.setItem('alltools:level:selectedEdge', selectedEdge)
-    } catch {}
+    } catch {
+      // Storage unavailable or full: the setting is simply not persisted
+    }
   }, [selectedEdge])
 
   const edgeOptions = useMemo(
