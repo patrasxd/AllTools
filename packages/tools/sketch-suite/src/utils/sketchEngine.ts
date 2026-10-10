@@ -36,12 +36,7 @@ export function hexToRgba(hex: string): RgbaColor {
 /**
  * Check if two colors match within a given tolerance
  */
-export function colorMatch(
-  data: Uint8ClampedArray,
-  pos: number,
-  target: RgbaColor,
-  tolerance = 32
-): boolean {
+export function colorMatch(data: Uint8ClampedArray, pos: number, target: RgbaColor, tolerance = 32): boolean {
   const rDiff = Math.abs(data[pos] - target.r)
   const gDiff = Math.abs(data[pos + 1] - target.g)
   const bDiff = Math.abs(data[pos + 2] - target.b)
@@ -57,7 +52,7 @@ export function floodFill(
   startX: number,
   startY: number,
   fillColorHex: string,
-  tolerance = 32
+  tolerance = 32,
 ): boolean {
   const width = imageData.width
   const height = imageData.height
@@ -144,7 +139,7 @@ export function drawShape(
   strokeColor: string,
   fillColor: string,
   strokeWidth: number,
-  fillMode: ShapeFillMode
+  fillMode: ShapeFillMode,
 ) {
   ctx.save()
   ctx.strokeStyle = strokeColor
@@ -181,14 +176,8 @@ export function drawShape(
       // Arrow head
       ctx.beginPath()
       ctx.moveTo(end.x, end.y)
-      ctx.lineTo(
-        end.x - headLength * Math.cos(angle - Math.PI / 6),
-        end.y - headLength * Math.sin(angle - Math.PI / 6)
-      )
-      ctx.lineTo(
-        end.x - headLength * Math.cos(angle + Math.PI / 6),
-        end.y - headLength * Math.sin(angle + Math.PI / 6)
-      )
+      ctx.lineTo(end.x - headLength * Math.cos(angle - Math.PI / 6), end.y - headLength * Math.sin(angle - Math.PI / 6))
+      ctx.lineTo(end.x - headLength * Math.cos(angle + Math.PI / 6), end.y - headLength * Math.sin(angle + Math.PI / 6))
       ctx.closePath()
       ctx.fillStyle = strokeColor
       ctx.fill()
@@ -251,7 +240,7 @@ export function drawShape(
 export function getCanvasCoordinates(
   event: React.PointerEvent<HTMLCanvasElement> | PointerEvent,
   canvas: HTMLCanvasElement,
-  zoom = 1
+  zoom = 1,
 ): Point {
   const rect = canvas.getBoundingClientRect()
   if (!rect.width || !rect.height) {
@@ -275,7 +264,7 @@ export function getCanvasCoordinates(
 export async function copyCanvasToClipboard(
   canvas: HTMLCanvasElement,
   cropRect?: { x: number; y: number; width: number; height: number },
-  clipPoints?: Point[]
+  clipPoints?: Point[],
 ): Promise<boolean> {
   if (!navigator.clipboard || typeof ClipboardItem === 'undefined') {
     return false
@@ -310,7 +299,7 @@ export async function copyCanvasToClipboard(
           0,
           0,
           cropRect.width,
-          cropRect.height
+          cropRect.height,
         )
       }
       sourceCanvas = cropped
@@ -365,7 +354,7 @@ export function drawPencilSegment(
   from: Point,
   to: Point,
   color: string,
-  size: number
+  size: number,
 ): void {
   const rgba = hexToRgba(color)
   const dx = to.x - from.x
@@ -410,12 +399,7 @@ export function drawPencilSegment(
 /**
  * Renders an initial realistic graphite pencil touch dot with micro-grain dispersion
  */
-export function drawPencilDot(
-  ctx: CanvasRenderingContext2D,
-  point: Point,
-  color: string,
-  size: number
-): void {
+export function drawPencilDot(ctx: CanvasRenderingContext2D, point: Point, color: string, size: number): void {
   const rgba = hexToRgba(color)
   const radius = Math.max(0.5, size / 2)
   const specks = Math.max(4, Math.round(size * 4))

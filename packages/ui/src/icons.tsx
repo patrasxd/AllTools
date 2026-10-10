@@ -1292,7 +1292,3 @@ export const IconZoomIn: React.FC<IconProps> = ({ size = 20, className = '', ...
     <line x1="8" y1="11" x2="14" y2="11" />
   </svg>
 )
-
-
-
-

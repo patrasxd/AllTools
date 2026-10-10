@@ -189,9 +189,7 @@ describe('drawPencilDot & drawPencilSegment', () => {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    expect(() =>
-      drawPencilSegment(ctx, { x: 10, y: 10 }, { x: 50, y: 50 }, '#333333', 4)
-    ).not.toThrow()
+    expect(() => drawPencilSegment(ctx, { x: 10, y: 10 }, { x: 50, y: 50 }, '#333333', 4)).not.toThrow()
   })
 })
 

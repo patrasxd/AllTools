@@ -456,7 +456,10 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false, setIsDir
 
     const { srcX, srcY, srcW, srcH } = calculateDimensions(loadedImage.naturalWidth, loadedImage.naturalHeight, resize)
     const imgX = Math.max(0, Math.min(loadedImage.naturalWidth - 1, Math.floor(srcX + (canvasX / canvas.width) * srcW)))
-    const imgY = Math.max(0, Math.min(loadedImage.naturalHeight - 1, Math.floor(srcY + (canvasY / canvas.height) * srcH)))
+    const imgY = Math.max(
+      0,
+      Math.min(loadedImage.naturalHeight - 1, Math.floor(srcY + (canvasY / canvas.height) * srcH)),
+    )
 
     // Sample pristine RGB pixel from loadedImage to avoid picking already transparent pixels
     const sampleCanvas = document.createElement('canvas')
@@ -466,11 +469,7 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false, setIsDir
     if (sCtx) {
       sCtx.drawImage(loadedImage, imgX, imgY, 1, 1, 0, 0, 1, 1)
       const pixel = sCtx.getImageData(0, 0, 1, 1).data
-      const hex =
-        '#' +
-        [pixel[0], pixel[1], pixel[2]]
-          .map((c) => c.toString(16).padStart(2, '0'))
-          .join('')
+      const hex = '#' + [pixel[0], pixel[1], pixel[2]].map((c) => c.toString(16).padStart(2, '0')).join('')
       setBgRemoval((b) => ({ ...b, color: hex, enabled: true }))
       if (format === 'image/jpeg') {
         setFormat('image/png')
@@ -840,12 +839,7 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false, setIsDir
                                 </defs>
 
                                 {/* Dim outer framing slightly to highlight biometric face area */}
-                                <rect
-                                  width="350"
-                                  height="450"
-                                  fill="rgba(0, 0, 0, 0.15)"
-                                  mask="url(#id-photo-mask)"
-                                />
+                                <rect width="350" height="450" fill="rgba(0, 0, 0, 0.15)" mask="url(#id-photo-mask)" />
 
                                 {/* Central Head & Chin Biometric Oval (standard 70-80% height coverage) */}
                                 <ellipse
@@ -1017,11 +1011,7 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false, setIsDir
                           ) : vectorViewMode === 'vector' ? (
                             <div className="img-vector-single img-checkerboard">
                               {vectorSvgBlobUrl ? (
-                                <img
-                                  src={vectorSvgBlobUrl}
-                                  alt={t.previewVector}
-                                  className="img-vector-preview-img"
-                                />
+                                <img src={vectorSvgBlobUrl} alt={t.previewVector} className="img-vector-preview-img" />
                               ) : null}
                             </div>
                           ) : (
@@ -1183,9 +1173,7 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false, setIsDir
                           </div>
 
                           {/* Feature Options (dimmed when background removal is inactive) */}
-                          <div
-                            className={`img-feature-body ${!bgRemoval.enabled ? 'img-feature-body--disabled' : ''}`}
-                          >
+                          <div className={`img-feature-body ${!bgRemoval.enabled ? 'img-feature-body--disabled' : ''}`}>
                             {/* Color Sampling & Pipette */}
                             <div className="img-panel-group">
                               <label className="img-panel-label">{t.bgColorLabel}</label>
@@ -1590,8 +1578,6 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false, setIsDir
                             </div>
                           )}
 
-
-
                           {/* Smoothness Slider */}
                           <div className="img-panel-group">
                             <div className="img-panel-label-row">
@@ -1626,9 +1612,7 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false, setIsDir
                               <Toggle
                                 id="img-vector-right-angles"
                                 checked={vectorConfig.rightAngleEnhance ?? false}
-                                onChange={(checked) =>
-                                  setVectorConfig((v) => ({ ...v, rightAngleEnhance: checked }))
-                                }
+                                onChange={(checked) => setVectorConfig((v) => ({ ...v, rightAngleEnhance: checked }))}
                                 aria-label={t.rightAngles}
                               />
                             </div>

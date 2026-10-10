@@ -781,7 +781,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
       textInputRef.current.style.height = 'auto'
       textInputRef.current.style.height = `${Math.max(
         Math.round(fontSize * zoom * 1.3),
-        textInputRef.current.scrollHeight
+        textInputRef.current.scrollHeight,
       )}px`
     }
   }, [activeTextOverlay?.text, fontSize, zoom])
@@ -1737,40 +1737,43 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
     setIsExportDialogOpen(false)
   }
 
-  const startPanning = useCallback((clientX: number, clientY: number, captureEl?: Element | null, pointerId?: number) => {
-    const viewport = canvasViewportRef.current
-    if (!viewport) return
-    isPanningRef.current = true
-    setIsPanning(true)
-    panStartRef.current = {
-      clientX,
-      clientY,
-      scrollLeft: viewport.scrollLeft,
-      scrollTop: viewport.scrollTop,
-    }
-    if (captureEl && pointerId !== undefined && 'setPointerCapture' in captureEl) {
-      try {
-        (captureEl as HTMLElement).setPointerCapture(pointerId)
-      } catch {}
-    }
-    const handleGlobalPointerMove = (moveEvt: PointerEvent) => {
-      if (!isPanningRef.current) return
-      const v = canvasViewportRef.current
-      if (!v) return
-      v.scrollLeft = panStartRef.current.scrollLeft - (moveEvt.clientX - panStartRef.current.clientX)
-      v.scrollTop = panStartRef.current.scrollTop - (moveEvt.clientY - panStartRef.current.clientY)
-    }
-    const handleGlobalPointerUp = () => {
-      isPanningRef.current = false
-      setIsPanning(false)
-      window.removeEventListener('pointermove', handleGlobalPointerMove)
-      window.removeEventListener('pointerup', handleGlobalPointerUp)
-      window.removeEventListener('pointercancel', handleGlobalPointerUp)
-    }
-    window.addEventListener('pointermove', handleGlobalPointerMove)
-    window.addEventListener('pointerup', handleGlobalPointerUp)
-    window.addEventListener('pointercancel', handleGlobalPointerUp)
-  }, [])
+  const startPanning = useCallback(
+    (clientX: number, clientY: number, captureEl?: Element | null, pointerId?: number) => {
+      const viewport = canvasViewportRef.current
+      if (!viewport) return
+      isPanningRef.current = true
+      setIsPanning(true)
+      panStartRef.current = {
+        clientX,
+        clientY,
+        scrollLeft: viewport.scrollLeft,
+        scrollTop: viewport.scrollTop,
+      }
+      if (captureEl && pointerId !== undefined && 'setPointerCapture' in captureEl) {
+        try {
+          ;(captureEl as HTMLElement).setPointerCapture(pointerId)
+        } catch {}
+      }
+      const handleGlobalPointerMove = (moveEvt: PointerEvent) => {
+        if (!isPanningRef.current) return
+        const v = canvasViewportRef.current
+        if (!v) return
+        v.scrollLeft = panStartRef.current.scrollLeft - (moveEvt.clientX - panStartRef.current.clientX)
+        v.scrollTop = panStartRef.current.scrollTop - (moveEvt.clientY - panStartRef.current.clientY)
+      }
+      const handleGlobalPointerUp = () => {
+        isPanningRef.current = false
+        setIsPanning(false)
+        window.removeEventListener('pointermove', handleGlobalPointerMove)
+        window.removeEventListener('pointerup', handleGlobalPointerUp)
+        window.removeEventListener('pointercancel', handleGlobalPointerUp)
+      }
+      window.addEventListener('pointermove', handleGlobalPointerMove)
+      window.addEventListener('pointerup', handleGlobalPointerUp)
+      window.addEventListener('pointercancel', handleGlobalPointerUp)
+    },
+    [],
+  )
 
   // Pointer Down (Start Drawing / Tool Action)
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -2024,7 +2027,9 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
           setSelectionPoints(null)
           drawMarquee(newRect)
           showNotice(
-            locale === 'pl' ? `Zaznaczono: ${w}×${h}px (Ctrl+C aby skopiować)` : `Selected: ${w}×${h}px (Ctrl+C to copy)`,
+            locale === 'pl'
+              ? `Zaznaczono: ${w}×${h}px (Ctrl+C aby skopiować)`
+              : `Selected: ${w}×${h}px (Ctrl+C to copy)`,
           )
         } else {
           clearSelection()
@@ -3043,9 +3048,7 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                     <span>
                       {activeTextOverlay.x}, {activeTextOverlay.y}
                     </span>
-                    <span style={{ opacity: 0.6, fontSize: 9, marginLeft: 4 }}>
-                      Ctrl+↵
-                    </span>
+                    <span style={{ opacity: 0.6, fontSize: 9, marginLeft: 4 }}>Ctrl+↵</span>
                   </div>
 
                   <div className="paint-text-box-actions">

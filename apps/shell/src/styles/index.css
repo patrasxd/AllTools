@@ -25,7 +25,6 @@
 
 /* ─── Design Tokens & Themes are provided by @all/ui/tokens.css ─── */
 
-
 [data-theme^='e-ink'] body::after,
 [data-eink='true'] body::after {
   display: none !important;
