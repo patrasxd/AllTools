@@ -19,6 +19,7 @@ import { calcConverterTranslations } from './i18n'
 import { safeEvaluate, evaluateScientific, formatCalcDisplay } from './utils/calcEngine'
 import { UNIT_CATEGORIES, convertValue, convertRadix, formatFormattedValue } from './conversionData'
 import './styles/calc-converter.css'
+import { onKeyActivate } from '@alltools/ui'
 
 function BackspaceIcon() {
   return (
@@ -727,6 +728,9 @@ export function CalcConverter({ locale = 'en', setHeader, isEink = false }: Tool
                       <div
                         className="conv-output-display"
                         onClick={() => copyResult(primaryConvertedValue, 'main-target')}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={onKeyActivate(() => copyResult(primaryConvertedValue, 'main-target'))}
                         title={t.copy}
                       >
                         <span className="conv-output-val">{primaryConvertedValue}</span>
@@ -772,6 +776,11 @@ export function CalcConverter({ locale = 'en', setHeader, isEink = false }: Tool
                           onClick={() => {
                             if (!isCurrent) setToUnitId(unit.id)
                           }}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={onKeyActivate(() => {
+                            if (!isCurrent) setToUnitId(unit.id)
+                          })}
                           title={isCurrent ? t.from : t.clickToSetTo}
                         >
                           <div className="conv-matrix-left">
@@ -877,6 +886,13 @@ export function CalcConverter({ locale = 'en', setHeader, isEink = false }: Tool
                     setIsNewNumber(true)
                     setIsHistoryOpen(false)
                   }}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={onKeyActivate(() => {
+                    setDisplayVal(h.result)
+                    setIsNewNumber(true)
+                    setIsHistoryOpen(false)
+                  })}
                   title={t.clickToUse}
                 >
                   <span className="calc-history-dialog-expr">{h.expression}</span>

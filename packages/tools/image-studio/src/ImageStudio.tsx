@@ -730,7 +730,7 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false, setIsDir
                   </div>
                   <div className="img-drop-title">{t.dropTitle}</div>
                   <div className="img-drop-sub">{t.dropSubtitle}</div>
-                  <div className="img-drop-actions" onClick={(e) => e.stopPropagation()}>
+                  <div className="img-drop-actions" role="presentation" onClick={(e) => e.stopPropagation()}>
                     <Button
                       id="img-browse-btn"
                       variant="primary"

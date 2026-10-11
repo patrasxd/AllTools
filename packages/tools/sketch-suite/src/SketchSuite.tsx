@@ -22,6 +22,7 @@ import {
   IconMaximize2,
   IconZoomIn,
   IconPhoto,
+  onKeyActivate,
 } from '@alltools/ui'
 import {
   ToolComponentProps,
@@ -2885,6 +2886,9 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                   <div
                     className={`paint-color-box-slot ${activeColorSlot === 1 ? 'active' : ''}`}
                     onClick={() => setActiveColorSlot(1)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={onKeyActivate(() => setActiveColorSlot(1))}
                     title={t.actions.color1}
                   >
                     <div className="paint-color-box-preview" style={{ backgroundColor: color1 }} />
@@ -2893,6 +2897,9 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                   <div
                     className={`paint-color-box-slot ${activeColorSlot === 2 ? 'active' : ''}`}
                     onClick={() => setActiveColorSlot(2)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={onKeyActivate(() => setActiveColorSlot(2))}
                     title={t.actions.color2}
                   >
                     <div className="paint-color-box-preview" style={{ backgroundColor: color2 }} />
@@ -2911,6 +2918,12 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                         if (activeColorSlot === 1) setColor1(hex)
                         else setColor2(hex)
                       }}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={onKeyActivate(() => {
+                        if (activeColorSlot === 1) setColor1(hex)
+                        else setColor2(hex)
+                      })}
                       onContextMenu={(e) => {
                         e.preventDefault()
                         setColor2(hex)
@@ -3957,6 +3970,9 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
                           outlineOffset: 1,
                         }}
                         onClick={() => handleHexInputChange(hex)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={onKeyActivate(() => handleHexInputChange(hex))}
                       />
                     ))}
                   </div>

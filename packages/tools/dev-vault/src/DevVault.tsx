@@ -17,6 +17,7 @@ import {
   generateUuid,
 } from './utils/cryptoEngine'
 import './styles/dev-vault.css'
+import { onKeyActivate } from '@alltools/ui'
 
 export interface ToolComponentProps {
   locale?: 'en' | 'pl'
@@ -229,6 +230,9 @@ export function DevVault({ locale = 'en', setHeader, isEink = false }: ToolCompo
                   <div
                     className="vault-screen"
                     onClick={() => copyToClipboard(generatedPassword)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={onKeyActivate(() => copyToClipboard(generatedPassword))}
                     title={t.clickToCopy}
                   >
                     <span className="vault-screen-val">{generatedPassword}</span>
@@ -477,7 +481,14 @@ export function DevVault({ locale = 'en', setHeader, isEink = false }: ToolCompo
                     placeholder={t.enterHashPlaceholder}
                   />
 
-                  <div className="vault-screen" onClick={() => copyToClipboard(hashOutput)} title={t.clickToCopy}>
+                  <div
+                    className="vault-screen"
+                    onClick={() => copyToClipboard(hashOutput)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={onKeyActivate(() => copyToClipboard(hashOutput))}
+                    title={t.clickToCopy}
+                  >
                     <span className="vault-screen-val" style={{ fontSize: '0.8125rem' }}>
                       {hashOutput}
                     </span>

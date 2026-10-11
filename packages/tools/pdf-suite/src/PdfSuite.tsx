@@ -14,7 +14,7 @@ import {
   CheckIcon,
   TrashIcon,
 } from '@all/ui'
-import { IconMaximize2 } from '@alltools/ui'
+import { IconMaximize2, onKeyActivate } from '@alltools/ui'
 import type {
   GuidedStep,
   PdfFileItem,
@@ -1049,13 +1049,16 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, setIsDirty 
                     }
                   }}
                   onClick={() => fileInputRef.current?.click()}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={onKeyActivate(() => fileInputRef.current?.click())}
                 >
                   <div className="pdf-drop-icon">
                     <UploadIcon width="40" height="40" />
                   </div>
                   <div className="pdf-drop-title">{t.dropTitle}</div>
                   <div className="pdf-drop-sub">{t.dropSubtitle}</div>
-                  <div className="pdf-drop-actions" onClick={(e) => e.stopPropagation()}>
+                  <div className="pdf-drop-actions" role="presentation" onClick={(e) => e.stopPropagation()}>
                     <Button
                       id="pdf-browse-btn"
                       variant="primary"
@@ -1193,6 +1196,9 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, setIsDirty 
                           }}
                           className={`pdf-page-card ${page.selected ? 'pdf-page-card--selected' : 'pdf-page-card--deselected'}`}
                           onClick={() => togglePageSelection(page.id)}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={onKeyActivate(() => togglePageSelection(page.id))}
                           title={t.dragHint}
                         >
                           <div className="pdf-page-preview-box">
@@ -1296,6 +1302,9 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, setIsDirty 
                           key={imgItem.id}
                           className={`pdf-img-thumb-card ${activeImageIndex === idx ? 'pdf-img-thumb-card--active' : ''}`}
                           onClick={() => setActiveImageIndex(idx)}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={onKeyActivate(() => setActiveImageIndex(idx))}
                           title={`${t.editImagePage} ${idx + 1}`}
                         >
                           <img src={imgItem.originalUrl} alt={imgItem.name} className="pdf-img-thumb-img" />
@@ -1668,24 +1677,36 @@ export function PdfSuite({ locale = 'en', setHeader, isEink = false, setIsDirty 
                     <div
                       className={`pdf-font-card font-style-dancingscript ${selectedFont === 'dancing-script' ? 'pdf-font-card--active' : ''}`}
                       onClick={() => setSelectedFont('dancing-script')}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={onKeyActivate(() => setSelectedFont('dancing-script'))}
                     >
                       {typedName || 'Signature'}
                     </div>
                     <div
                       className={`pdf-font-card font-style-caveat ${selectedFont === 'caveat' ? 'pdf-font-card--active' : ''}`}
                       onClick={() => setSelectedFont('caveat')}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={onKeyActivate(() => setSelectedFont('caveat'))}
                     >
                       {typedName || 'Signature'}
                     </div>
                     <div
                       className={`pdf-font-card font-style-greatvibes ${selectedFont === 'calligraphy' ? 'pdf-font-card--active' : ''}`}
                       onClick={() => setSelectedFont('calligraphy')}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={onKeyActivate(() => setSelectedFont('calligraphy'))}
                     >
                       {typedName || 'Signature'}
                     </div>
                     <div
                       className={`pdf-font-card font-style-sacramento ${selectedFont === 'cursive' ? 'pdf-font-card--active' : ''}`}
                       onClick={() => setSelectedFont('cursive')}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={onKeyActivate(() => setSelectedFont('cursive'))}
                     >
                       {typedName || 'Signature'}
                     </div>

@@ -20,6 +20,7 @@ import type { ToolComponentProps, Locale, QrMode, PayloadType, CameraLabels, Zoo
 import { generatePayload, formatCameraName, clampZoom, isWebUrl } from './utils/qrPayload'
 import { qrSuiteTranslations } from './i18n'
 import './styles/qr-suite.css'
+import { onKeyActivate } from '@alltools/ui'
 
 export function QrSuite({ locale = 'en', setHeader, isEink = false }: ToolComponentProps) {
   const t = qrSuiteTranslations[locale as Locale] || qrSuiteTranslations.en
@@ -534,6 +535,12 @@ export function QrSuite({ locale = 'en', setHeader, isEink = false }: ToolCompon
                         fileInputRef.current.click()
                       }
                     }}
+                    tabIndex={0}
+                    onKeyDown={onKeyActivate(() => {
+                      if (!isScanning && fileInputRef.current) {
+                        fileInputRef.current.click()
+                      }
+                    })}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={handleDrop}
                     role="region"
@@ -543,7 +550,9 @@ export function QrSuite({ locale = 'en', setHeader, isEink = false }: ToolCompon
                       ref={videoRef}
                       className="qr-viewfinder-video"
                       style={{ display: isScanning ? 'block' : 'none' }}
-                    />
+                    >
+                      <track kind="captions" />
+                    </video>
 
                     {/* Viewfinder Corner Reticles */}
                     <div className="qr-reticle" aria-hidden="true">
@@ -576,7 +585,7 @@ export function QrSuite({ locale = 'en', setHeader, isEink = false }: ToolCompon
                         )}
 
                         {zoomCapabilities && zoomCapabilities.max >= 1.5 && (
-                          <div className="qr-zoom-toolbar" onClick={(e) => e.stopPropagation()}>
+                          <div className="qr-zoom-toolbar" role="presentation" onClick={(e) => e.stopPropagation()}>
                             {[1, 2, ...(zoomCapabilities.max >= 3 ? [3] : [])].map((z) => {
                               const isActive = Math.abs(currentZoom - z) < 0.2
                               return (
