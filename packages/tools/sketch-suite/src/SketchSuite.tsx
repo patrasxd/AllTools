@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect, useCallback, useContext } from 'react'
+import React, { useState, useRef, useEffect, useCallback, useContext, useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import { FullBleedLayout, Dialog, Button, Input, Slider, ThemeContext } from '@all/ui'
+import { FullBleedLayout, Dialog, Button, IconButton, Input, Select, Slider, ThemeContext } from '@all/ui'
 import {
   IconPencil,
   IconBrush,
@@ -169,12 +169,77 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
   locale = 'en',
   isEink: propEink,
   theme: propTheme,
+  setHeader,
   setIsDirty,
 }) => {
   const themeCtx = useContext(ThemeContext)
   const activeTheme = propTheme || themeCtx?.theme || 'dark'
   const isEink = propEink ?? themeCtx?.isEink ?? (activeTheme === 'e-ink-light' || activeTheme === 'e-ink-dark')
   const t = translations[locale] || translations.en
+  const [isMobileUiVisible, setIsMobileUiVisible] = useState(true)
+  const [isMobileViewport, setIsMobileViewport] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(max-width: 900px)').matches,
+  )
+
+  // Give the mobile toolbars a clearly labeled collapse control in the shell header.
+  useEffect(() => {
+    if (!setHeader) return
+    setHeader(
+      <button
+        type="button"
+        className="paint-mobile-controls-toggle"
+        style={{ width: 36, height: 36 }}
+        onClick={() => setIsMobileUiVisible((visible) => !visible)}
+        aria-label={
+          isMobileUiVisible
+            ? t.mobile?.hideControls || (locale === 'pl' ? 'Ukryj paski narzędzi' : 'Hide toolbars')
+            : t.mobile?.showControls || (locale === 'pl' ? 'Pokaż paski narzędzi' : 'Show toolbars')
+        }
+        title={
+          isMobileUiVisible
+            ? t.mobile?.hideControls || (locale === 'pl' ? 'Ukryj paski narzędzi' : 'Hide toolbars')
+            : t.mobile?.showControls || (locale === 'pl' ? 'Pokaż paski narzędzi' : 'Show toolbars')
+        }
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M2.5 12s3.4-7 9.5-7 9.5 7 9.5 7-3.4 7-9.5 7-9.5-7-9.5-7Z" />
+          {isMobileUiVisible ? (
+            <circle cx="12" cy="12" r="3" />
+          ) : (
+            <>
+              <path d="m4 4 16 16" />
+              <path d="M10.6 5.2A8.9 8.9 0 0 1 12 5c6.1 0 9.5 7 9.5 7a14 14 0 0 1-3.1 3.9" />
+              <path d="M6.2 6.2C3.8 8 2.5 12 2.5 12s3.4 7 9.5 7a9 9 0 0 0 2.1-.3" />
+            </>
+          )}
+        </svg>
+      </button>,
+    )
+    return () => {
+      setHeader(null)
+    }
+  }, [setHeader, isMobileUiVisible, locale, t])
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return
+    const mediaQuery = window.matchMedia('(max-width: 900px)')
+    const updateViewport = () => setIsMobileViewport(mediaQuery.matches)
+    mediaQuery.addEventListener('change', updateViewport)
+    return () => mediaQuery.removeEventListener('change', updateViewport)
+  }, [])
 
   // Canvas refs
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
@@ -321,7 +386,15 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
     const popoverWidth = 270
     const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 1024
     const left = Math.max(12, Math.min(screenWidth - popoverWidth - 12, rect.left + rect.width / 2 - popoverWidth / 2))
-    setSizePopoverPos({ top: rect.bottom + 8, left })
+    const mobileBottomBar = document.querySelector('.paint-mobile-bottom-bar')
+    let top = rect.bottom + 8
+    if (isMobileViewport) {
+      const maxTop = mobileBottomBar?.getBoundingClientRect().top
+      top = Math.min(top, window.innerHeight - 380)
+      if (maxTop && maxTop > 12) top = Math.min(top, maxTop - 12)
+      top = Math.max(12, top)
+    }
+    setSizePopoverPos({ top, left })
     setIsCustomSizeOpen((open) => !open)
     setIsCustomColorOpen(false)
     setIsFileDialogOpen(false)
@@ -511,6 +584,357 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
       setStatusMessage(null)
     }, 3000)
   }, [])
+
+  // ─── Mobile Smartphone Helpers ───
+  const handleMobileFitScreen = useCallback(() => {
+    const viewport = canvasViewportRef.current
+    const targetW = (viewport?.clientWidth ?? (typeof window !== 'undefined' ? window.innerWidth : 400)) - 16
+    const targetH = (viewport?.clientHeight ?? (typeof window !== 'undefined' ? window.innerHeight : 600)) - 16
+    setZoom(calculateFitZoom(canvasDim.width, canvasDim.height, targetW, targetH))
+    showNotice(t.mobile?.fitScreen || (locale === 'pl' ? 'Dopasowano do ekranu' : 'Fitted to screen'))
+  }, [canvasDim.height, canvasDim.width, locale, showNotice, t.mobile?.fitScreen])
+
+  const handleMobileQuickSave = useCallback(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const link = document.createElement('a')
+    link.download = `sketch-${Date.now()}.png`
+    link.href = canvas.toDataURL('image/png')
+    link.click()
+    showNotice(t.mobile?.quickSavePng || (locale === 'pl' ? 'Pobrano PNG' : 'Downloaded PNG'))
+  }, [locale, showNotice, t.mobile?.quickSavePng])
+
+  const isShapeTool = ['line', 'arrow', 'rectangle', 'rounded-rect', 'ellipse', 'triangle'].includes(currentTool)
+  const isSizeTool = currentTool === 'pencil' || currentTool === 'brush' || currentTool === 'eraser' || isShapeTool
+  const mobileSizePresets =
+    currentTool === 'pencil'
+      ? [1, 2, 4, 8]
+      : currentTool === 'eraser'
+        ? [4, 8, 16, 24]
+        : isShapeTool
+          ? [1, 2, 4, 8]
+          : [2, 6, 12, 24]
+
+  const activeMobileSize =
+    currentTool === 'pencil'
+      ? pencilSize
+      : currentTool === 'eraser'
+        ? eraserSize
+        : isShapeTool
+          ? shapeStrokeWidth
+          : brushSize
+
+  const handleSetMobileSize = useCallback(
+    (size: number) => {
+      if (currentTool === 'pencil') setPencilSize(size)
+      else if (currentTool === 'eraser') setEraserSize(size)
+      else if (isShapeTool) setShapeStrokeWidth(size)
+      else setBrushSize(size)
+    },
+    [currentTool, isShapeTool],
+  )
+
+  const SHAPE_TOOLS: { tool: SketchTool; label: string; icon: React.ReactNode }[] = useMemo(
+    () => [
+      {
+        tool: 'line',
+        label: t.tools.line,
+        icon: (
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+          >
+            <line x1="4" y1="20" x2="20" y2="4" />
+          </svg>
+        ),
+      },
+      {
+        tool: 'arrow',
+        label: t.tools.arrow,
+        icon: (
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <line x1="4" y1="12" x2="20" y2="12" />
+            <polyline points="14 6 20 12 14 18" />
+          </svg>
+        ),
+      },
+      {
+        tool: 'rectangle',
+        label: t.tools.rectangle,
+        icon: (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+            <rect x="3" y="5" width="18" height="14" rx="0" />
+          </svg>
+        ),
+      },
+      {
+        tool: 'rounded-rect',
+        label: t.tools.roundedRect,
+        icon: (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+            <rect x="3" y="5" width="18" height="14" rx="4" />
+          </svg>
+        ),
+      },
+      {
+        tool: 'ellipse',
+        label: t.tools.ellipse,
+        icon: (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+            <ellipse cx="12" cy="12" rx="9" ry="6" />
+          </svg>
+        ),
+      },
+      {
+        tool: 'triangle',
+        label: t.tools.triangle,
+        icon: (
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinejoin="round"
+          >
+            <polygon points="12 4 21 20 3 20" />
+          </svg>
+        ),
+      },
+    ],
+    [t.tools],
+  )
+
+  const MAIN_MOBILE_TOOLS = useMemo(
+    () => [
+      {
+        id: 'pencil',
+        active: currentTool === 'pencil',
+        label: t.tools.pencil,
+        onClick: () => setCurrentTool('pencil'),
+        icon: <IconPencil size={20} />,
+      },
+      {
+        id: 'brush',
+        active: currentTool === 'brush',
+        label: t.tools.brush,
+        onClick: () => setCurrentTool('brush'),
+        icon: <IconBrush size={20} />,
+      },
+      {
+        id: 'eraser',
+        active: currentTool === 'eraser',
+        label: t.tools.eraser,
+        onClick: () => setCurrentTool('eraser'),
+        icon: <IconEraser size={20} />,
+      },
+      {
+        id: 'bucket',
+        active: currentTool === 'bucket',
+        label: t.tools.bucket,
+        onClick: () => setCurrentTool('bucket'),
+        icon: <IconBucket size={20} />,
+      },
+      {
+        id: 'shapes',
+        active: isShapeTool,
+        label: t.sections.shapes,
+        onClick: () => {
+          if (!isShapeTool) setCurrentTool('rectangle')
+        },
+        icon: (
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="9" cy="9" r="6" />
+            <path d="m14 14 6 6" />
+            <rect width="8" height="8" x="13" y="13" rx="1.5" />
+          </svg>
+        ),
+      },
+      {
+        id: 'eyedropper',
+        active: currentTool === 'eyedropper',
+        label: t.tools.eyedropper,
+        onClick: () => setCurrentTool('eyedropper'),
+        icon: <IconPipette size={20} />,
+      },
+      {
+        id: 'text',
+        active: currentTool === 'text',
+        label: t.tools.text,
+        onClick: () => setCurrentTool('text'),
+        icon: <IconType size={20} />,
+      },
+      {
+        id: 'select',
+        active: currentTool === 'select',
+        label: t.tools.select,
+        onClick: () => setCurrentTool('select'),
+        icon: <IconSelect size={20} />,
+      },
+      {
+        id: 'hand',
+        active: currentTool === 'hand',
+        label: t.tools.hand,
+        onClick: () => setCurrentTool('hand'),
+        icon: <IconHand size={20} />,
+      },
+    ],
+    [currentTool, isShapeTool, t.sections.shapes, t.tools],
+  )
+
+  const mobileColorControls = (
+    <>
+      <div className="paint-mobile-color-slots" role="group" aria-label={t.sections.colors}>
+        <Button
+          type="button"
+          variant={activeColorSlot === 1 ? 'primary' : 'secondary'}
+          size="sm"
+          className="paint-mobile-color-slot"
+          onClick={() => setActiveColorSlot(1)}
+          aria-label={t.actions.color1}
+          aria-pressed={activeColorSlot === 1}
+        >
+          1
+          <span className="paint-mobile-color-slot-swatch" style={{ backgroundColor: color1 }} aria-hidden="true" />
+        </Button>
+        <Button
+          type="button"
+          variant={activeColorSlot === 2 ? 'primary' : 'secondary'}
+          size="sm"
+          className="paint-mobile-color-slot"
+          onClick={() => setActiveColorSlot(2)}
+          aria-label={t.actions.color2}
+          aria-pressed={activeColorSlot === 2}
+        >
+          2
+          <span className="paint-mobile-color-slot-swatch" style={{ backgroundColor: color2 }} aria-hidden="true" />
+        </Button>
+      </div>
+      <div className="paint-mobile-strip-divider" />
+      <div className="paint-mobile-palette-strip">
+        {SWATCH_PALETTE.slice(0, 10).map((hex) => {
+          const isSelected = (activeColorSlot === 1 ? color1 : color2).toLowerCase() === hex.toLowerCase()
+          return (
+            <button
+              key={hex}
+              type="button"
+              className={`paint-mobile-swatch ${isSelected ? 'is-selected' : ''}`}
+              style={{ backgroundColor: hex }}
+              onClick={() => {
+                if (activeColorSlot === 1) setColor1(hex)
+                else setColor2(hex)
+              }}
+              title={hex}
+              aria-label={hex}
+              aria-pressed={isSelected}
+            />
+          )
+        })}
+        <label
+          className="paint-mobile-swatch paint-mobile-swatch--picker"
+          title={t.mobile?.customColor || 'Custom color'}
+        >
+          <input
+            type="color"
+            className="paint-hidden-color-input"
+            value={activeColorSlot === 1 ? color1 : color2}
+            aria-label={t.mobile?.customColor || 'Custom color'}
+            onChange={(e) => {
+              if (activeColorSlot === 1) setColor1(e.target.value)
+              else setColor2(e.target.value)
+            }}
+          />
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 2a10 10 0 0 1 10 10" stroke="var(--all-accent, #3b82f6)" />
+          </svg>
+        </label>
+      </div>
+    </>
+  )
+
+  const mobileSizeControls = (
+    <div className="paint-mobile-size-pills">
+      {mobileSizePresets.map((sz) => (
+        <Button
+          key={sz}
+          type="button"
+          variant={activeMobileSize === sz ? 'primary' : 'secondary'}
+          size="md"
+          shape="pill"
+          className="paint-mobile-size-pill"
+          onClick={() => handleSetMobileSize(sz)}
+          title={`${sz}px`}
+          aria-label={`${sz}px`}
+          aria-pressed={activeMobileSize === sz}
+        >
+          <span
+            className="paint-mobile-size-dot"
+            style={{
+              width: Math.min(18, Math.max(4, sz * 1.5)),
+              height: Math.min(18, Math.max(4, sz * 1.5)),
+            }}
+          />
+          <span>{sz}</span>
+        </Button>
+      ))}
+      <Button
+        type="button"
+        variant={mobileSizePresets.includes(activeMobileSize) ? 'secondary' : 'primary'}
+        size="md"
+        className="paint-mobile-size-custom"
+        onClick={handleOpenSizePopover}
+        title={t.dynamicProps.customSize}
+        aria-label={`${t.dynamicProps.customSize}: ${activeMobileSize}px`}
+        aria-pressed={!mobileSizePresets.includes(activeMobileSize)}
+      >
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          aria-hidden="true"
+        >
+          <line x1="4" y1="21" x2="4" y2="14" />
+          <line x1="4" y1="10" x2="4" y2="3" />
+          <line x1="12" y1="21" x2="12" y2="12" />
+          <line x1="12" y1="8" x2="12" y2="3" />
+          <line x1="20" y1="21" x2="20" y2="16" />
+          <line x1="20" y1="12" x2="20" y2="3" />
+          <line x1="1" y1="14" x2="7" y2="14" />
+          <line x1="9" y1="8" x2="15" y2="8" />
+          <line x1="17" y1="16" x2="23" y2="16" />
+        </svg>
+      </Button>
+    </div>
+  )
 
   // Draw or clear the selection outline.
   // Two layers make it readable on any background:
@@ -2962,6 +3386,133 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
           </div>
         </header>
 
+        {/* ─── Mobile Top Bar (Clean, Unified Smartphone Controls) ─── */}
+        {isMobileViewport && isMobileUiVisible && (
+          <div
+            className="paint-mobile-top-bar is-visible"
+            role="toolbar"
+            aria-label={t.mobile?.topBar || 'Quick Actions'}
+          >
+            {/* Row 1: Primary File, Export & Clipboard Commands */}
+            <div className="paint-mobile-top-row">
+              <div className="paint-mobile-group">
+                <button
+                  type="button"
+                  className="paint-mobile-btn"
+                  onClick={handleOpenFilePopover}
+                  title={t.fileMenu.button}
+                  aria-label={t.fileMenu.button}
+                >
+                  <IconFile size={15} />
+                  <span>{t.mobile?.fileBtn || t.fileMenu.button}</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="paint-mobile-btn paint-mobile-btn--accent"
+                  onClick={() => setIsExportDialogOpen(true)}
+                  title={t.fileMenu.exportImage}
+                  aria-label={t.fileMenu.exportImage}
+                >
+                  <IconDownload size={15} />
+                  <span>{t.mobile?.exportBtn || (locale === 'pl' ? 'Eksportuj' : 'Export')}</span>
+                </button>
+              </div>
+
+              <div className="paint-mobile-group">
+                <button
+                  type="button"
+                  className="paint-mobile-btn"
+                  onClick={handleCopy}
+                  title={t.fileMenu.copyImage}
+                  aria-label={t.fileMenu.copyImage}
+                >
+                  <IconCopy size={15} />
+                  <span>{t.mobile?.copyBtn || (locale === 'pl' ? 'Kopiuj' : 'Copy')}</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="paint-mobile-btn"
+                  onClick={handleToolbarPaste}
+                  title={t.actions.paste}
+                  aria-label={t.actions.paste}
+                >
+                  <IconCopy size={15} style={{ transform: 'rotate(180deg)' }} />
+                  <span>{t.mobile?.pasteBtn || (locale === 'pl' ? 'Wklej' : 'Paste')}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Row 2: History (Undo/Redo/Clear) + Zoom & Dimensions */}
+            <div className="paint-mobile-sub-row">
+              <div className="paint-mobile-group">
+                <button
+                  type="button"
+                  className="paint-mobile-icon-btn"
+                  disabled={!canUndo}
+                  onClick={undo}
+                  title={t.actions.undo}
+                  aria-label={t.actions.undo}
+                >
+                  <IconUndo size={15} />
+                </button>
+                <button
+                  type="button"
+                  className="paint-mobile-icon-btn"
+                  disabled={!canRedo}
+                  onClick={redo}
+                  title={t.actions.redo}
+                  aria-label={t.actions.redo}
+                >
+                  <IconRedo size={15} />
+                </button>
+              </div>
+
+              <div className="paint-mobile-group">
+                <span className="paint-mobile-dim-badge" aria-label={`${canvasDim.width}×${canvasDim.height}`}>
+                  {canvasDim.width}×{canvasDim.height}
+                </span>
+                <button
+                  type="button"
+                  className="paint-mobile-icon-btn"
+                  onClick={() => setZoom((z) => Math.max(0.1, Number((z > 0.5 ? z - 0.25 : z / 2).toFixed(2))))}
+                  title={t.actions.zoomOut}
+                  aria-label={t.actions.zoomOut}
+                >
+                  -
+                </button>
+                <button
+                  type="button"
+                  className="paint-mobile-zoom-badge"
+                  onClick={() => setZoom(1)}
+                  title={t.actions.zoomReset}
+                >
+                  {Math.round(zoom * 100)}%
+                </button>
+                <button
+                  type="button"
+                  className="paint-mobile-icon-btn"
+                  onClick={() => setZoom((z) => Math.min(3, Number((z + 0.25).toFixed(2))))}
+                  title={t.actions.zoomIn}
+                  aria-label={t.actions.zoomIn}
+                >
+                  +
+                </button>
+                <button
+                  type="button"
+                  className="paint-mobile-icon-btn"
+                  onClick={handleMobileFitScreen}
+                  title={t.mobile?.fitScreen || 'Fit'}
+                  aria-label={t.mobile?.fitScreen || 'Fit'}
+                >
+                  <IconMaximize2 size={13} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ─── Canvas Viewport (Center) ─── */}
         <main
           ref={canvasViewportRef}
@@ -3451,6 +4002,322 @@ export const SketchSuite: React.FC<ToolComponentProps> = ({
             </button>
           </div>
         </footer>
+
+        {/* ─── Mobile Bottom Bar (Context Controls & Touch Tool Dock) ─── */}
+        {isMobileViewport && isMobileUiVisible && (
+          <div
+            className="paint-mobile-bottom-bar is-visible"
+            role="toolbar"
+            aria-label={t.mobile?.toolbar || 'Drawing Toolbar'}
+          >
+            {/* Row 1: Context sub-strip (changes according to tool) */}
+            {currentTool !== 'hand' && currentTool !== 'eyedropper' && (
+              <div
+                className={`paint-mobile-context-strip ${isShapeTool ? 'paint-mobile-context-strip--shapes' : ''} ${currentTool === 'select' ? 'paint-mobile-context-strip--select' : ''} ${isSizeTool ? 'paint-mobile-context-strip--sizes' : ''} ${currentTool === 'text' ? 'paint-mobile-context-strip--text' : ''}`}
+              >
+                {isShapeTool ? (
+                  <>
+                    {/* Shape Switchers */}
+                    <div className="paint-mobile-pill-group">
+                      {SHAPE_TOOLS.map((s) => (
+                        <IconButton
+                          key={s.tool}
+                          type="button"
+                          variant={currentTool === s.tool ? 'primary' : 'secondary'}
+                          size="md"
+                          rounded
+                          className={`paint-mobile-shape-btn ${currentTool === s.tool ? 'is-active' : ''}`}
+                          onClick={() => setCurrentTool(s.tool)}
+                          title={s.label}
+                          aria-label={s.label}
+                          icon={s.icon}
+                        />
+                      ))}
+                    </div>
+
+                    <div className="paint-mobile-strip-divider" />
+
+                    {/* Fill Mode Switcher */}
+                    <div className="paint-mobile-pill-group">
+                      <Button
+                        type="button"
+                        variant={shapeFillMode === 'outline' ? 'primary' : 'secondary'}
+                        size="md"
+                        shape="pill"
+                        className="paint-mobile-pill-text"
+                        onClick={() => setShapeFillMode('outline')}
+                        title={t.actions.strokeOnly}
+                        aria-pressed={shapeFillMode === 'outline'}
+                      >
+                        {t.actions.strokeOnly}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={shapeFillMode === 'fill' ? 'primary' : 'secondary'}
+                        size="md"
+                        shape="pill"
+                        className="paint-mobile-pill-text"
+                        onClick={() => setShapeFillMode('fill')}
+                        title={t.actions.fillOnly}
+                        aria-pressed={shapeFillMode === 'fill'}
+                      >
+                        {t.actions.fillOnly}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={shapeFillMode === 'both' ? 'primary' : 'secondary'}
+                        size="md"
+                        shape="pill"
+                        className="paint-mobile-pill-text"
+                        onClick={() => setShapeFillMode('both')}
+                        title={t.actions.both}
+                        aria-pressed={shapeFillMode === 'both'}
+                      >
+                        {t.actions.both}
+                      </Button>
+                    </div>
+                    <div className="paint-mobile-strip-divider" />
+                    {mobileSizeControls}
+                    <div className="paint-mobile-strip-divider" />
+                    {mobileColorControls}
+                  </>
+                ) : currentTool === 'text' ? (
+                  <>
+                    <Select
+                      className="paint-mobile-font-family"
+                      value={fontFamily}
+                      onChange={(e) => setFontFamily(e.target.value as typeof fontFamily)}
+                      aria-label={t.textTool.fontFamily}
+                      options={[
+                        { value: 'sans-serif', label: 'Inter' },
+                        { value: 'monospace', label: 'JetBrains' },
+                        { value: 'serif', label: 'Serif' },
+                        { value: 'cursive', label: 'Cursive' },
+                      ]}
+                    />
+                    <div className="paint-mobile-pill-group">
+                      {[12, 24, 40, 64].map((sz) => (
+                        <Button
+                          key={sz}
+                          type="button"
+                          variant={fontSize === sz ? 'primary' : 'secondary'}
+                          size="md"
+                          shape="pill"
+                          className="paint-mobile-pill-text"
+                          onClick={() => setFontSize(sz)}
+                          aria-pressed={fontSize === sz}
+                        >
+                          {sz}px
+                        </Button>
+                      ))}
+                    </div>
+                    <div className="paint-mobile-strip-divider" />
+                    <Input
+                      className="paint-mobile-font-size"
+                      type="number"
+                      min="1"
+                      max="256"
+                      value={fontSize}
+                      onChange={(e) => {
+                        const value = Number(e.target.value)
+                        if (Number.isInteger(value) && value >= 1 && value <= 256) setFontSize(value)
+                      }}
+                      aria-label={t.textTool.fontSize}
+                    />
+                    <div className="paint-mobile-strip-divider" />
+                    <div className="paint-mobile-pill-group">
+                      <Button
+                        type="button"
+                        variant={isBold ? 'primary' : 'secondary'}
+                        size="md"
+                        shape="pill"
+                        className="paint-mobile-pill-text"
+                        onClick={() => setIsBold((b) => !b)}
+                        style={{ fontWeight: 'bold' }}
+                        title={t.textTool.bold}
+                        aria-label={t.textTool.bold}
+                        aria-pressed={isBold}
+                      >
+                        B
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={isItalic ? 'primary' : 'secondary'}
+                        size="md"
+                        shape="pill"
+                        className="paint-mobile-pill-text"
+                        onClick={() => setIsItalic((i) => !i)}
+                        style={{ fontStyle: 'italic' }}
+                        title={t.textTool.italic}
+                        aria-label={t.textTool.italic}
+                        aria-pressed={isItalic}
+                      >
+                        I
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={isUnderline ? 'primary' : 'secondary'}
+                        size="md"
+                        shape="pill"
+                        className="paint-mobile-pill-text"
+                        onClick={() => setIsUnderline((underline) => !underline)}
+                        title={t.textTool.underline}
+                        aria-label={t.textTool.underline}
+                        aria-pressed={isUnderline}
+                        style={{ textDecoration: 'underline' }}
+                      >
+                        U
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={isSolidBg ? 'primary' : 'secondary'}
+                        size="md"
+                        shape="pill"
+                        className="paint-mobile-pill-text"
+                        onClick={() => setIsSolidBg((solidBg) => !solidBg)}
+                        title={t.textTool.background}
+                        aria-label={t.textTool.background}
+                        aria-pressed={isSolidBg}
+                      >
+                        BG
+                      </Button>
+                    </div>
+                    <div className="paint-mobile-strip-divider" />
+                    {mobileColorControls}
+                  </>
+                ) : currentTool === 'select' ? (
+                  <>
+                    <div className="paint-mobile-pill-group paint-mobile-select-modes">
+                      <Button
+                        type="button"
+                        variant={selectionMode === 'rect' ? 'primary' : 'secondary'}
+                        size="md"
+                        shape="pill"
+                        className="paint-mobile-pill-text"
+                        onClick={() => handleSwitchSelectionMode('rect')}
+                        title={t.dynamicProps.modeRect}
+                        aria-label={t.dynamicProps.modeRect}
+                        aria-pressed={selectionMode === 'rect'}
+                      >
+                        {t.tools.select.split(' ')[0]}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={selectionMode === 'freehand' ? 'primary' : 'secondary'}
+                        size="md"
+                        shape="pill"
+                        className="paint-mobile-pill-text"
+                        onClick={() => handleSwitchSelectionMode('freehand')}
+                        title={t.dynamicProps.modeFreehand}
+                        aria-label={t.dynamicProps.modeFreehand}
+                        aria-pressed={selectionMode === 'freehand'}
+                      >
+                        Lasso
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={selectionMode === 'polygon' ? 'primary' : 'secondary'}
+                        size="md"
+                        shape="pill"
+                        className="paint-mobile-pill-text"
+                        onClick={() => handleSwitchSelectionMode('polygon')}
+                        title={t.dynamicProps.modePolygon}
+                        aria-label={t.dynamicProps.modePolygon}
+                        aria-pressed={selectionMode === 'polygon'}
+                      >
+                        Poly
+                      </Button>
+                    </div>
+                    <div className="paint-mobile-select-actions">
+                      <IconButton
+                        type="button"
+                        variant="secondary"
+                        size="md"
+                        className="paint-mobile-icon-btn"
+                        onClick={handleSelectAll}
+                        title={t.actions.selectAll}
+                        aria-label={t.actions.selectAll}
+                        icon={<IconSelectAll size={18} />}
+                      />
+                      <IconButton
+                        type="button"
+                        variant="secondary"
+                        size="md"
+                        className="paint-mobile-icon-btn"
+                        onClick={handleCopy}
+                        title={t.actions.copyImage}
+                        aria-label={t.actions.copyImage}
+                        icon={<IconCopy size={18} />}
+                      />
+                      <IconButton
+                        type="button"
+                        variant="secondary"
+                        size="md"
+                        className="paint-mobile-icon-btn"
+                        onClick={handleCut}
+                        title={t.actions.cut}
+                        aria-label={t.actions.cut}
+                        icon={<IconScissors size={18} />}
+                      />
+                      <IconButton
+                        type="button"
+                        variant="secondary"
+                        size="md"
+                        className="paint-mobile-icon-btn"
+                        onClick={handleDeleteSelection}
+                        disabled={!selectionRect}
+                        title={t.actions.deleteSelection}
+                        aria-label={t.actions.deleteSelection}
+                        icon={<IconTrash size={18} />}
+                      />
+                      {selectionMode === 'polygon' && polygonPoints.length >= 3 && (
+                        <IconButton
+                          type="button"
+                          variant="secondary"
+                          size="md"
+                          className="paint-mobile-icon-btn"
+                          onClick={finalizePolygon}
+                          title={locale === 'pl' ? 'Zakończ zaznaczenie' : 'Finish selection'}
+                          aria-label={locale === 'pl' ? 'Zakończ zaznaczenie' : 'Finish selection'}
+                          icon={<IconSelect size={18} />}
+                        />
+                      )}
+                    </div>
+                  </>
+                ) : isSizeTool ? (
+                  <>
+                    {mobileSizeControls}
+
+                    {currentTool !== 'eraser' && (
+                      <>
+                        <div className="paint-mobile-strip-divider" />
+                        {mobileColorControls}
+                      </>
+                    )}
+                  </>
+                ) : currentTool === 'bucket' ? (
+                  mobileColorControls
+                ) : null}
+              </div>
+            )}
+
+            {/* Row 2: Touch Dock Tool Icons */}
+            <div className="paint-mobile-tool-dock">
+              {MAIN_MOBILE_TOOLS.map((toolItem) => (
+                <button
+                  key={toolItem.id}
+                  type="button"
+                  className={`paint-mobile-dock-btn ${toolItem.active ? 'is-active' : ''}`}
+                  onClick={toolItem.onClick}
+                  title={toolItem.label}
+                  aria-label={toolItem.label}
+                >
+                  {toolItem.icon}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* ─── Anchored File Menu Popover ─── */}
         {isFileDialogOpen &&

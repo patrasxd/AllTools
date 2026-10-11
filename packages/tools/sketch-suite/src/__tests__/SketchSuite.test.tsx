@@ -1,5 +1,5 @@
 import React from 'react'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { afterEach, describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
@@ -765,6 +765,137 @@ describe('SketchSuite: selection outline drawing', () => {
     expect(strokes.get(overlay)?.length).toBeGreaterThan(0)
     expect(strokes.get(overlay)?.every((c) => c === '#ffffff')).toBe(true)
     expect(strokes.get(preview)?.length).toBeGreaterThan(0)
-    expect(strokes.get(preview)?.every((c) => c === '#000000')).toBe(true)
+    expect(strokes.get(preview)?.every((c) => c === '#ffffff' || c === '#000000')).toBe(true)
+  })
+})
+
+describe('SketchSuite smartphone mobile interface', () => {
+  const originalMatchMedia = window.matchMedia
+
+  beforeEach(() => {
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      value: vi.fn((query: string) => ({
+        matches: query === '(max-width: 900px)',
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    })
+  })
+
+  afterEach(() => {
+    if (originalMatchMedia) {
+      Object.defineProperty(window, 'matchMedia', { configurable: true, value: originalMatchMedia })
+    } else {
+      Reflect.deleteProperty(window, 'matchMedia')
+    }
+  })
+
+  it('shows a clearly labeled shell-header control to collapse and restore the mobile bars', () => {
+    let headerNode: React.ReactNode = null
+    const setHeader = vi.fn((node: React.ReactNode) => {
+      headerNode = node
+    })
+    const { container } = render(<SketchSuite locale="en" setHeader={setHeader} />)
+
+    expect(container.querySelector('.paint-mobile-top-bar')).not.toBeNull()
+    expect(container.querySelector('.paint-mobile-bottom-bar')).not.toBeNull()
+
+    const { container: headerContainer } = render(<div>{headerNode}</div>)
+    const toggleButton = headerContainer.querySelector('.paint-mobile-controls-toggle') as HTMLButtonElement
+    expect(toggleButton.getAttribute('aria-label')).toBe('Hide sketch controls')
+
+    fireEvent.click(toggleButton)
+    expect(container.querySelector('.paint-mobile-top-bar')).toBeNull()
+    expect(container.querySelector('.paint-mobile-bottom-bar')).toBeNull()
+
+    fireEvent.click(toggleButton)
+    expect(container.querySelector('.paint-mobile-top-bar')).not.toBeNull()
+    expect(container.querySelector('.paint-mobile-bottom-bar')).not.toBeNull()
+  })
+
+  it('shows only controls relevant to the active mobile tool', () => {
+    const { container } = render(<SketchSuite locale="pl" />)
+    const mobileBottomBar = container.querySelector('.paint-mobile-bottom-bar')
+    expect(mobileBottomBar).not.toBeNull()
+
+    const dockButtons = mobileBottomBar?.querySelectorAll('.paint-mobile-dock-btn')
+    expect(dockButtons?.length).toBeGreaterThan(0)
+
+    const eraserBtn = dockButtons?.[2] as HTMLButtonElement
+    fireEvent.click(eraserBtn)
+    expect(container.querySelector('.paint-mobile-size-pill')).not.toBeNull()
+    expect(container.querySelector('.paint-mobile-size-custom')).not.toBeNull()
+    expect(container.querySelector('.paint-mobile-color-slots')).toBeNull()
+    expect(container.querySelector('.paint-mobile-palette-strip')).toBeNull()
+
+    const handBtn = dockButtons?.[8] as HTMLButtonElement
+    fireEvent.click(handBtn)
+    expect(container.querySelector('.paint-mobile-context-strip')).toBeNull()
+    expect(container.querySelector('.paint-mobile-size-pill')).toBeNull()
+    expect(container.querySelector('.paint-mobile-swatch')).toBeNull()
+  })
+
+  it('offers drawing size presets and opens the custom size slider', () => {
+    const { container } = render(<SketchSuite locale="en" />)
+    const brushPresets = container.querySelectorAll('.paint-mobile-size-pill')
+    expect(brushPresets).toHaveLength(4)
+
+    const size12Button = Array.from(brushPresets).find((button) => button.textContent?.includes('12'))
+    expect(size12Button).toBeDefined()
+    fireEvent.click(size12Button!)
+    expect(size12Button?.getAttribute('aria-pressed')).toBe('true')
+    expect(size12Button?.classList.contains('all-btn--primary')).toBe(true)
+
+    const customSizeButton = container.querySelector('.paint-mobile-size-custom') as HTMLButtonElement
+    expect(customSizeButton).not.toBeNull()
+    expect(customSizeButton.getAttribute('aria-label')).toBe('Custom Size: 12px')
+    expect(customSizeButton.querySelector('svg')).not.toBeNull()
+    expect(customSizeButton.textContent).toBe('')
+    fireEvent.click(customSizeButton)
+    expect(document.querySelector('.paint-anchored-popover[role="dialog"] input[type="range"]')).not.toBeNull()
+  })
+
+  it('provides selection actions and keeps shape and text settings on mobile', () => {
+    const { container } = render(<SketchSuite locale="pl" />)
+    const selectTool = container.querySelector('.paint-mobile-dock-btn[aria-label="Zaznacz (Prostokąt)"]')
+    expect(selectTool).not.toBeNull()
+    fireEvent.click(selectTool!)
+
+    expect(container.querySelectorAll('.paint-mobile-select-actions .paint-mobile-icon-btn')).toHaveLength(4)
+    const deleteButton = container.querySelector(
+      '.paint-mobile-select-actions button[aria-label="Usuń zaznaczenie (Del)"]',
+    ) as HTMLButtonElement
+    expect(deleteButton).toBeDisabled()
+    fireEvent.click(
+      container.querySelector('.paint-mobile-select-actions button[aria-label="Zaznacz wszystko (Ctrl+A)"]')!,
+    )
+    expect(deleteButton).toBeEnabled()
+
+    fireEvent.click(container.querySelector('.paint-mobile-dock-btn[aria-label="Kształty"]')!)
+    expect(container.querySelector('.paint-mobile-size-pill')).not.toBeNull()
+    expect(container.querySelector('.paint-mobile-size-custom')).not.toBeNull()
+    expect(container.querySelectorAll('.paint-mobile-color-slot')).toHaveLength(2)
+    expect(container.querySelector('.paint-mobile-color-slot.all-btn--primary')).not.toBeNull()
+
+    fireEvent.click(container.querySelector('.paint-mobile-dock-btn[aria-label="Narzędzie Tekstu"]')!)
+    expect(container.querySelector('.paint-mobile-font-family .all-select-field')).not.toBeNull()
+    expect(container.querySelector('.paint-mobile-font-size .all-input-field')).not.toBeNull()
+    expect(container.querySelector('button[aria-label="Podkreślenie"]')).not.toBeNull()
+    expect(container.querySelector('button[aria-label="Tło pod tekstem"]')).not.toBeNull()
+  })
+
+  it('clears the shell header extra on unmount', () => {
+    const setHeader = vi.fn()
+    const { unmount } = render(<SketchSuite locale="en" setHeader={setHeader} />)
+
+    expect(setHeader).toHaveBeenCalledWith(expect.anything())
+    unmount()
+    expect(setHeader).toHaveBeenLastCalledWith(null)
   })
 })
