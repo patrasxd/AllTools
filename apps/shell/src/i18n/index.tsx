@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useEffect, useState, useMemo } from 'react'
 import type { Locale } from '../types/tool'
+import { safeGetItem, safeSetItem } from '@alltools/ui'
 
 const STORAGE_KEY = 'alltools:language'
 
 function detectInitialLocale(): Locale {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY)
+    const saved = safeGetItem(STORAGE_KEY)
     if (saved === 'en' || saved === 'pl') return saved
 
     // Auto-detect from browser locale
@@ -155,11 +156,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
 
   const setLocale = (newLocale: Locale) => {
     setLocaleState(newLocale)
-    try {
-      localStorage.setItem(STORAGE_KEY, newLocale)
-    } catch {
-      // Ignore
-    }
+    safeSetItem(STORAGE_KEY, newLocale)
   }
 
   // Sync with document element lang attribute

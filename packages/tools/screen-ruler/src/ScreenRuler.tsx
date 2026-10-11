@@ -24,6 +24,7 @@ import {
 } from './utils/rulerMath'
 import { screenRulerTranslations } from './i18n'
 import './styles/screen-ruler.css'
+import { safeGetItem, safeSetItem } from '@alltools/ui'
 
 export function ScreenRuler({ locale = 'en', setHeader, isEink = false, theme }: ToolComponentProps) {
   const t = screenRulerTranslations[locale as Locale] || screenRulerTranslations.en
@@ -46,11 +47,7 @@ export function ScreenRuler({ locale = 'en', setHeader, isEink = false, theme }:
   const [pixelsPerMm, setPixelsPerMm] = useState<number>(getInitialPpm)
 
   const [isCalibrated, setIsCalibrated] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem(RULER_STORAGE_KEY_CALIBRATED) === 'true'
-    } catch {
-      return false
-    }
+    return safeGetItem(RULER_STORAGE_KEY_CALIBRATED) === 'true'
   })
 
   // Card orientation for calibration (landscape vs portrait)
@@ -141,12 +138,8 @@ export function ScreenRuler({ locale = 'en', setHeader, isEink = false, theme }:
     const ppm = calculatePpm(cardWidthPx, targetWidthMm)
     setPixelsPerMm(ppm)
     setIsCalibrated(true)
-    try {
-      localStorage.setItem(RULER_STORAGE_KEY_PPM, String(ppm))
-      localStorage.setItem(RULER_STORAGE_KEY_CALIBRATED, 'true')
-    } catch {
-      // Ignore storage errors
-    }
+    safeSetItem(RULER_STORAGE_KEY_PPM, String(ppm))
+    safeSetItem(RULER_STORAGE_KEY_CALIBRATED, 'true')
   }, [cardWidthPx, targetWidthMm])
 
   const startRecalibration = useCallback(() => {

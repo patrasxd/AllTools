@@ -23,6 +23,7 @@ import {
 } from './utils/timerMath'
 import { stopwatchTranslations } from './i18n'
 import './styles/stopwatch-interval.css'
+import { safeGetItem, safeSetItem, safeSetJSON } from '@alltools/ui'
 
 interface NumberStepperProps {
   id?: string
@@ -147,15 +148,15 @@ export function StopwatchInterval({ locale = 'en', isEink = false, setHeader, se
   // ─── Custom Interval State & LocalStorage ───
   const [customSteps, setCustomSteps] = useState<IntervalStep[]>(() => {
     try {
-      const saved = localStorage.getItem('alltools:interval:customSteps')
+      const saved = safeGetItem('alltools:interval:customSteps')
       if (saved) {
         const parsed = JSON.parse(saved)
         if (Array.isArray(parsed) && parsed.length > 0) return parsed
       }
       // Backward compatibility with previous single custom values
-      const oldWork = localStorage.getItem('alltools:interval:customWorkSec')
-      const oldRest = localStorage.getItem('alltools:interval:customRestSec')
-      const oldSets = localStorage.getItem('alltools:interval:customSetsTotal')
+      const oldWork = safeGetItem('alltools:interval:customWorkSec')
+      const oldRest = safeGetItem('alltools:interval:customRestSec')
+      const oldSets = safeGetItem('alltools:interval:customSetsTotal')
       if (oldWork || oldRest || oldSets) {
         return [
           {
@@ -178,11 +179,7 @@ export function StopwatchInterval({ locale = 'en', isEink = false, setHeader, se
 
   // ─── Interval timer state ───
   const [preset, setPreset] = useState<Preset>(() => {
-    try {
-      return (localStorage.getItem('alltools:interval:preset') as Preset) || 'tabata'
-    } catch {
-      return 'tabata'
-    }
+    return (safeGetItem('alltools:interval:preset') as Preset) || 'tabata'
   })
 
   const activeSteps: IntervalStep[] = useMemo(() => {
@@ -237,12 +234,8 @@ export function StopwatchInterval({ locale = 'en', isEink = false, setHeader, se
 
   // Persist interval settings
   useEffect(() => {
-    try {
-      localStorage.setItem('alltools:interval:preset', preset)
-      localStorage.setItem('alltools:interval:customSteps', JSON.stringify(customSteps))
-    } catch {
-      // Ignore
-    }
+    safeSetItem('alltools:interval:preset', preset)
+    safeSetJSON('alltools:interval:customSteps', customSteps)
   }, [preset, customSteps])
 
   // Audio cues
@@ -422,15 +415,11 @@ export function StopwatchInterval({ locale = 'en', isEink = false, setHeader, se
     }))
 
     setCustomSteps(cleaned)
-    try {
-      localStorage.setItem('alltools:interval:customSteps', JSON.stringify(cleaned))
-      if (cleaned[0]) {
-        localStorage.setItem('alltools:interval:customWorkSec', String(cleaned[0].workSec))
-        localStorage.setItem('alltools:interval:customRestSec', String(cleaned[0].restSec))
-        localStorage.setItem('alltools:interval:customSetsTotal', String(cleaned[0].sets))
-      }
-    } catch {
-      // Storage unavailable or full: the setting is simply not persisted
+    safeSetJSON('alltools:interval:customSteps', cleaned)
+    if (cleaned[0]) {
+      safeSetItem('alltools:interval:customWorkSec', String(cleaned[0].workSec))
+      safeSetItem('alltools:interval:customRestSec', String(cleaned[0].restSec))
+      safeSetItem('alltools:interval:customSetsTotal', String(cleaned[0].sets))
     }
 
     setIsCustomDialogOpen(false)

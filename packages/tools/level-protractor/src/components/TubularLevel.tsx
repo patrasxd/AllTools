@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react'
 import { Badge, Button, PillGroup } from '@all/ui'
 import { calculateEdgeLevel, type EdgeLevelResult } from '../utils/sensorUtils'
 import { levelTranslations, type Locale } from '../i18n'
+import { safeGetItem, safeSetItem } from '@alltools/ui'
 
 export interface TubularLevelProps {
   locale?: Locale
@@ -35,21 +36,13 @@ export const TubularLevel: React.FC<TubularLevelProps> = ({
 
   // Edge selection: user selects Bottom Edge (horizontal) or Left Edge (vertical)
   const [selectedEdge, setSelectedEdge] = useState<'bottom' | 'left'>(() => {
-    try {
-      const saved = localStorage.getItem('alltools:level:selectedEdge')
-      if (saved === 'bottom' || saved === 'left') return saved
-    } catch {
-      // Storage unavailable or invalid saved value: fall back to defaults
-    }
+    const saved = safeGetItem('alltools:level:selectedEdge')
+    if (saved === 'bottom' || saved === 'left') return saved
     return 'bottom'
   })
 
   useEffect(() => {
-    try {
-      localStorage.setItem('alltools:level:selectedEdge', selectedEdge)
-    } catch {
-      // Storage unavailable or full: the setting is simply not persisted
-    }
+    safeSetItem('alltools:level:selectedEdge', selectedEdge)
   }, [selectedEdge])
 
   const edgeOptions = useMemo(

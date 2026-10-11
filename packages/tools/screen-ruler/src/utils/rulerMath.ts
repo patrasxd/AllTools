@@ -1,4 +1,5 @@
 import type { CaliperPosition, WorkspaceDimensions, MeasurementResult, MeasurementUnit, TickMark } from '../types'
+import { safeGetItem } from '@alltools/ui'
 
 // ISO/IEC 7810 ID-1 standard dimensions in millimeters
 export const CARD_LONG_MM = 85.6
@@ -14,16 +15,10 @@ export const RULER_STORAGE_KEY_CALIBRATED = 'alltools:ruler:calibrated'
  * Returns initial pixels per millimeter from localStorage or viewport heuristic.
  */
 export function getInitialPpm(isMobile?: boolean): number {
-  try {
-    if (typeof localStorage !== 'undefined') {
-      const saved = localStorage.getItem(RULER_STORAGE_KEY_PPM)
-      if (saved) {
-        const parsed = parseFloat(saved)
-        if (Number.isFinite(parsed) && parsed >= 2.0 && parsed <= 8.0) return parsed
-      }
-    }
-  } catch {
-    // Ignore storage access errors
+  const saved = safeGetItem(RULER_STORAGE_KEY_PPM)
+  if (saved) {
+    const parsed = parseFloat(saved)
+    if (Number.isFinite(parsed) && parsed >= 2.0 && parsed <= 8.0) return parsed
   }
 
   const mobile = isMobile ?? (typeof window !== 'undefined' && window.innerWidth < 640)

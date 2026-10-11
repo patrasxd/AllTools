@@ -33,32 +33,25 @@ import type {
   CompassStats,
 } from './types'
 import './styles/level-protractor.css'
+import { safeGetItem, safeSetItem, safeSetJSON } from '@alltools/ui'
 
 export function LevelProtractor({ locale = 'en', setHeader, isEink = false }: ToolComponentProps) {
   const t = levelTranslations[locale] || levelTranslations.en
 
   const [activeTab, setActiveTab] = useState<LevelProtractorTab>(() => {
-    try {
-      const saved = localStorage.getItem('alltools:level:tab') as LevelProtractorTab
-      if (saved && (saved === 'level' || saved === 'protractor' || saved === 'compass')) {
-        return saved
-      }
-    } catch {
-      // Storage unavailable or invalid saved value: fall back to defaults
+    const saved = safeGetItem('alltools:level:tab') as LevelProtractorTab
+    if (saved && (saved === 'level' || saved === 'protractor' || saved === 'compass')) {
+      return saved
     }
     return 'level'
   })
 
   // Settings State
   const [tolerance, setTolerance] = useState<number>(() => {
-    try {
-      const saved = localStorage.getItem('alltools:level:tolerance')
-      if (saved) {
-        const val = parseFloat(saved)
-        if (Number.isFinite(val)) return val
-      }
-    } catch {
-      // Storage unavailable or invalid saved value: fall back to defaults
+    const saved = safeGetItem('alltools:level:tolerance')
+    if (saved) {
+      const val = parseFloat(saved)
+      if (Number.isFinite(val)) return val
     }
     return 0.5
   })
@@ -67,30 +60,18 @@ export function LevelProtractor({ locale = 'en', setHeader, isEink = false }: To
   const [sensorPermissionGranted, setSensorPermissionGranted] = useState<boolean>(false)
 
   useEffect(() => {
-    try {
-      localStorage.setItem('alltools:level:tab', activeTab)
-    } catch {
-      // Storage unavailable or full: the setting is simply not persisted
-    }
+    safeSetItem('alltools:level:tab', activeTab)
   }, [activeTab])
 
   useEffect(() => {
-    try {
-      localStorage.setItem('alltools:level:tolerance', String(tolerance))
-    } catch {
-      // Storage unavailable or full: the setting is simply not persisted
-    }
+    safeSetItem('alltools:level:tolerance', String(tolerance))
   }, [tolerance])
 
   // ─── Level State ───
   const [levelViewMode, setLevelViewMode] = useState<LevelViewMode>(() => {
-    try {
-      const saved = localStorage.getItem('alltools:level:viewMode') as LevelViewMode
-      if (saved && (saved === 'surface' || saved === 'edge')) {
-        return saved
-      }
-    } catch {
-      // Storage unavailable or invalid saved value: fall back to defaults
+    const saved = safeGetItem('alltools:level:viewMode') as LevelViewMode
+    if (saved && (saved === 'surface' || saved === 'edge')) {
+      return saved
     }
     return 'surface'
   })
@@ -99,7 +80,7 @@ export function LevelProtractor({ locale = 'en', setHeader, isEink = false }: To
   const [roll, setRoll] = useState<number>(0)
   const [calibratedPitch, setCalibratedPitch] = useState<number>(() => {
     try {
-      const saved = localStorage.getItem('alltools:level:calibration')
+      const saved = safeGetItem('alltools:level:calibration')
       return saved ? JSON.parse(saved).pitch : 0
     } catch {
       return 0
@@ -107,7 +88,7 @@ export function LevelProtractor({ locale = 'en', setHeader, isEink = false }: To
   })
   const [calibratedRoll, setCalibratedRoll] = useState<number>(() => {
     try {
-      const saved = localStorage.getItem('alltools:level:calibration')
+      const saved = safeGetItem('alltools:level:calibration')
       return saved ? JSON.parse(saved).roll : 0
     } catch {
       return 0
@@ -115,22 +96,11 @@ export function LevelProtractor({ locale = 'en', setHeader, isEink = false }: To
   })
 
   useEffect(() => {
-    try {
-      localStorage.setItem(
-        'alltools:level:calibration',
-        JSON.stringify({ pitch: calibratedPitch, roll: calibratedRoll }),
-      )
-    } catch {
-      // Storage unavailable or invalid saved value: fall back to defaults
-    }
+    safeSetJSON('alltools:level:calibration', { pitch: calibratedPitch, roll: calibratedRoll })
   }, [calibratedPitch, calibratedRoll])
 
   useEffect(() => {
-    try {
-      localStorage.setItem('alltools:level:viewMode', levelViewMode)
-    } catch {
-      // Storage unavailable or full: the setting is simply not persisted
-    }
+    safeSetItem('alltools:level:viewMode', levelViewMode)
   }, [levelViewMode])
 
   const [levelStats, setLevelStats] = useState<LevelStats>({

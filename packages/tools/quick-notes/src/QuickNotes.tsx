@@ -24,13 +24,14 @@ import {
 } from './utils/notesEngine'
 import { quickNotesTranslations } from './i18n'
 import './styles/quick-notes.css'
+import { safeGetItem, safeSetJSON } from '@alltools/ui'
 
 export function QuickNotes({ locale = 'en', isEink = false, setHeader }: ToolComponentProps) {
   const t = quickNotesTranslations[locale] || quickNotesTranslations.en
 
   const [lists, setLists] = useState<NoteList[]>(() => {
     try {
-      const saved = localStorage.getItem('alltools:quick-notes:v2:lists')
+      const saved = safeGetItem('alltools:quick-notes:v2:lists')
       return loadNotesFromStorage(saved, DEFAULT_LISTS)
     } catch {
       return DEFAULT_LISTS
@@ -45,11 +46,7 @@ export function QuickNotes({ locale = 'en', isEink = false, setHeader }: ToolCom
 
   // Persist
   useEffect(() => {
-    try {
-      localStorage.setItem('alltools:quick-notes:v2:lists', JSON.stringify(lists))
-    } catch {
-      // Ignore
-    }
+    safeSetJSON('alltools:quick-notes:v2:lists', lists)
   }, [lists])
 
   // Count items

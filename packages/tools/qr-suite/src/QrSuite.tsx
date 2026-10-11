@@ -20,7 +20,7 @@ import type { ToolComponentProps, Locale, QrMode, PayloadType, CameraLabels, Zoo
 import { generatePayload, formatCameraName, clampZoom, isWebUrl } from './utils/qrPayload'
 import { qrSuiteTranslations } from './i18n'
 import './styles/qr-suite.css'
-import { onKeyActivate } from '@alltools/ui'
+import { onKeyActivate, safeGetItem, safeSetItem } from '@alltools/ui'
 
 export function QrSuite({ locale = 'en', setHeader, isEink = false }: ToolComponentProps) {
   const t = qrSuiteTranslations[locale as Locale] || qrSuiteTranslations.en
@@ -42,11 +42,7 @@ export function QrSuite({ locale = 'en', setHeader, isEink = false }: ToolCompon
   // Multi-camera and zoom state
   const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([])
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(() => {
-    try {
-      return localStorage.getItem('alltools:qr-camera-id')
-    } catch {
-      return null
-    }
+    return safeGetItem('alltools:qr-camera-id')
   })
   const [zoomCapabilities, setZoomCapabilities] = useState<ZoomCapabilities | null>(null)
   const [currentZoom, setCurrentZoom] = useState<number>(1)
@@ -302,11 +298,7 @@ export function QrSuite({ locale = 'en', setHeader, isEink = false }: ToolCompon
         const activeId = settings?.deviceId || deviceIdToUse || (vInputs[0]?.deviceId ?? null)
         if (activeId) {
           setSelectedDeviceId(activeId)
-          try {
-            localStorage.setItem('alltools:qr-camera-id', activeId)
-          } catch {
-            // ignore
-          }
+          safeSetItem('alltools:qr-camera-id', activeId)
         }
       } catch {
         // ignore

@@ -28,6 +28,7 @@ import { NeedleGauge } from './components/NeedleGauge'
 import type { ToolComponentProps, NoiseGateLevel } from './types'
 import { tunerTranslations } from './i18n'
 import './styles/tuner.css'
+import { safeGetItem, safeSetItem } from '@alltools/ui'
 
 export function GuitarTuner({ setHeader, locale = 'en', isEink = false }: ToolComponentProps) {
   const t = tunerTranslations[locale] || tunerTranslations.en
@@ -35,33 +36,21 @@ export function GuitarTuner({ setHeader, locale = 'en', isEink = false }: ToolCo
 
   // ─── Settings & Presets State ───
   const [selectedPresetId, setSelectedPresetId] = useState<string>(() => {
-    try {
-      return localStorage.getItem('alltools:tuner:preset') || 'guitar-std'
-    } catch {
-      return 'guitar-std'
-    }
+    return safeGetItem('alltools:tuner:preset') || 'guitar-std'
   })
 
   const [a4Calibration, setA4Calibration] = useState<number>(() => {
-    try {
-      const saved = localStorage.getItem('alltools:tuner:a4')
-      if (saved) {
-        const val = parseInt(saved, 10)
-        if (Number.isFinite(val) && val >= 420 && val <= 460) return val
-      }
-    } catch {
-      // Storage unavailable or invalid saved value: fall back to defaults
+    const saved = safeGetItem('alltools:tuner:a4')
+    if (saved) {
+      const val = parseInt(saved, 10)
+      if (Number.isFinite(val) && val >= 420 && val <= 460) return val
     }
     return DEFAULT_A4
   })
 
   const [noiseGate, setNoiseGate] = useState<NoiseGateLevel>(() => {
-    try {
-      const saved = localStorage.getItem('alltools:tuner:gate') as NoiseGateLevel
-      if (saved && (saved === 'low' || saved === 'medium' || saved === 'high')) return saved
-    } catch {
-      // Storage unavailable or invalid saved value: fall back to defaults
-    }
+    const saved = safeGetItem('alltools:tuner:gate') as NoiseGateLevel
+    if (saved && (saved === 'low' || saved === 'medium' || saved === 'high')) return saved
     return 'medium'
   })
 
@@ -72,27 +61,15 @@ export function GuitarTuner({ setHeader, locale = 'en', isEink = false }: ToolCo
 
   // Save settings
   useEffect(() => {
-    try {
-      localStorage.setItem('alltools:tuner:preset', selectedPresetId)
-    } catch {
-      // Storage unavailable or full: the setting is simply not persisted
-    }
+    safeSetItem('alltools:tuner:preset', selectedPresetId)
   }, [selectedPresetId])
 
   useEffect(() => {
-    try {
-      localStorage.setItem('alltools:tuner:a4', String(a4Calibration))
-    } catch {
-      // Storage unavailable or full: the setting is simply not persisted
-    }
+    safeSetItem('alltools:tuner:a4', String(a4Calibration))
   }, [a4Calibration])
 
   useEffect(() => {
-    try {
-      localStorage.setItem('alltools:tuner:gate', noiseGate)
-    } catch {
-      // Storage unavailable or full: the setting is simply not persisted
-    }
+    safeSetItem('alltools:tuner:gate', noiseGate)
   }, [noiseGate])
 
   // ─── Detected Pitch State ───

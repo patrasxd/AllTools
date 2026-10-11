@@ -12,7 +12,7 @@
   <img src="https://img.shields.io/badge/TypeScript-5.5-blue.svg" alt="TypeScript 5" />
   <img src="https://img.shields.io/badge/Vite-6.0-646CFF.svg" alt="Vite" />
   <img src="https://img.shields.io/badge/PWA-Offline--First-brightgreen.svg" alt="PWA Ready" />
-  <img src="https://img.shields.io/badge/Vitest-347%20passed-success.svg" alt="Vitest Tests" />
+  <img src="https://img.shields.io/badge/Vitest-357%20passed-success.svg" alt="Vitest Tests" />
 </p>
 
 ---

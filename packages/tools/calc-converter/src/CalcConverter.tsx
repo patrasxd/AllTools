@@ -19,7 +19,7 @@ import { calcConverterTranslations } from './i18n'
 import { safeEvaluate, evaluateScientific, formatCalcDisplay } from './utils/calcEngine'
 import { UNIT_CATEGORIES, convertValue, convertRadix, formatFormattedValue } from './conversionData'
 import './styles/calc-converter.css'
-import { onKeyActivate } from '@alltools/ui'
+import { onKeyActivate, safeGetJSON, safeRemoveItem, safeSetJSON } from '@alltools/ui'
 
 function BackspaceIcon() {
   return (
@@ -109,14 +109,9 @@ export function CalcConverter({ locale = 'en', setHeader, isEink = false }: Tool
   const [activeOperator, setActiveOperator] = useState<string | null>(null)
   const [isNewNumber, setIsNewNumber] = useState<boolean>(true)
   const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false)
-  const [history, setHistory] = useState<CalcHistoryItem[]>(() => {
-    try {
-      const saved = localStorage.getItem('alltools:calc-history')
-      return saved ? JSON.parse(saved) : []
-    } catch {
-      return []
-    }
-  })
+  const [history, setHistory] = useState<CalcHistoryItem[]>(() =>
+    safeGetJSON<CalcHistoryItem[]>('alltools:calc-history', []),
+  )
 
   // ─── Converter State ────────────────────────────────────────
   const [selectedCatId, setSelectedCatId] = useState<string>('weight')
@@ -157,20 +152,12 @@ export function CalcConverter({ locale = 'en', setHeader, isEink = false }: Tool
     }
     const updated = [item, ...history.filter((h) => h.expression !== expr)].slice(0, 30)
     setHistory(updated)
-    try {
-      localStorage.setItem('alltools:calc-history', JSON.stringify(updated))
-    } catch {
-      // ignore
-    }
+    safeSetJSON('alltools:calc-history', updated)
   }
 
   const clearHistory = () => {
     setHistory([])
-    try {
-      localStorage.removeItem('alltools:calc-history')
-    } catch {
-      // ignore
-    }
+    safeRemoveItem('alltools:calc-history')
   }
 
   const handleInputDigit = useCallback(
