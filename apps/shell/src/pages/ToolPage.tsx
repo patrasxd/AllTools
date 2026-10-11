@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Button, BackLink, setLastActiveCardId } from '@all/ui'
+import { Button, setLastActiveCardId } from '@all/ui'
 import { TOOLS_METADATA, loadToolComponent } from '../tools/registry'
 import { useI18n } from '../i18n'
 import { useTheme } from '../hooks/useTheme'
@@ -69,7 +69,7 @@ export function ToolPage() {
   const { theme, isEink } = useTheme()
   const metadata = TOOLS_METADATA.find((item) => item.slug === slug)
 
-  const { setHeaderExtra, isDirty, setIsDirty, requestExit } = useToolHeader()
+  const { setHeaderExtra, isDirty, setIsDirty } = useToolHeader()
 
   useEffect(() => {
     if (slug) {
@@ -82,15 +82,6 @@ export function ToolPage() {
       setIsDirty(false)
     }
   }, [setIsDirty])
-
-  const handleBackToTools = useCallback(() => {
-    requestExit(() => {
-      if (slug) {
-        setLastActiveCardId(`tool-card-${slug}`)
-      }
-      navigate('/')
-    })
-  }, [requestExit, navigate, slug])
 
   const [ToolComp, setToolComp] = useState<React.ComponentType<any> | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
@@ -134,20 +125,6 @@ export function ToolPage() {
   return (
     <motion.div className="tool-page" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
       <div className="tool-page-inner">
-        <div
-          className="container tool-page-top-bar"
-          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-        >
-          <BackLink
-            id={`back-btn-${slug}`}
-            label={t.backToTools}
-            onClick={handleBackToTools}
-            aria-label={t.backToToolsAria}
-            title={t.backToTools}
-          />
-          <div id="tool-page-top-actions" className="tool-page-top-actions" />
-        </div>
-
         <div
           className={`tool-page-content ${slug === 'screen-ruler' || slug === 'sketch-suite' ? 'tool-page-content--fullbleed' : ''}`.trim()}
         >

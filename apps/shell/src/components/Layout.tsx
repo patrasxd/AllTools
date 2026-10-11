@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { AppHeader, clearLastActiveCardId, ConfirmDialog } from '@all/ui'
+import { AppHeader, clearLastActiveCardId, ConfirmDialog, setLastActiveCardId } from '@all/ui'
 import { HeaderMenu } from './HeaderMenu'
 import { useI18n } from '../i18n'
 import { TOOLS_METADATA } from '../tools/registry'
@@ -120,13 +120,23 @@ export function Layout({ children }: LayoutProps) {
             type="button"
             className="header-logo"
             onClick={() => {
-              requestExit(() => {
-                clearLastActiveCardId()
+              const returnHome = () => {
+                if (isToolPage && slug) {
+                  setLastActiveCardId(`tool-card-${slug}`)
+                } else {
+                  clearLastActiveCardId()
+                }
                 window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
                 navigate('/')
-              })
+              }
+
+              if (isToolPage) {
+                requestExit(returnHome)
+              } else {
+                returnHome()
+              }
             }}
-            aria-label={t.backToHomeAria}
+            aria-label={isToolPage ? t.backToToolsAria : t.backToHomeAria}
           >
             <span>AllTools</span>
           </button>
