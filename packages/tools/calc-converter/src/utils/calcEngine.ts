@@ -27,44 +27,178 @@ export function formatCalcDisplay(val: number): string {
   return cleaned.toString()
 }
 
+type Token =
+  | { type: 'num'; value: number }
+  | { type: 'op'; value: '+' | '-' | '*' | '/' | '%' | '^' }
+  | { type: 'paren'; value: '(' | ')' }
+  | { type: 'ident'; value: string }
+
+const FUNCTIONS: Record<string, (x: number) => number> = {
+  sqrt: Math.sqrt,
+  sin: Math.sin,
+  cos: Math.cos,
+  tan: Math.tan,
+  ln: Math.log,
+  log: Math.log10,
+}
+
+const CONSTANTS: Record<string, number> = {
+  π: Math.PI,
+  e: Math.E,
+}
+
+function tokenize(input: string): Token[] {
+  const src = input.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-')
+
+  // Reject runs of three or more operators such as "++-" or "*/-"
+  if (/[+\-*/]{3,}/.test(src.replace(/\s+/g, ''))) {
+    throw new Error('Invalid operator sequence')
+  }
+
+  const tokens: Token[] = []
+  let i = 0
+  while (i < src.length) {
+    const ch = src[i]
+    if (/\s/.test(ch)) {
+      i++
+      continue
+    }
+    // Numbers, including decimals and exponents (e.g. 12, 0.5, .5, 1.5e+12)
+    const num = /^(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?/.exec(src.slice(i))
+    if (num) {
+      tokens.push({ type: 'num', value: parseFloat(num[0]) })
+      i += num[0].length
+      continue
+    }
+    if ('+-*/%^'.includes(ch)) {
+      tokens.push({ type: 'op', value: ch as '+' | '-' | '*' | '/' | '%' | '^' })
+      i++
+      continue
+    }
+    if (ch === '(' || ch === ')') {
+      tokens.push({ type: 'paren', value: ch })
+      i++
+      continue
+    }
+    if (ch === 'π') {
+      tokens.push({ type: 'ident', value: 'π' })
+      i++
+      continue
+    }
+    const word = /^[a-z]+/.exec(src.slice(i))
+    if (word) {
+      tokens.push({ type: 'ident', value: word[0] })
+      i += word[0].length
+      continue
+    }
+    throw new Error('Invalid expression')
+  }
+  return tokens
+}
+
 /**
- * Safely evaluate a mathematical expression string
+ * Recursive-descent parser. Grammar (lowest to highest precedence):
+ *   expr    := term (('+' | '-') term)*
+ *   term    := unary (('*' | '/' | '%') unary)*
+ *   unary   := ('+' | '-') unary | power
+ *   power   := primary ('^' unary)?        (right-associative)
+ *   primary := number | constant | func '(' expr ')' | '(' expr ')'
+ */
+class Parser {
+  private pos = 0
+
+  constructor(private readonly tokens: Token[]) {}
+
+  parse(): number {
+    const value = this.expr()
+    if (this.pos < this.tokens.length) throw new Error('Invalid expression')
+    return value
+  }
+
+  private peek(): Token | undefined {
+    return this.tokens[this.pos]
+  }
+
+  private isOp(...ops: string[]): boolean {
+    const t = this.peek()
+    return t !== undefined && t.type === 'op' && ops.includes(t.value)
+  }
+
+  private expr(): number {
+    let left = this.term()
+    while (this.isOp('+', '-')) {
+      const op = (this.tokens[this.pos++] as { value: string }).value
+      const right = this.term()
+      left = op === '+' ? left + right : left - right
+    }
+    return left
+  }
+
+  private term(): number {
+    let left = this.unary()
+    while (this.isOp('*', '/', '%')) {
+      const op = (this.tokens[this.pos++] as { value: string }).value
+      const right = this.unary()
+      left = op === '*' ? left * right : op === '/' ? left / right : left % right
+    }
+    return left
+  }
+
+  private unary(): number {
+    if (this.isOp('+', '-')) {
+      const op = (this.tokens[this.pos++] as { value: string }).value
+      const value = this.unary()
+      return op === '-' ? -value : value
+    }
+    return this.power()
+  }
+
+  private power(): number {
+    const base = this.primary()
+    if (this.isOp('^')) {
+      this.pos++
+      return Math.pow(base, this.unary())
+    }
+    return base
+  }
+
+  private primary(): number {
+    const t = this.tokens[this.pos++]
+    if (!t) throw new Error('Invalid expression')
+    if (t.type === 'num') return t.value
+    if (t.type === 'paren' && t.value === '(') {
+      const value = this.expr()
+      const close = this.tokens[this.pos++]
+      if (!close || close.type !== 'paren' || close.value !== ')') throw new Error('Invalid expression')
+      return value
+    }
+    if (t.type === 'ident') {
+      if (Object.prototype.hasOwnProperty.call(CONSTANTS, t.value)) return CONSTANTS[t.value]
+      if (Object.prototype.hasOwnProperty.call(FUNCTIONS, t.value)) {
+        const open = this.tokens[this.pos++]
+        if (!open || open.type !== 'paren' || open.value !== '(') throw new Error('Invalid expression')
+        const arg = this.expr()
+        const close = this.tokens[this.pos++]
+        if (!close || close.type !== 'paren' || close.value !== ')') throw new Error('Invalid expression')
+        return FUNCTIONS[t.value](arg)
+      }
+    }
+    throw new Error('Invalid expression')
+  }
+}
+
+/**
+ * Safely evaluate a mathematical expression string.
+ * Uses a small hand-written parser; the input is never executed as code.
+ * Supports + - × ÷ * / % ^, parentheses, unary signs, the constants π and e,
+ * and the functions sqrt, sin, cos, tan (radians), ln and log (base 10).
  */
 export function safeEvaluate(exprStr: string): number {
   if (!exprStr || !exprStr.trim()) {
     throw new Error('Empty expression')
   }
 
-  // Normalize operators & symbols
-  let sanitized = exprStr
-    .replace(/×/g, '*')
-    .replace(/÷/g, '/')
-    .replace(/−/g, '-')
-    .replace(/\^/g, '**')
-    .replace(/π/g, `${Math.PI}`)
-    .replace(/e(?![a-zA-Z0-9_])/g, `${Math.E}`)
-
-  // Replace function aliases
-  sanitized = sanitized
-    .replace(/sqrt\(/g, 'Math.sqrt(')
-    .replace(/sin\(/g, 'Math.sin(')
-    .replace(/cos\(/g, 'Math.cos(')
-    .replace(/tan\(/g, 'Math.tan(')
-    .replace(/ln\(/g, 'Math.log(')
-    .replace(/log\(/g, 'Math.log10(')
-
-  // Validate allowed characters only
-  if (!/^[0-9+\-*/().,%\sMath.PIEsqrtincoatgl**]+$/.test(sanitized)) {
-    throw new Error('Invalid expression')
-  }
-
-  // Disallow consecutive operators that are invalid in JS like * / or + *
-  if (/[+\-*/]{3,}/.test(sanitized)) {
-    throw new Error('Invalid operator sequence')
-  }
-
-  // eslint-disable-next-line no-new-func
-  const result = Function(`"use strict"; return (${sanitized})`)()
+  const result = new Parser(tokenize(exprStr)).parse()
 
   if (typeof result !== 'number' || isNaN(result) || !isFinite(result)) {
     throw new Error('Math error')

@@ -12,7 +12,15 @@
   <img src="https://img.shields.io/badge/TypeScript-5.5-blue.svg" alt="TypeScript 5" />
   <img src="https://img.shields.io/badge/Vite-6.0-646CFF.svg" alt="Vite" />
   <img src="https://img.shields.io/badge/PWA-Offline--First-brightgreen.svg" alt="PWA Ready" />
-  <img src="https://img.shields.io/badge/Vitest-357%20passed-success.svg" alt="Vitest Tests" />
+  <img src="https://img.shields.io/badge/Vitest-363%20passed-success.svg" alt="Vitest Tests" />
+</p>
+
+<p align="center">
+  <a href="https://patrasxd.github.io/AllTools/"><img src="apps/shell/public/og-image.png" alt="AllTools: free browser tools that work offline" width="640" /></a>
+</p>
+
+<p align="center">
+  <a href="https://patrasxd.github.io/AllTools/"><strong>Open AllTools online</strong></a> · installable as an offline app (PWA) · no sign-up
 </p>
 
 ---
@@ -20,6 +28,7 @@
 ## Table of Contents
 
 - [Overview](#overview)
+- [Why AllTools](#why-alltools)
 - [Key Features](#key-features)
 - [Tools Catalog](#tools-catalog)
 - [Architecture & Monorepo](#architecture--monorepo)
@@ -29,6 +38,7 @@
 - [Getting Started](#getting-started)
 - [Adding a New Tool](#adding-a-new-tool)
 - [Storage & Privacy](#storage--privacy)
+- [AI-assisted Development](#ai-assisted-development)
 - [License](#license)
 
 ---
@@ -38,6 +48,12 @@
 **AllTools** is an open-source collection of fast, private browser utilities designed for everyday productivity, hardware measurements, media manipulation, and calculations. Every tool runs entirely within your browser engine — your files, audio inputs, microphone feeds, and notes never leave your machine.
 
 Packaged as an npm workspaces monorepo and styled with a tactile ink-and-paper aesthetic, AllTools combines the instant access of web applications with the security and offline reliability of native desktop software.
+
+---
+
+## Why AllTools
+
+Every now and then I need to merge or sign a PDF, make a QR code, turn a raster image into a vector, or put a quick watermark on a photo before sending it somewhere. It usually ended in one of three ways: an app that sat on my phone afterwards, full of ads and collecting data, several apps for one job because each did only a tiny part of it, or a random "free online" site where I had to upload my files. AllTools puts these tools in one place, runs them entirely in your browser, and keeps your files on your device.
 
 ---
 
@@ -287,16 +303,27 @@ Deployment is fully automated via GitHub Actions ([`.github/workflows/deploy.yml
 
 ## Storage & Privacy
 
-All data is stored purely in client-side browser `localStorage` under organized prefixes:
+All data is stored purely in client-side browser `localStorage`. Storage access goes through the safe helpers in `packages/ui` (`safeGetItem`, `safeSetItem`, `safeGetJSON`, `safeSetJSON`), so an unavailable or full storage (for example in private mode) never breaks a tool; it just falls back to defaults. Keys:
 
-| Key Format           | Type                                                 | Description                            |
-| :------------------- | :--------------------------------------------------- | :------------------------------------- |
-| `alltools:theme`     | `'dark' \| 'light' \| 'e-ink-light' \| 'e-ink-dark'` | User theme preference                  |
-| `alltools:language`  | `'en' \| 'pl'`                                       | User language preference               |
-| `alltools:notes:*`   | `JSON Object`                                        | Quick Notes saved items and checklists |
-| `alltools:ruler:ppi` | `number`                                             | Calibrated screen pixels-per-inch      |
+| Key                             | Type                                                 | Description                                         |
+| :------------------------------ | :--------------------------------------------------- | :-------------------------------------------------- |
+| `all_theme`                     | `'dark' \| 'light' \| 'e-ink-light' \| 'e-ink-dark'` | Theme preference (shared AllUI theme provider)      |
+| `alltools:language`             | `'en' \| 'pl'`                                       | Language preference                                 |
+| `alltools:quick-notes:v2:lists` | `JSON`                                               | Quick Notes lists and checklists                    |
+| `alltools:calc-history`         | `JSON`                                               | Calculator history                                  |
+| `alltools:ruler:ppm`            | `number`                                             | Calibrated screen pixels per millimeter             |
+| `alltools:tuner:*`              | `string`                                             | Guitar tuner preset, A4 calibration, noise gate     |
+| `alltools:level:*`              | `string`                                             | Level, protractor and compass settings, calibration |
+| `alltools:interval:*`           | `string \| JSON`                                     | Interval timer preset and custom steps              |
+| `alltools:qr-camera-id`         | `string`                                             | Last used camera for the QR scanner                 |
 
-No data, file contents, camera feeds, or audio waveforms are transmitted over the network. Production builds enforce a strict Content Security Policy (`connect-src 'self'`), providing a technical guarantee that the application cannot send data to external servers. All computations, conversions, and document processing execute purely client-side within your browser.
+No data, file contents, camera feeds, or audio waveforms are transmitted over the network. Files you open (PDFs, images, audio) are processed in memory in your browser and never uploaded. There are no cookies and no analytics. Production builds ship a Content Security Policy that limits network connections to the same origin (`connect-src 'self'`) and allows no external hosts, so the app cannot send data to third-party servers. The policy includes `'unsafe-eval'` for the HEIC converter (the `heic2any` library), which is why it is described as restrictive rather than strict.
+
+---
+
+## AI-assisted Development
+
+This project is built with AI coding agents under human direction. The architecture, the tech stack, the testing approach, the look and feel, and the written instructions the agents follow ([`AGENTS.md`](AGENTS.md) and the rules and skills in [`.agents/`](.agents/)) were decided by the author. The agents implement within those rules, the author reviews the result, and the repository has also been cross-checked with Claude, GitHub Copilot and Antigravity. Lint, formatting, type checks, tests and a production build must pass in CI before every deployment.
 
 ---
 

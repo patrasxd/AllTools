@@ -34,6 +34,71 @@ describe('calcEngine', () => {
     })
   })
 
+  describe('safeEvaluate parser', () => {
+    it('supports unary signs and nested parentheses', () => {
+      expect(safeEvaluate('-5 + 3')).toBe(-2)
+      expect(safeEvaluate('2 × -3')).toBe(-6)
+      expect(safeEvaluate('-(2 + 3) × 2')).toBe(-10)
+      expect(safeEvaluate('((1 + 2) × (3 + 4))')).toBe(21)
+    })
+
+    it('treats ^ as right-associative and binding tighter than unary minus', () => {
+      expect(safeEvaluate('2 ^ 3 ^ 2')).toBe(512)
+      expect(safeEvaluate('-2 ^ 2')).toBe(-4)
+      expect(safeEvaluate('2 ^ -1')).toBe(0.5)
+    })
+
+    it('supports modulo, decimals and exponent notation', () => {
+      expect(safeEvaluate('10 % 3')).toBe(1)
+      expect(safeEvaluate('.5 + 1.5')).toBe(2)
+      expect(safeEvaluate('1.5e3 + 1')).toBe(1501)
+    })
+
+    it('supports functions and constants', () => {
+      expect(safeEvaluate('sqrt(16) + 1')).toBe(5)
+      expect(safeEvaluate('log(1000)')).toBeCloseTo(3, 9)
+      expect(safeEvaluate('ln(e)')).toBeCloseTo(1, 9)
+      expect(safeEvaluate('sin(0)')).toBe(0)
+      expect(safeEvaluate('2 × π')).toBeCloseTo(2 * Math.PI, 6)
+    })
+
+    it('rejects malformed input', () => {
+      for (const bad of [
+        '2 +',
+        '(1 + 2',
+        '1 + 2)',
+        '()',
+        'sqrt',
+        'sqrt 4',
+        '2 3',
+        '*3',
+        '1 ** 2',
+        'sqrt(-1)',
+        '5 % 0',
+      ]) {
+        expect(() => safeEvaluate(bad)).toThrow()
+      }
+    })
+
+    it('never executes input as code', () => {
+      const attempts = [
+        'constructor',
+        '__proto__',
+        'toString()',
+        'alert(1)',
+        'Math.sqrt(4)',
+        'this',
+        'globalThis',
+        '1; 2',
+        '`1`',
+        'sqrt.constructor("return 1")()',
+      ]
+      for (const bad of attempts) {
+        expect(() => safeEvaluate(bad)).toThrow()
+      }
+    })
+  })
+
   describe('evaluateScientific', () => {
     it('calculates square and square root', () => {
       expect(evaluateScientific('sqr', 5)).toBe(25)
