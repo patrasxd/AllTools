@@ -43,31 +43,6 @@
   display: none !important;
 }
 
-[data-theme^='e-ink'] .home-filter-chip,
-[data-eink='true'] .home-filter-chip {
-  border: 1.5px solid var(--border) !important;
-  color: var(--text) !important;
-}
-
-[data-theme^='e-ink'] .home-filter-chip--active,
-[data-eink='true'] .home-filter-chip--active {
-  background: var(--text) !important;
-  color: var(--bg) !important;
-  border-color: var(--text) !important;
-}
-
-[data-theme^='e-ink'] .home-filter-chip--active .home-filter-count,
-[data-theme^='e-ink'] .home-filter-chip--active .home-filter-text,
-[data-eink='true'] .home-filter-chip--active .home-filter-count,
-[data-eink='true'] .home-filter-chip--active .home-filter-text {
-  color: var(--bg) !important;
-}
-
-[data-theme^='e-ink'] .home-filter-indicator,
-[data-eink='true'] .home-filter-indicator {
-  display: none !important;
-}
-
 [data-theme^='e-ink'] .tool-btn,
 [data-eink='true'] .tool-btn {
   border: 1.5px solid var(--border) !important;
@@ -202,68 +177,6 @@
   gap: var(--space-3);
   margin-bottom: 0;
   white-space: nowrap;
-}
-
-.home-filters {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  flex-wrap: wrap;
-}
-
-.home-filter-chip {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-1) var(--space-3);
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 9999px;
-  color: var(--text-dim);
-  font-family: var(--font-sans);
-  font-size: 0.6875rem;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  cursor: pointer;
-  user-select: none;
-  transition:
-    color var(--duration-fast) ease,
-    border-color var(--duration-fast) ease;
-}
-
-.home-filter-chip:hover {
-  color: var(--text);
-  border-color: var(--border-2);
-}
-
-.home-filter-chip--active {
-  color: var(--text);
-  border-color: transparent;
-  font-weight: 600;
-}
-
-.home-filter-indicator {
-  position: absolute;
-  inset: -1px;
-  background: var(--surface-2);
-  border: 1px solid var(--text-dim);
-  border-radius: 9999px;
-  z-index: 0;
-}
-
-.home-filter-text {
-  position: relative;
-  z-index: 1;
-}
-
-.home-filter-count {
-  position: relative;
-  z-index: 1;
-  font-family: var(--font-mono);
-  font-size: 0.625rem;
-  opacity: 0.6;
 }
 
 .home-no-games {

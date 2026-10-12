@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { AppFooter, useCardScrollRestoration, isReturningFromCard } from '@all/ui'
+import { AppFooter, FilterGroup, useCardScrollRestoration, isReturningFromCard } from '@all/ui'
 import { TOOLS_METADATA } from '../tools/registry'
 import { ToolCard } from '../components/ToolCard'
 import { useI18n } from '../i18n'
@@ -112,60 +112,31 @@ export function HomePage() {
               {t.toolCount(filteredTools.length)}
             </motion.p>
 
-            {/* Filter chips */}
+            {/* Shared category filters */}
             {allTags.length > 0 && (
-              <motion.div
-                className="home-filters"
-                role="group"
-                aria-label={t.filterLabel}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.35, duration: 0.4 }}
-              >
-                <button
-                  type="button"
-                  id="filter-all-btn"
-                  className={`home-filter-chip ${selectedTag === null ? 'home-filter-chip--active' : ''}`}
-                  onClick={() => setSelectedTag(null)}
-                >
-                  {selectedTag === null && (
-                    <motion.span
-                      className="home-filter-indicator"
-                      layoutId="activeFilterIndicator"
-                      transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                    />
-                  )}
-                  <span className="home-filter-text">{t.allFilter}</span>
-                  <span className="home-filter-count">{TOOLS_METADATA.length}</span>
-                </button>
-
-                {allTags.map((tag) => {
-                  const isSelected = selectedTag === tag
-                  const count = TOOLS_METADATA.filter((tool) =>
-                    getLocalizedTags(tool.tags, locale).some((tg) => tg.trim().toLowerCase() === tag),
-                  ).length
-
-                  return (
-                    <button
-                      key={tag}
-                      type="button"
-                      id={`filter-tag-${tag.replace(/\s+/g, '-').toLowerCase()}`}
-                      className={`home-filter-chip ${isSelected ? 'home-filter-chip--active' : ''}`}
-                      onClick={() => setSelectedTag(isSelected ? null : tag)}
-                    >
-                      {isSelected && (
-                        <motion.span
-                          className="home-filter-indicator"
-                          layoutId="activeFilterIndicator"
-                          transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                        />
-                      )}
-                      <span className="home-filter-text">{tag}</span>
-                      <span className="home-filter-count">{count}</span>
-                    </button>
-                  )
-                })}
-              </motion.div>
+              <FilterGroup<string | null>
+                label={t.filterLabel}
+                value={selectedTag}
+                onChange={(tag) => setSelectedTag(tag === selectedTag ? null : tag)}
+                options={[
+                  {
+                    id: 'all',
+                    value: null,
+                    label: t.allFilter,
+                    count: TOOLS_METADATA.length,
+                    buttonId: 'filter-all-btn',
+                  },
+                  ...allTags.map((tag) => ({
+                    id: tag,
+                    value: tag,
+                    label: tag,
+                    count: TOOLS_METADATA.filter((g) =>
+                      getLocalizedTags(g.tags, locale).some((t) => t.trim().toLowerCase() === tag),
+                    ).length,
+                    buttonId: `filter-tag-${tag.replace(/\s+/g, '-').toLowerCase()}`,
+                  })),
+                ]}
+              />
             )}
           </div>
 
