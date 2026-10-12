@@ -8,7 +8,7 @@ The detailed, authoritative instructions live in [`.agents/`](.agents/). This fi
 
 - npm workspaces monorepo (Node 22): `apps/shell` (Vite + React 18 + TypeScript + PWA), `packages/tools` (one package per tool), `packages/ui` (`@alltools/ui`, local helpers and icons).
 - Shared UI primitives, layouts and design tokens come from the **AllUI** git submodule (`AllUI/`, imported as `@all/ui`). Clone with `git clone --recurse-submodules`, or run `git submodule update --init --recursive`.
-- Two languages (English and Polish), three themes (`dark`, `light`, `e-ink-light`), responsive from phones to desktop.
+- Two languages (English and Polish), four themes (`dark`, `light`, `e-ink-light`, `e-ink-dark`), responsive from phones to desktop.
 
 ## Commands
 

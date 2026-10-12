@@ -239,7 +239,7 @@ export interface ToolComponentProps {
 
 ### Prerequisites
 
-- **Node.js**: `18.0.0` or higher
+- **Node.js**: `22` (the version used by CI)
 - **npm**: `9.0.0` or higher (supporting npm workspaces)
 
 ### Installation & Run
