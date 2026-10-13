@@ -1,3 +1,4 @@
+import { useClipboardFeedback } from '@all/ui'
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import {
   BoardLayout,
@@ -119,7 +120,7 @@ export function CalcConverter({ locale = 'en', setHeader, isEink = false }: Tool
   const [fromUnitId, setFromUnitId] = useState<string>('kg')
   const [toUnitId, setToUnitId] = useState<string>('lb')
   const [searchQuery, setSearchQuery] = useState<string>('')
-  const [copiedId, setCopiedId] = useState<string | null>(null)
+  const { copiedId, copyText } = useClipboardFeedback(1800)
 
   // Clear any redundant top-right header
   useEffect(() => {
@@ -332,9 +333,7 @@ export function CalcConverter({ locale = 'en', setHeader, isEink = false }: Tool
   }
 
   const copyResult = (val: string, id: string) => {
-    navigator.clipboard.writeText(val)
-    setCopiedId(id)
-    setTimeout(() => setCopiedId(null), 1800)
+    void copyText(val, id)
   }
 
   const primaryConvertedValue = useMemo(() => {

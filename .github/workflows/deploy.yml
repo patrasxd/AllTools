@@ -27,6 +27,12 @@ jobs:
           npm ci
           npm install --no-save @rollup/rollup-linux-x64-gnu
 
+      - name: Verify pinned shared UI
+        run: |
+          npm ci --prefix AllUI
+          npm run build --prefix AllUI
+          npm run test:ui
+
       - name: Run linter
         run: npm run lint
 
@@ -38,6 +44,20 @@ jobs:
 
       - name: Run tests
         run: npm test
+
+      - name: Install browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Shared browser checks
+        run: npm run test:e2e
+
+      - name: Upload browser artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-results
+          path: test-results
+          if-no-files-found: ignore
 
       - name: Build project
         run: npm run build

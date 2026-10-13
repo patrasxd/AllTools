@@ -1,3 +1,4 @@
+import { useClipboardFeedback } from '@all/ui'
 import React, { useState, useEffect, useMemo, useId, useCallback } from 'react'
 import { BoardLayout, Button, PillGroup, StatsHeader, ControlsBar, CopyIcon, CheckIcon, RestartIcon } from '@all/ui'
 import type { DevVaultMode, PasswordConfig, EncoderFormat, HashAlgorithm } from './types'
@@ -35,7 +36,7 @@ export function DevVault({ locale = 'en', setHeader, isEink = false }: ToolCompo
   const hashInputId = useId()
 
   const [activeMode, setActiveMode] = useState<DevVaultMode>('password')
-  const [copied, setCopied] = useState<boolean>(false)
+  const { copied, copyText } = useClipboardFeedback()
 
   // ─── 1. Password State ───
   const [pwdConfig, setPwdConfig] = useState<PasswordConfig>({
@@ -180,9 +181,7 @@ export function DevVault({ locale = 'en', setHeader, isEink = false }: ToolCompo
 
   const copyToClipboard = (text: string) => {
     if (!navigator.clipboard) return
-    navigator.clipboard.writeText(text)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    void copyText(text)
   }
 
   const modeOptions = [

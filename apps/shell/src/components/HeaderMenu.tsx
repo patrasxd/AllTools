@@ -5,7 +5,7 @@ import { usePWAInstall } from '../hooks/usePWAInstall'
 
 export function HeaderMenu() {
   const { theme, setTheme, isEink, isDark } = useTheme()
-  const { locale, setLocale, t } = useI18n()
+  const { locale, setLocale } = useI18n()
   const { canInstall, install } = usePWAInstall()
 
   return (
@@ -19,19 +19,6 @@ export function HeaderMenu() {
       canInstall={canInstall}
       onInstall={() => {
         void install()
-      }}
-      labels={{
-        language: t.language,
-        theme: t.theme,
-        darkMode: t.darkMode,
-        lightMode: t.lightMode,
-        einkMode: t.einkMode,
-        einkOff: t.einkOff,
-        einkOn: t.einkOn,
-        installApp: t.installApp,
-        preferences: t.preferences,
-        menuToggleAria: t.menuToggleAria,
-        closeMenuAria: t.closeMenuAria,
       }}
     />
   )

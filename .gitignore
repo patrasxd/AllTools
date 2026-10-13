@@ -28,3 +28,7 @@ dev-dist/
 sw.js
 sw.js.map
 workbox-*.js
+
+# Browser test artifacts
+playwright-report
+test-results

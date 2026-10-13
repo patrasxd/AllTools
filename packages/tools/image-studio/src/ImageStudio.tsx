@@ -1,3 +1,4 @@
+import { useClipboardFeedback } from '@all/ui'
 import React, { useState, useEffect, useRef, useId, useMemo, useCallback } from 'react'
 import {
   BoardLayout,
@@ -117,7 +118,7 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false, setIsDir
   const [outputDataUrl, setOutputDataUrl] = useState<string>('')
   const [outputDimensions, setOutputDimensions] = useState<{ w: number; h: number }>({ w: 0, h: 0 })
   const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [copied, setCopied] = useState<boolean>(false)
+  const { copied, markCopied } = useClipboardFeedback()
   const [showOriginal, setShowOriginal] = useState<boolean>(false)
   const [isDragging, setIsDragging] = useState<boolean>(false)
 
@@ -145,7 +146,7 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false, setIsDir
     rightAngleEnhance: false,
   })
   const [vectorViewMode, setVectorViewMode] = useState<'split' | 'vector' | 'original'>('vector')
-  const [copiedSvg, setCopiedSvg] = useState<boolean>(false)
+  const { copied: copiedSvg, markCopied: markCopiedSvg } = useClipboardFeedback()
   const [vectorSvgBlobUrl, setVectorSvgBlobUrl] = useState<string>('')
 
   const { isVectorizing, vectorResult, error: vectorError, runVectorize } = useVectorizeWorker()
@@ -638,14 +639,14 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false, setIsDir
           img.onload = res
         })
         ctx?.drawImage(img, 0, 0)
-        canvas.toBlob(async (pngBlob) => {
-          if (pngBlob) {
-            await navigator.clipboard.write([new ClipboardItem({ 'image/png': pngBlob })])
-          }
-        }, 'image/png')
+        const pngBlob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'))
+        if (!pngBlob) {
+          handleDownload()
+          return
+        }
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': pngBlob })])
       }
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      markCopied()
     } catch (err) {
       console.warn('Clipboard write error:', err)
       handleDownload()
@@ -656,8 +657,7 @@ export function ImageStudio({ locale = 'en', setHeader, isEink = false, setIsDir
     if (!vectorResult?.svg) return
     try {
       await navigator.clipboard.writeText(vectorResult.svg)
-      setCopiedSvg(true)
-      setTimeout(() => setCopiedSvg(false), 2000)
+      markCopiedSvg()
     } catch (err) {
       console.warn('Clipboard SVG copy error:', err)
       handleDownloadSvg()

@@ -6,7 +6,7 @@ import { TOOLS_METADATA, loadToolComponent } from '../tools/registry'
 import { useI18n } from '../i18n'
 import { useTheme } from '../hooks/useTheme'
 import { useToolHeader } from '../components/Layout'
-import { safeSetJSON } from '@alltools/ui'
+import { safeSetJSON } from '@all/ui'
 
 function ToolFallback() {
   const { t } = useI18n()

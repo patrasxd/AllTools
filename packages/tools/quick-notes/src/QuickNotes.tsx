@@ -1,3 +1,4 @@
+import { useClipboardFeedback } from '@all/ui'
 import React, { useState, useEffect, useCallback } from 'react'
 import {
   BoardLayout,
@@ -40,7 +41,7 @@ export function QuickNotes({ locale = 'en', isEink = false, setHeader }: ToolCom
 
   const [activeCategoryId, setActiveCategoryId] = useState<Category>('shopping')
   const [newItemText, setNewItemText] = useState<string>('')
-  const [copied, setCopied] = useState<boolean>(false)
+  const { copied, copyText } = useClipboardFeedback()
 
   const activeList = lists.find((l) => l.category === activeCategoryId) || lists[0]
 
@@ -103,9 +104,7 @@ export function QuickNotes({ locale = 'en', isEink = false, setHeader }: ToolCom
   const handleCopyList = () => {
     if (!activeList || activeList.items.length === 0) return
     const text = formatListForClipboard(activeList.items)
-    navigator.clipboard.writeText(text)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    void copyText(text)
   }
 
   const categoryOptions = [

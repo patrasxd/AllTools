@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useMemo } from 'react'
 import type { Locale } from '../types/tool'
-import { safeGetItem, safeSetItem } from '@alltools/ui'
+import { safeGetItem, safeSetItem } from '@all/ui'
 
 const STORAGE_KEY = 'alltools:language'
 

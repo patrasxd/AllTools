@@ -1,3 +1,4 @@
+import { useClipboardFeedback } from '@all/ui'
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import QRCode from 'qrcode'
 import jsQR from 'jsqr'
@@ -32,7 +33,7 @@ export function QrSuite({ locale = 'en', setHeader, isEink = false }: ToolCompon
   const [wifiPass, setWifiPass] = useState<string>('bezpiecznehaslo123')
   const [contactName, setContactName] = useState<string>('Jan Kowalski')
   const [contactPhone, setContactPhone] = useState<string>('+48 500 000 000')
-  const [copied, setCopied] = useState<boolean>(false)
+  const { copied, markCopied, copyText } = useClipboardFeedback()
 
   // Scanner state
   const [isScanning, setIsScanning] = useState<boolean>(false)
@@ -361,16 +362,13 @@ export function QrSuite({ locale = 'en', setHeader, isEink = false }: ToolCompon
 
   const copyToClipboard = () => {
     if (!canvasRef.current) return
-    canvasRef.current.toBlob((blob) => {
+    canvasRef.current.toBlob(async (blob) => {
       if (blob) {
         try {
-          navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
-          setCopied(true)
-          setTimeout(() => setCopied(false), 2000)
+          await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+          markCopied()
         } catch {
-          navigator.clipboard.writeText(payload)
-          setCopied(true)
-          setTimeout(() => setCopied(false), 2000)
+          await copyText(payload)
         }
       }
     })
@@ -617,9 +615,7 @@ export function QrSuite({ locale = 'en', setHeader, isEink = false }: ToolCompon
                           size="sm"
                           icon={copied ? <CheckIcon width={14} height={14} /> : <CopyIcon width={14} height={14} />}
                           onClick={() => {
-                            navigator.clipboard.writeText(scannedResult)
-                            setCopied(true)
-                            setTimeout(() => setCopied(false), 2000)
+                            void copyText(scannedResult)
                           }}
                         >
                           {copied ? t.copied : t.copy}

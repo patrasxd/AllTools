@@ -1,19 +1,9 @@
 import React from 'react'
 
-export type Locale = 'en' | 'pl'
-
-export type LocalizedString = string | { en: string; pl: string }
-export type LocalizedTags = string[] | { en: string[]; pl: string[] }
-
-export function getLocalizedText(field: LocalizedString, locale: Locale): string {
-  if (typeof field === 'string') return field
-  return field[locale] ?? field.en ?? ''
-}
-
-export function getLocalizedTags(tags: LocalizedTags, locale: Locale): string[] {
-  if (Array.isArray(tags)) return tags
-  return tags[locale] ?? tags.en ?? []
-}
+import type { Locale, LocalizedText, LocalizedTags } from '@all/ui'
+export type { Locale, LocalizedTags } from '@all/ui'
+export type LocalizedString = LocalizedText
+export { getLocalizedText, getLocalizedTags } from '@all/ui'
 
 export interface ToolMetadata {
   slug: string

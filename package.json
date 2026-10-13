@@ -12,11 +12,13 @@
     "start": "npm run dev --workspace=@alltools/shell",
     "dev": "npm run dev --workspace=@alltools/shell",
     "build": "npm run build --workspace=@alltools/shell",
+    "test:ui": "npm --prefix AllUI test",
     "typecheck": "tsc -b apps/shell",
     "lint": "eslint .",
     "format:check": "prettier --check .",
+    "test:e2e": "playwright test",
     "preview": "npm run preview --workspace=@alltools/shell",
-    "test": "vitest run packages/tools",
+    "test": "vitest run packages/tools packages/ui",
     "install-all": "npm install"
   },
   "keywords": [
@@ -34,6 +36,7 @@
   "license": "MIT",
   "devDependencies": {
     "@eslint/js": "^9.20.0",
+    "@playwright/test": "^1.64.0",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "eslint": "^9.20.0",

@@ -8,3 +8,5 @@ package-lock.json
 *.woff2
 sw.js
 workbox-*.js
+playwright-report
+test-results
