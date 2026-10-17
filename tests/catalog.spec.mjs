@@ -3,6 +3,6 @@ import { registerCatalogTests } from '../AllUI/browser-tests/catalog.mjs'
 registerCatalogTests(test, expect, {
   appName: 'AllTools',
   cardSelector: '.tool-card',
-  count: 12,
+  count: 13,
   representative: { card: '#tool-card-calc-converter', path: '/tools/calc-converter' },
 })

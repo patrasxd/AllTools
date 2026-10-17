@@ -1,6 +1,7 @@
 import { ToolMetadata } from '../types/tool'
 
 import { metadata as calcConverterMeta } from '@alltools/calc-converter/metadata'
+import { metadata as codeStudioMeta } from '@alltools/code-studio/metadata'
 import { metadata as devVaultMeta } from '@alltools/dev-vault/metadata'
 import { metadata as imageStudioMeta } from '@alltools/image-studio/metadata'
 import { metadata as pdfSuiteMeta } from '@alltools/pdf-suite/metadata'
@@ -15,6 +16,7 @@ import { metadata as sketchSuiteMeta } from '@alltools/sketch-suite/metadata'
 
 export const TOOLS_METADATA: ToolMetadata[] = [
   calcConverterMeta,
+  codeStudioMeta,
   devVaultMeta,
   guitarTunerMeta,
   imageStudioMeta,
@@ -32,6 +34,7 @@ export const TOOLS_METADATA: ToolMetadata[] = [
 const loaders: Record<string, () => Promise<{ ToolComponent: React.ComponentType<any> }>> = {
   'sound-meter': () => import('@alltools/sound-meter'),
   'dev-vault': () => import('@alltools/dev-vault'),
+  'code-studio': () => import('@alltools/code-studio'),
   'pdf-suite': () => import('@alltools/pdf-suite'),
   'image-studio': () => import('@alltools/image-studio'),
   'calc-converter': () => import('@alltools/calc-converter'),

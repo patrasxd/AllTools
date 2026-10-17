@@ -71,22 +71,23 @@ Every now and then I need to merge or sign a PDF, make a QR code, turn a raster 
 
 ## Tools Catalog
 
-AllTools currently provides **12 high-utility tools**:
+AllTools currently provides **13 high-utility tools**:
 
-| Tool                     | Slug                 | Category         | Template                | Key Capabilities                                                                                                                                                                                                                                                                                              |
-| :----------------------- | :------------------- | :--------------- | :---------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Sound Meter**          | `sound-meter`        | Audio / Sensor   | `FullBleedLayout`       | Real-time acoustic noise meter via microphone input with dBA/dBZ frequency weighting, peak hold, and live audio oscilloscope.                                                                                                                                                                                 |
-| **Dev Vault**            | `dev-vault`          | Utility / Dev    | `SplitWorkspaceLayout`  | CSPRNG password & passphrase generator, UUIDv4, SHA/MD5 hashing, Base64 encoder/decoder, JWT payload inspector, and IPv4/CIDR subnet calculator.                                                                                                                                                              |
-| **PDF Suite**            | `pdf-suite`          | Documents        | `SplitWorkspaceLayout`  | In-browser PDF toolkit powered by `pdf-lib` & `pdfjs-dist`: merge documents, extract/split pages, rotate orientations, sign documents (drawn or typed signature), and convert images into PDF.                                                                                                                |
-| **Image Studio**         | `image-studio`       | Media / Graphics | `CenteredUtilityLayout` | Client-side image editor: crop, resize, text/image watermarking, quality compression, format conversion (PNG/JPEG/WebP/HEIC), and raster-to-SVG vectorization (B&W via VTracer WASM `vectortracer`, color via `imagetracerjs`; a single Smoothness slider drives pre-trace upscale + blur and curve fitting). |
-| **Calc & Converter**     | `calc-converter`     | Math / Utility   | `CenteredUtilityLayout` | Dual-mode calculator (Standard & Scientific) paired with multi-unit converter across Length, Mass, Temperature, Speed, Time, and Digital Storage.                                                                                                                                                             |
-| **Guitar Tuner**         | `guitar-tuner`       | Audio            | `FullBleedLayout`       | High-precision chromatic and guitar tuner using real-time Web Audio FFT pitch detection, note frequency gauge, and reference tone generator.                                                                                                                                                                  |
-| **Level & Protractor**   | `level-protractor`   | Measurement      | `FullBleedLayout`       | Dual-axis bubble level using DeviceOrientation API, calibrated tubular spirit level, interactive touch-canvas protractor with angle lock, and digital magnetic compass.                                                                                                                                       |
-| **Screen Ruler**         | `screen-ruler`       | Measurement      | `FullBleedLayout`       | Screen-calibrated on-screen ruler supporting millimeters, centimeters, and inches with standard credit-card PPI calibration and dual-axis calipers.                                                                                                                                                           |
-| **QR Suite**             | `qr-suite`           | Utility          | `SplitWorkspaceLayout`  | Offline QR Code generator (URL, text, WiFi credentials, vCard) with custom sizing and error correction, paired with live camera & file QR scanner.                                                                                                                                                            |
-| **Stopwatch & Interval** | `stopwatch-interval` | Time             | `CenteredUtilityLayout` | Precision stopwatch with millisecond timing, lap recordings, split differences, and customizable interval HIIT workout timer with audio beeps.                                                                                                                                                                |
-| **Quick Notes**          | `quick-notes`        | Productivity     | `SplitWorkspaceLayout`  | Minimalist offline scratchpad and checklist with markdown support, color tags, live text search, and automatic local persistence.                                                                                                                                                                             |
-| **Sketch Suite**         | `sketch-suite`       | Media / Graphics | `FullBleedLayout`       | Retro sketch & drawing suite with shapes, flood fill bucket, image clipboard paste (Ctrl+V) & editing, and custom palettes.                                                                                                                                                                                   |
+| Tool                     | Slug                 | Category         | Template                | Key Capabilities                                                                                                                                                                                                                                                                                                                                                                                   |
+| :----------------------- | :------------------- | :--------------- | :---------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Sound Meter**          | `sound-meter`        | Audio / Sensor   | `FullBleedLayout`       | Real-time acoustic noise meter via microphone input with dBA/dBZ frequency weighting, peak hold, and live audio oscilloscope.                                                                                                                                                                                                                                                                      |
+| **Dev Vault**            | `dev-vault`          | Utility / Dev    | `SplitWorkspaceLayout`  | CSPRNG password & passphrase generator, UUIDv4, SHA/MD5 hashing, Base64 encoder/decoder, JWT payload inspector, and IPv4/CIDR subnet calculator.                                                                                                                                                                                                                                                   |
+| **Code Studio**          | `code-studio`        | Utility / Dev    | `SplitWorkspaceLayout`  | Offline multi-tab code and text editor (CodeMirror 6): syntax highlighting for 18 languages, find & replace with regex, syntax error underlining with a Problems panel, Prettier/SQL formatting, JSON minify, Markdown live preview with a syntax toolbar, code-to-image (PNG/SVG/clipboard), LF/CRLF handling, drag & drop import, export to any file extension, and automatic local persistence. |
+| **PDF Suite**            | `pdf-suite`          | Documents        | `SplitWorkspaceLayout`  | In-browser PDF toolkit powered by `pdf-lib` & `pdfjs-dist`: merge documents, extract/split pages, rotate orientations, sign documents (drawn or typed signature), and convert images into PDF.                                                                                                                                                                                                     |
+| **Image Studio**         | `image-studio`       | Media / Graphics | `CenteredUtilityLayout` | Client-side image editor: crop, resize, text/image watermarking, quality compression, format conversion (PNG/JPEG/WebP/HEIC), and raster-to-SVG vectorization (B&W via VTracer WASM `vectortracer`, color via `imagetracerjs`; a single Smoothness slider drives pre-trace upscale + blur and curve fitting).                                                                                      |
+| **Calc & Converter**     | `calc-converter`     | Math / Utility   | `CenteredUtilityLayout` | Dual-mode calculator (Standard & Scientific) paired with multi-unit converter across Length, Mass, Temperature, Speed, Time, and Digital Storage.                                                                                                                                                                                                                                                  |
+| **Guitar Tuner**         | `guitar-tuner`       | Audio            | `FullBleedLayout`       | High-precision chromatic and guitar tuner using real-time Web Audio FFT pitch detection, note frequency gauge, and reference tone generator.                                                                                                                                                                                                                                                       |
+| **Level & Protractor**   | `level-protractor`   | Measurement      | `FullBleedLayout`       | Dual-axis bubble level using DeviceOrientation API, calibrated tubular spirit level, interactive touch-canvas protractor with angle lock, and digital magnetic compass.                                                                                                                                                                                                                            |
+| **Screen Ruler**         | `screen-ruler`       | Measurement      | `FullBleedLayout`       | Screen-calibrated on-screen ruler supporting millimeters, centimeters, and inches with standard credit-card PPI calibration and dual-axis calipers.                                                                                                                                                                                                                                                |
+| **QR Suite**             | `qr-suite`           | Utility          | `SplitWorkspaceLayout`  | Offline QR Code generator (URL, text, WiFi credentials, vCard) with custom sizing and error correction, paired with live camera & file QR scanner.                                                                                                                                                                                                                                                 |
+| **Stopwatch & Interval** | `stopwatch-interval` | Time             | `CenteredUtilityLayout` | Precision stopwatch with millisecond timing, lap recordings, split differences, and customizable interval HIIT workout timer with audio beeps.                                                                                                                                                                                                                                                     |
+| **Quick Notes**          | `quick-notes`        | Productivity     | `SplitWorkspaceLayout`  | Minimalist offline scratchpad and checklist with markdown support, color tags, live text search, and automatic local persistence.                                                                                                                                                                                                                                                                  |
+| **Sketch Suite**         | `sketch-suite`       | Media / Graphics | `FullBleedLayout`       | Retro sketch & drawing suite with shapes, flood fill bucket, image clipboard paste (Ctrl+V) & editing, and custom palettes.                                                                                                                                                                                                                                                                        |
 
 ---
 
@@ -99,7 +100,7 @@ graph TD
     SharedUI["@all/ui (Shared Design System & Templates)"]
     Shell["apps/shell (Host Application)"]
     ToolsUI["packages/ui (@alltools/ui Primitives)"]
-    Tools["packages/tools/* (12 Autonomous Tool Packages)"]
+    Tools["packages/tools/* (13 Autonomous Tool Packages)"]
 
     SharedUI --> Shell
     SharedUI --> ToolsUI
@@ -133,8 +134,9 @@ AllTools/
 │
 ├── packages/
 │   ├── ui/                        # Tool-specific UI wrappers (@alltools/ui)
-│   └── tools/                     # 12 Standalone Tool Packages
+│   └── tools/                     # 13 Standalone Tool Packages
 │       ├── calc-converter/
+│       ├── code-studio/
 │       ├── dev-vault/
 │       ├── guitar-tuner/
 │       ├── image-studio/
@@ -158,7 +160,7 @@ Rather than arbitrary layout sizing, every tool in AllTools is built upon reusab
 
 1. **`SplitWorkspaceLayout`**:
    - Ideal for workbench workflows where input/controls live on the left (or top on mobile) and live output/preview occupies the right (or bottom on mobile).
-   - Used by: `dev-vault`, `pdf-suite`, `qr-suite`, `quick-notes`.
+   - Used by: `code-studio`, `dev-vault`, `pdf-suite`, `qr-suite`, `quick-notes`.
 2. **`CenteredUtilityLayout`**:
    - Ideal for focused card utilities, converters, and timers requiring clean vertical or grid centering.
    - Used by: `calc-converter`, `image-studio`, `stopwatch-interval`.
@@ -305,17 +307,19 @@ Deployment is fully automated via GitHub Actions ([`.github/workflows/deploy.yml
 
 All data is stored purely in client-side browser `localStorage`. Storage access goes through the safe helpers in `packages/ui` (`safeGetItem`, `safeSetItem`, `safeGetJSON`, `safeSetJSON`), so an unavailable or full storage (for example in private mode) never breaks a tool; it just falls back to defaults. Keys:
 
-| Key                             | Type                                                 | Description                                         |
-| :------------------------------ | :--------------------------------------------------- | :-------------------------------------------------- |
-| `all_theme`                     | `'dark' \| 'light' \| 'e-ink-light' \| 'e-ink-dark'` | Theme preference (shared AllUI theme provider)      |
-| `alltools:language`             | `'en' \| 'pl'`                                       | Language preference                                 |
-| `alltools:quick-notes:v2:lists` | `JSON`                                               | Quick Notes lists and checklists                    |
-| `alltools:calc-history`         | `JSON`                                               | Calculator history                                  |
-| `alltools:ruler:ppm`            | `number`                                             | Calibrated screen pixels per millimeter             |
-| `alltools:tuner:*`              | `string`                                             | Guitar tuner preset, A4 calibration, noise gate     |
-| `alltools:level:*`              | `string`                                             | Level, protractor and compass settings, calibration |
-| `alltools:interval:*`           | `string \| JSON`                                     | Interval timer preset and custom steps              |
-| `alltools:qr-camera-id`         | `string`                                             | Last used camera for the QR scanner                 |
+| Key                                     | Type                                                 | Description                                         |
+| :-------------------------------------- | :--------------------------------------------------- | :-------------------------------------------------- |
+| `all_theme`                             | `'dark' \| 'light' \| 'e-ink-light' \| 'e-ink-dark'` | Theme preference (shared AllUI theme provider)      |
+| `alltools:language`                     | `'en' \| 'pl'`                                       | Language preference                                 |
+| `alltools:quick-notes:v2:lists`         | `JSON`                                               | Quick Notes lists and checklists                    |
+| `alltools:code-studio:v1:session`       | `JSON`                                               | Code Studio open documents and editor settings      |
+| `alltools:code-studio:v1:image-options` | `JSON`                                               | Code Studio code-to-image settings                  |
+| `alltools:calc-history`                 | `JSON`                                               | Calculator history                                  |
+| `alltools:ruler:ppm`                    | `number`                                             | Calibrated screen pixels per millimeter             |
+| `alltools:tuner:*`                      | `string`                                             | Guitar tuner preset, A4 calibration, noise gate     |
+| `alltools:level:*`                      | `string`                                             | Level, protractor and compass settings, calibration |
+| `alltools:interval:*`                   | `string \| JSON`                                     | Interval timer preset and custom steps              |
+| `alltools:qr-camera-id`                 | `string`                                             | Last used camera for the QR scanner                 |
 
 No data, file contents, camera feeds, or audio waveforms are transmitted over the network. Files you open (PDFs, images, audio) are processed in memory in your browser and never uploaded. There are no cookies and no analytics. Production builds ship a Content Security Policy that limits network connections to the same origin (`connect-src 'self'`) and allows no external hosts, so the app cannot send data to third-party servers. The policy includes `'unsafe-eval'` for the HEIC converter (the `heic2any` library), which is why it is described as restrictive rather than strict.
 
