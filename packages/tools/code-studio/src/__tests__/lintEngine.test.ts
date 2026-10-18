@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { jsonLanguage } from '@codemirror/lang-json'
 import { javascriptLanguage } from '@codemirror/lang-javascript'
-import { buildProblems, findSyntaxErrors, validateJson } from '../utils/lintEngine'
+import { javaLanguage } from '@codemirror/lang-java'
+import { buildProblems, findSyntaxErrors, findSyntaxErrorsForLanguage, validateJson } from '../utils/lintEngine'
 
 const messages = {
   syntaxError: 'Syntax error',
@@ -92,5 +93,39 @@ describe('buildProblems', () => {
 
   it('stays empty for valid JSON', () => {
     expect(buildProblems('{"a": 1}', [], 'json', messages)).toEqual([])
+  })
+})
+
+describe('findSyntaxErrorsForLanguage (Java snippets)', () => {
+  const parse = (text: string) => javaLanguage.parser.parse(text)
+  const check = (text: string, languageId = 'java') => findSyntaxErrorsForLanguage(text, parse(text), languageId, parse)
+
+  it('does not report a method written outside a class', () => {
+    expect(check('public static int add(int a, int b) {\n  return a + b;\n}')).toEqual([])
+    expect(check('void hello() {\n  System.out.println("hi");\n}')).toEqual([])
+  })
+
+  it('keeps accepting complete classes and plain statements', () => {
+    expect(check('public class A {\n  int add(int a, int b) { return a + b; }\n}')).toEqual([])
+    expect(check('int x = 5;\nSystem.out.println(x);')).toEqual([])
+  })
+
+  it('still reports real mistakes inside a loose method', () => {
+    const text = 'int add(int a, int b {\n  return a + b;\n}'
+    const errors = check(text)
+    expect(errors.length).toBeGreaterThan(0)
+    for (const range of errors) {
+      expect(range.from).toBeGreaterThanOrEqual(0)
+      expect(range.to).toBeLessThanOrEqual(text.length)
+    }
+  })
+
+  it('still reports real mistakes inside a class', () => {
+    expect(check('class A {\n  int add(int a, int b {\n    return a + b;\n  }\n}').length).toBeGreaterThan(0)
+  })
+
+  it('does not wrap languages that have no snippet wrapper', () => {
+    const text = 'public static int add(int a, int b) {\n  return a + b;\n}'
+    expect(check(text, 'cpp').length).toBeGreaterThan(0)
   })
 })

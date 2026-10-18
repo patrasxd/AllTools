@@ -8,6 +8,7 @@ import {
   indentOnInput,
   ensureSyntaxTree,
   indentUnit,
+  language,
   syntaxHighlighting,
   syntaxTree,
 } from '@codemirror/language'
@@ -27,7 +28,7 @@ import {
 } from '@codemirror/view'
 import { tags as t } from '@lezer/highlight'
 import type { EditorSettings, Problem } from '../types'
-import { buildProblems, findSyntaxErrors, type ProblemMessages } from './lintEngine'
+import { buildProblems, findSyntaxErrorsForLanguage, type ProblemMessages } from './lintEngine'
 
 /**
  * Highlight classes instead of inline colors: every theme (dark, light, e-ink) styles
@@ -73,6 +74,8 @@ export interface BaseExtensionOptions {
   /** Returns true while "Tab moves focus" mode is on, so Tab is left to the browser. */
   isTabFocusMode: () => boolean
   toggleTabFocusMode: () => void
+  onFormat: () => void
+  onSave: () => void
 }
 
 /** Locale and accessibility dependent extensions (search panel wording, editor label), kept in a Compartment. */
@@ -106,6 +109,22 @@ export function baseExtensions(options: BaseExtensionOptions): Extension[] {
           return true
         },
       },
+      {
+        key: 'Shift-Alt-f',
+        preventDefault: true,
+        run: () => {
+          options.onFormat()
+          return true
+        },
+      },
+      {
+        key: 'Mod-s',
+        preventDefault: true,
+        run: () => {
+          options.onSave()
+          return true
+        },
+      },
       { key: 'Tab', run: (view) => !options.isTabFocusMode() && indentMore(view) },
       { key: 'Shift-Tab', run: (view) => !options.isTabFocusMode() && indentLess(view) },
       ...closeBracketsKeymap,
@@ -130,7 +149,10 @@ export function lintExtensions(options: LintOptions): Extension[] {
       (view) => {
         const text = view.state.doc.toString()
         const tree = ensureSyntaxTree(view.state, view.state.doc.length, 150) ?? syntaxTree(view.state)
-        const ranges = findSyntaxErrors(tree, view.state.doc.length)
+        const grammar = view.state.facet(language)
+        const ranges = findSyntaxErrorsForLanguage(text, tree, options.getLanguageId(), (source) =>
+          grammar ? grammar.parser.parse(source) : null,
+        )
         const problems = buildProblems(text, ranges, options.getLanguageId(), options.getMessages())
         options.onProblems(problems)
         return problems.map<Diagnostic>((problem) => ({

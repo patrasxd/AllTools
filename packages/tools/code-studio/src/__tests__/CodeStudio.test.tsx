@@ -23,6 +23,8 @@ function getView(): EditorView {
   return view
 }
 
+const editorText = () => getView().state.doc.toString()
+
 function typeInEditor(text: string) {
   const view = getView()
   act(() => {
@@ -159,9 +161,9 @@ describe('CodeStudio', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   })
 
-  it('renames a tab and re-detects the language', async () => {
+  it('renames a tab with a double-click and re-detects the language', async () => {
     render(<CodeStudio locale="en" />)
-    fireEvent.click(screen.getByRole('button', { name: 'Rename' }))
+    fireEvent.doubleClick(screen.getByRole('tab', { name: 'untitled-1.txt' }))
     const dialog = await screen.findByRole('dialog')
     fireEvent.change(within(dialog).getByLabelText('File name'), { target: { value: 'config.yaml' } })
     fireEvent.click(within(dialog).getByRole('button', { name: 'Apply' }))
@@ -170,10 +172,29 @@ describe('CodeStudio', () => {
     expect((screen.getByLabelText('Language') as HTMLSelectElement).value).toBe('yaml')
   })
 
+  it('renames a tab with F2, even one that is not active yet', async () => {
+    render(<CodeStudio locale="en" />)
+    fireEvent.click(screen.getByRole('button', { name: 'New' }))
+    expect(tabNames()).toEqual(['untitled-1.txt', 'untitled-2.txt'])
+    fireEvent.keyDown(screen.getByRole('tab', { name: 'untitled-1.txt' }), { key: 'F2' })
+
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.change(within(dialog).getByLabelText('File name'), { target: { value: 'first.md' } })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Apply' }))
+    await waitFor(() => expect(tabNames()).toEqual(['first.md', 'untitled-2.txt']))
+  })
+
+  it('adds a tab with the plus button at the end of the tab strip', () => {
+    render(<CodeStudio locale="en" />)
+    fireEvent.click(screen.getByRole('button', { name: 'New tab' }))
+    expect(tabNames()).toEqual(['untitled-1.txt', 'untitled-2.txt'])
+  })
+
   it('lists syntax problems for invalid JSON and jumps to them', async () => {
     const session = createDefaultSession()
     session.docs = [createDoc([], { id: 'j', name: 'broken.json', content: '{"a": 1,, "b": }' })]
     session.activeId = 'j'
+    session.settings.panelOpen = true
     localStorage.setItem(SESSION_STORAGE_KEY, serializeSession(session)!)
 
     render(<CodeStudio locale="en" />)
@@ -189,6 +210,7 @@ describe('CodeStudio', () => {
     const session = createDefaultSession()
     session.docs = [createDoc([], { id: 'j', name: 'ok.json', content: '{"a": 1}' })]
     session.activeId = 'j'
+    session.settings.panelOpen = true
     localStorage.setItem(SESSION_STORAGE_KEY, serializeSession(session)!)
 
     render(<CodeStudio locale="en" />)
@@ -198,16 +220,16 @@ describe('CodeStudio', () => {
     expect(await screen.findByText('Syntax checking is not available for plain text.')).toBeInTheDocument()
   })
 
-  it('toggles wrapping and line numbers', async () => {
+  it('toggles wrapping and line numbers from the settings dialog', async () => {
     render(<CodeStudio locale="en" />)
     expect(document.querySelector('.cm-lineNumbers')).not.toBeNull()
-    const lines = screen.getByRole('button', { name: 'Lines' })
-    fireEvent.click(lines)
-    await waitFor(() => expect(document.querySelector('.cm-lineNumbers')).toBeNull())
-    expect(lines).toHaveAttribute('aria-pressed', 'false')
 
-    const wrap = screen.getByRole('button', { name: 'Wrap' })
-    fireEvent.click(wrap)
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }))
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.click(within(dialog).getByRole('switch', { name: 'Lines' }))
+    await waitFor(() => expect(document.querySelector('.cm-lineNumbers')).toBeNull())
+
+    fireEvent.click(within(dialog).getByRole('switch', { name: 'Wrap' }))
     await waitFor(() => expect(document.querySelector('.cm-lineWrapping')).not.toBeNull())
   })
 
@@ -239,6 +261,195 @@ describe('CodeStudio', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Szukaj' }))
     await waitFor(() => expect(document.querySelector('.cm-search')).not.toBeNull())
     expect(document.querySelector('.cm-search input[name="search"]')?.getAttribute('placeholder')).toBe('Szukaj')
+  })
+
+  it('asks before closing a tab that has text, and keeps it when cancelled', async () => {
+    render(<CodeStudio locale="en" />)
+    typeInEditor('important notes')
+    fireEvent.click(screen.getByRole('button', { name: 'Close untitled-1.txt' }))
+
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).getByText('Close untitled-1.txt?')).toBeInTheDocument()
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(tabNames()).toEqual(['untitled-1.txt'])
+    expect(editorText()).toBe('important notes')
+  })
+
+  it('closes the tab after the confirmation', async () => {
+    render(<CodeStudio locale="en" />)
+    fireEvent.click(screen.getByRole('button', { name: 'New' }))
+    typeInEditor('to be removed')
+    fireEvent.click(screen.getByRole('button', { name: 'Close untitled-2.txt' }))
+
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Close tab' }))
+    await waitFor(() => expect(tabNames()).toEqual(['untitled-1.txt']))
+  })
+
+  it('shows problems as dismissible alerts above the editor', async () => {
+    render(<CodeStudio locale="en" />)
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement
+    const huge = new File(['x'], 'huge.txt')
+    Object.defineProperty(huge, 'size', { value: 6 * 1024 * 1024 })
+    fireEvent.change(input, { target: { files: [huge] } })
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('Could not read huge.txt.')
+    fireEvent.click(within(alert).getByRole('button'))
+    await waitFor(() => expect(screen.queryByRole('alert')).toBeNull())
+  })
+
+  it('groups the toolbar into labelled sections', () => {
+    render(<CodeStudio locale="en" />)
+    const toolbar = screen.getByRole('toolbar', { name: 'Editor toolbar' })
+    for (const name of ['File', 'Edit', 'View']) {
+      expect(within(toolbar).getByRole('group', { name })).toBeInTheDocument()
+    }
+  })
+
+  it('gives every toolbar button a tooltip and an accessible name', () => {
+    render(<CodeStudio locale="en" />)
+    const toolbar = screen.getByRole('toolbar', { name: 'Editor toolbar' })
+    const buttons = within(toolbar).getAllByRole('button')
+    expect(buttons.length).toBeGreaterThanOrEqual(6)
+    for (const button of buttons) {
+      expect(button.getAttribute('aria-label')).toBeTruthy()
+      expect(button.getAttribute('title')).toBeTruthy()
+    }
+    expect(screen.getByRole('button', { name: 'Export' })).toHaveAttribute('title', expect.stringContaining('Ctrl+S'))
+    expect(screen.getByRole('button', { name: 'Find' })).toHaveAttribute('title', expect.stringContaining('Ctrl+F'))
+  })
+
+  it('shows a column ruler by default and lets the user turn it off', async () => {
+    render(<CodeStudio locale="en" />)
+    const editor = document.querySelector('.cs-editor') as HTMLElement
+    expect(editor.classList.contains('cs-editor--ruler')).toBe(true)
+    expect(editor.style.getPropertyValue('--cs-ruler-col')).toBe('80')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }))
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.change(within(dialog).getByLabelText('Ruler'), { target: { value: '120' } })
+    expect(editor.style.getPropertyValue('--cs-ruler-col')).toBe('120')
+    fireEvent.change(within(dialog).getByLabelText('Ruler'), { target: { value: '0' } })
+    expect(editor.classList.contains('cs-editor--ruler')).toBe(false)
+  })
+
+  it('also offers language and line endings in the settings dialog (the phone status bar hides them)', async () => {
+    render(<CodeStudio locale="en" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }))
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.change(within(dialog).getByLabelText('Language'), { target: { value: 'python' } })
+    fireEvent.change(within(dialog).getByLabelText('Line endings'), { target: { value: 'crlf' } })
+
+    const status = screen.getByRole('group', { name: 'Status bar' })
+    expect((within(status).getByLabelText('Language') as HTMLSelectElement).value).toBe('python')
+    expect((within(status).getByLabelText('Line endings') as HTMLSelectElement).value).toBe('crlf')
+  })
+
+  it('keeps the side panel closed until it is needed', async () => {
+    render(<CodeStudio locale="en" />)
+    expect(screen.queryByRole('complementary')).toBeNull()
+
+    const toggle = screen.getByRole('button', { name: 'Side panel' })
+    expect(toggle).toHaveAttribute('aria-pressed', 'false')
+    fireEvent.click(toggle)
+    expect(screen.getByRole('complementary', { name: 'Side panel' })).toBeInTheDocument()
+    expect(toggle).toHaveAttribute('aria-pressed', 'true')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close side panel' }))
+    expect(screen.queryByRole('complementary')).toBeNull()
+    // the problems panel was open for a moment: let its debounced linter finish inside act()
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 450))
+    })
+  })
+
+  it('opens the problems panel from the status bar', async () => {
+    const session = createDefaultSession()
+    session.docs = [createDoc([], { id: 'j', name: 'broken.json', content: '{"a": }' })]
+    session.activeId = 'j'
+    localStorage.setItem(SESSION_STORAGE_KEY, serializeSession(session)!)
+
+    render(<CodeStudio locale="en" />)
+    expect(screen.queryByRole('complementary')).toBeNull()
+    const status = screen.getByRole('group', { name: 'Status bar' })
+    const indicator = await within(status).findByRole('button', { name: /problem/ }, { timeout: 3000 })
+    expect(indicator.textContent).toMatch(/[1-9]\d* problem/)
+
+    fireEvent.click(indicator)
+    expect(await screen.findByRole('complementary', { name: 'Side panel' })).toBeInTheDocument()
+    expect(await screen.findAllByRole('button', { name: /Ln 1, Col/ })).not.toHaveLength(0)
+  })
+
+  it('puts position, document settings and font size in the status bar', () => {
+    render(<CodeStudio locale="en" />)
+    const status = screen.getByRole('group', { name: 'Status bar' })
+    expect(within(status).getByText('Ln 1, Col 1')).toBeInTheDocument()
+    expect(within(status).getByLabelText('Language')).toBeInTheDocument()
+    expect(within(status).getByLabelText('Line endings')).toBeInTheDocument()
+    expect(within(status).getByLabelText('Tab size')).toBeInTheDocument()
+    expect(within(status).getByRole('button', { name: 'Increase font size' })).toBeInTheDocument()
+    expect(within(status).getByRole('button', { name: 'Decrease font size' })).toBeInTheDocument()
+    // the toolbar no longer carries any of them
+    const toolbar = screen.getByRole('toolbar', { name: 'Editor toolbar' })
+    expect(within(toolbar).queryByLabelText('Language')).toBeNull()
+    expect(within(toolbar).queryByRole('button', { name: 'Increase font size' })).toBeNull()
+  })
+
+  it('opens the export dialog with Ctrl+S and formats with Shift+Alt+F', async () => {
+    const session = createDefaultSession()
+    session.docs = [createDoc([], { id: 'a', name: 'app.js', content: 'const a={b:1}' })]
+    session.activeId = 'a'
+    localStorage.setItem(SESSION_STORAGE_KEY, serializeSession(session)!)
+    render(<CodeStudio locale="en" />)
+
+    act(() => {
+      getView().contentDOM.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'F',
+          code: 'KeyF',
+          keyCode: 70,
+          shiftKey: true,
+          altKey: true,
+          bubbles: true,
+        }),
+      )
+    })
+    await waitFor(() => expect(editorText()).toBe('const a = { b: 1 };\n'))
+
+    act(() => {
+      getView().contentDOM.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 's', code: 'KeyS', keyCode: 83, ctrlKey: true, bubbles: true }),
+      )
+    })
+    expect(await screen.findByRole('dialog')).toBeInTheDocument()
+    expect(screen.getByText('Export file')).toBeInTheDocument()
+  })
+
+  it('does not flag a Java method written without a class, but still flags real mistakes', async () => {
+    const session = createDefaultSession()
+    session.docs = [
+      createDoc([], {
+        id: 'j',
+        name: 'Add.java',
+        content: 'public static int add(int a, int b) {\n  return a + b;\n}',
+      }),
+    ]
+    session.activeId = 'j'
+    session.settings.panelOpen = true
+    localStorage.setItem(SESSION_STORAGE_KEY, serializeSession(session)!)
+
+    render(<CodeStudio locale="en" />)
+    expect(await screen.findByText('No syntax problems found.', undefined, { timeout: 3000 })).toBeInTheDocument()
+
+    act(() => {
+      const view = getView()
+      view.dispatch({
+        changes: { from: 0, to: view.state.doc.length, insert: 'int add(int a, int b {\n  return a + b;\n}' },
+      })
+    })
+    expect(await screen.findAllByRole('button', { name: /Ln 1, Col/ }, { timeout: 3000 })).not.toHaveLength(0)
   })
 
   it('exposes an accessible editor and tab list', () => {

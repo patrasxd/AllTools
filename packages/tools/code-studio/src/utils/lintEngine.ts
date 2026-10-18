@@ -32,6 +32,47 @@ export function findSyntaxErrors(tree: Tree, docLength: number): SyntaxRange[] {
   return ranges
 }
 
+/**
+ * Some grammars only accept code inside a container (Java methods must live in a class), yet people paste and
+ * write loose snippets in an editor. For those languages a snippet without any type declaration is also checked
+ * wrapped in a container, so a bare method is not reported as an error at its `(`.
+ */
+export const SNIPPET_WRAPPERS: Record<string, { prefix: string; suffix: string }> = {
+  java: { prefix: 'class Snippet {\n', suffix: '\n}' },
+}
+
+const TYPE_DECLARATION = /\b(class|interface|enum|record)\s+[A-Za-z_]/
+
+export type TreeParser = (text: string) => Tree | null | undefined
+
+/**
+ * Finds syntax errors for a language, with snippet tolerance (see `SNIPPET_WRAPPERS`).
+ * Whichever reading, as written or wrapped, has fewer errors wins; real mistakes are still reported.
+ */
+export function findSyntaxErrorsForLanguage(
+  text: string,
+  tree: Tree,
+  languageId: string,
+  parse: TreeParser,
+): SyntaxRange[] {
+  const direct = findSyntaxErrors(tree, text.length)
+  const wrapper = SNIPPET_WRAPPERS[languageId]
+  if (direct.length === 0 || !wrapper || TYPE_DECLARATION.test(text)) return direct
+
+  const wrapped = `${wrapper.prefix}${text}${wrapper.suffix}`
+  const wrappedTree = parse(wrapped)
+  if (!wrappedTree) return direct
+
+  const shift = wrapper.prefix.length
+  const mapped = findSyntaxErrors(wrappedTree, wrapped.length)
+    .map((range) => ({ from: range.from - shift, to: range.to - shift }))
+    .filter((range) => range.to > 0 && range.from < text.length)
+    .map((range) => ({ from: Math.max(0, range.from), to: Math.min(text.length, range.to) }))
+    .filter((range) => range.to > range.from)
+
+  return mapped.length < direct.length ? mapped : direct
+}
+
 export interface JsonError {
   message: string
   /** Offset reported by the engine, when it reports one. */

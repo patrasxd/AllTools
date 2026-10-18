@@ -1,5 +1,16 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { Button, DownloadIcon, CopyIcon, Select, Toggle, safeGetItem, safeSetItem } from '@all/ui'
+import {
+  Button,
+  CopyIcon,
+  DownloadIcon,
+  Input,
+  Select,
+  SettingsGroup,
+  Text,
+  Toggle,
+  safeGetItem,
+  safeSetItem,
+} from '@all/ui'
 import { loadLanguageExtension } from '../languages'
 import type { CursorInfo } from '../types'
 import type { getTranslations } from '../i18n'
@@ -20,6 +31,7 @@ import {
   type ImageThemeId,
   type OuterBackground,
 } from '../utils/imageEngine'
+import { resolveImageTheme } from '../utils/imageTheme'
 import { downloadBlob, downloadTextFile } from '../utils/fileUtils'
 
 export const IMAGE_OPTIONS_KEY = 'alltools:code-studio:v1:image-options'
@@ -85,6 +97,7 @@ export function ImagePanel({ t, docName, language, content, tabSize, cursor, get
       const layout = layoutImage({
         lines,
         options,
+        theme: resolveImageTheme(options.theme),
         charWidth: measureCharWidth(options.fontSize),
         startLine: selection?.startLine ?? 1,
         fallbackTitle: docName,
@@ -223,17 +236,18 @@ export function ImagePanel({ t, docName, language, content, tabSize, cursor, get
         {previewUrl ? (
           <img src={previewUrl} alt={t.imagePreviewAlt} />
         ) : (
-          <p className="cs-problems__empty">{message?.text ?? t.imageEmpty}</p>
+          <Text variant="dim">{message?.text ?? t.imageEmpty}</Text>
         )}
       </div>
 
       {message && previewUrl && (
-        <p
+        <Text
+          variant="caption"
           className={`cs-image__message cs-image__message--${message.kind}`}
           role={message.kind === 'error' ? 'alert' : 'status'}
         >
           {message.text}
-        </p>
+        </Text>
       )}
 
       <div className="cs-image__actions">
@@ -260,43 +274,38 @@ export function ImagePanel({ t, docName, language, content, tabSize, cursor, get
         </Button>
       </div>
 
-      <div className="cs-image__form">
-        <Toggle
-          label={
-            selectionLines > 0
-              ? `${t.imageUseSelection} (${t.imageSelectionInfo(selectionLines)})`
-              : t.imageUseSelection
-          }
-          checked={useSelection}
-          onChange={setUseSelection}
-        />
-
+      <SettingsGroup label={t.imageGroupLook}>
         <div className="cs-image__grid">
           <Select
+            density="compact"
             label={t.imageTheme}
             value={options.theme}
             options={themeOptions}
             onChange={(event) => patch({ theme: event.target.value as ImageThemeId })}
           />
           <Select
+            density="compact"
             label={t.imageFontSize}
             value={options.fontSize}
             options={[12, 14, 16, 18, 20].map((size) => ({ value: size, label: `${size}px` }))}
             onChange={(event) => patch({ fontSize: Number(event.target.value) })}
           />
           <Select
+            density="compact"
             label={t.imagePadding}
             value={options.padding}
             options={[8, 16, 24, 32, 48, 64].map((size) => ({ value: size, label: `${size}px` }))}
             onChange={(event) => patch({ padding: Number(event.target.value) })}
           />
           <Select
+            density="compact"
             label={t.imageScale}
             value={options.scale}
             options={[1, 2, 3].map((scale) => ({ value: scale, label: `${scale}×` }))}
             onChange={(event) => patch({ scale: Number(event.target.value) as ImageScale })}
           />
           <Select
+            density="compact"
             label={t.imageFrame}
             value={options.outerPadding}
             options={[
@@ -309,6 +318,7 @@ export function ImagePanel({ t, docName, language, content, tabSize, cursor, get
             onChange={(event) => patch({ outerPadding: Number(event.target.value) })}
           />
           <Select
+            density="compact"
             label={t.imageBackground}
             value={options.outer}
             disabled={options.outerPadding === 0}
@@ -320,24 +330,32 @@ export function ImagePanel({ t, docName, language, content, tabSize, cursor, get
             onChange={(event) => patch({ outer: event.target.value as OuterBackground })}
           />
         </div>
-
-        <Toggle
-          label={t.imageLineNumbers}
-          checked={options.lineNumbers}
-          onChange={(checked) => patch({ lineNumbers: checked })}
-        />
         <Toggle
           label={t.imageWindow}
           checked={options.windowChrome}
           onChange={(checked) => patch({ windowChrome: checked })}
         />
+      </SettingsGroup>
 
-        <label className="cs-field-label" htmlFor="cs-image-title">
-          {t.imageTitleField}
-        </label>
-        <input
-          id="cs-image-title"
-          className="cs-field"
+      <SettingsGroup label={t.imageGroupContent}>
+        <Toggle
+          label={
+            selectionLines > 0
+              ? `${t.imageUseSelection} (${t.imageSelectionInfo(selectionLines)})`
+              : t.imageUseSelection
+          }
+          checked={useSelection}
+          onChange={setUseSelection}
+        />
+        <Toggle
+          label={t.imageLineNumbers}
+          checked={options.lineNumbers}
+          onChange={(checked) => patch({ lineNumbers: checked })}
+        />
+        <Input
+          density="compact"
+          fullWidth
+          label={t.imageTitleField}
           value={options.title}
           maxLength={80}
           placeholder={docName}
@@ -345,9 +363,11 @@ export function ImagePanel({ t, docName, language, content, tabSize, cursor, get
           autoComplete="off"
           spellCheck={false}
         />
-      </div>
+      </SettingsGroup>
 
-      <p className="cs-problems__note">{t.imageNote}</p>
+      <Text variant="caption" className="cs-note">
+        {t.imageNote}
+      </Text>
     </section>
   )
 }

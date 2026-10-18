@@ -106,6 +106,8 @@ export function lineWidth(line: TokenLine): number {
 
 export type ImageThemeId = 'dark' | 'light' | 'mono'
 
+export const IMAGE_THEME_IDS: ImageThemeId[] = ['dark', 'light', 'mono']
+
 export interface TokenStyle {
   color?: string
   bold?: boolean
@@ -113,6 +115,10 @@ export interface TokenStyle {
   underline?: boolean
 }
 
+/**
+ * A fully resolved theme: every color is a concrete CSS color. Themes are built from the shared design tokens by
+ * `imageTheme.ts`, so this module never contains color literals.
+ */
 export interface ImageTheme {
   id: ImageThemeId
   background: string
@@ -121,89 +127,9 @@ export interface ImageTheme {
   border: string | null
   /** Colors of the three window buttons. */
   chrome: [string, string, string]
+  /** Colors of the area around the card. */
+  outer: { solid: string; gradient: Gradient }
   tokens: Partial<Record<TokenClass, TokenStyle>>
-}
-
-export const IMAGE_THEMES: Record<ImageThemeId, ImageTheme> = {
-  dark: {
-    id: 'dark',
-    background: '#16181d',
-    foreground: '#e5e7eb',
-    lineNumber: '#6b7280',
-    border: null,
-    chrome: ['#ff5f56', '#ffbd2e', '#27c93f'],
-    tokens: {
-      keyword: { color: '#c4a5ff' },
-      string: { color: '#a5d6a7' },
-      regexp: { color: '#34d399' },
-      number: { color: '#ffb86c' },
-      comment: { color: '#6b7280', italic: true },
-      function: { color: '#82aaff' },
-      type: { color: '#7dd3fc' },
-      property: { color: '#e5c07b' },
-      tag: { color: '#f87171' },
-      punct: { color: '#9ca3af' },
-      meta: { color: '#9ca3af' },
-      heading: { color: '#82aaff', bold: true },
-      strong: { bold: true },
-      emphasis: { italic: true },
-      link: { color: '#60a5fa', underline: true },
-      quote: { color: '#6b7280', italic: true },
-      code: { color: '#a5d6a7' },
-      invalid: { color: '#f87171', underline: true },
-    },
-  },
-  light: {
-    id: 'light',
-    background: '#ffffff',
-    foreground: '#1f2937',
-    lineNumber: '#9ca3af',
-    border: '#e5e7eb',
-    chrome: ['#ff5f56', '#ffbd2e', '#27c93f'],
-    tokens: {
-      keyword: { color: '#7c3aed' },
-      string: { color: '#15803d' },
-      regexp: { color: '#047857' },
-      number: { color: '#c2410c' },
-      comment: { color: '#6b7280', italic: true },
-      function: { color: '#1d4ed8' },
-      type: { color: '#0e7490' },
-      property: { color: '#a16207' },
-      tag: { color: '#b91c1c' },
-      punct: { color: '#475569' },
-      meta: { color: '#475569' },
-      heading: { color: '#1d4ed8', bold: true },
-      strong: { bold: true },
-      emphasis: { italic: true },
-      link: { color: '#2563eb', underline: true },
-      quote: { color: '#6b7280', italic: true },
-      code: { color: '#15803d' },
-      invalid: { color: '#b91c1c', underline: true },
-    },
-  },
-  // Black on white: kinds of tokens are told apart by weight, slant and underline. Good for print and e-ink.
-  mono: {
-    id: 'mono',
-    background: '#ffffff',
-    foreground: '#000000',
-    lineNumber: '#555555',
-    border: '#000000',
-    chrome: ['#000000', '#555555', '#aaaaaa'],
-    tokens: {
-      keyword: { bold: true },
-      string: { italic: true },
-      comment: { color: '#555555', italic: true },
-      function: { bold: true, italic: true },
-      type: { underline: true },
-      tag: { bold: true },
-      heading: { bold: true, underline: true },
-      strong: { bold: true },
-      emphasis: { italic: true },
-      link: { underline: true },
-      quote: { color: '#555555', italic: true },
-      invalid: { underline: true },
-    },
-  },
 }
 
 // ─── Options ───
@@ -251,7 +177,7 @@ export function sanitizeImageOptions(input: unknown): ImageOptions {
   const num = (value: unknown, fallback: number) =>
     typeof value === 'number' && Number.isFinite(value) ? value : fallback
   return {
-    theme: raw.theme && raw.theme in IMAGE_THEMES ? raw.theme : d.theme,
+    theme: raw.theme && IMAGE_THEME_IDS.includes(raw.theme) ? raw.theme : d.theme,
     fontSize: Math.min(24, Math.max(10, Math.round(num(raw.fontSize, d.fontSize)))),
     padding: nearest(num(raw.padding, d.padding), PADDINGS),
     outerPadding: nearest(num(raw.outerPadding, d.outerPadding), OUTER_PADDINGS),
@@ -311,15 +237,10 @@ const LINE_HEIGHT_RATIO = 1.5
 /** Browsers refuse canvases larger than roughly this in one dimension. */
 export const MAX_CANVAS_SIDE = 16000
 
-const OUTER_COLORS: Record<ImageThemeId, { solid: string; gradient: Gradient }> = {
-  dark: { solid: '#2d3142', gradient: { from: '#7c3aed', to: '#2563eb' } },
-  light: { solid: '#e5e7eb', gradient: { from: '#fbbf24', to: '#f472b6' } },
-  mono: { solid: '#d4d4d4', gradient: { from: '#e5e5e5', to: '#a3a3a3' } },
-}
-
 export interface LayoutInput {
   lines: TokenLine[]
   options: ImageOptions
+  theme: ImageTheme
   /** Width of one character in pixels at `options.fontSize`. */
   charWidth: number
   /** Number shown for the first line (so a selection keeps its original numbering). */
@@ -327,8 +248,7 @@ export interface LayoutInput {
   fallbackTitle: string
 }
 
-export function layoutImage({ lines, options, charWidth, startLine, fallbackTitle }: LayoutInput): ImageLayout {
-  const theme = IMAGE_THEMES[options.theme]
+export function layoutImage({ lines, options, theme, charWidth, startLine, fallbackTitle }: LayoutInput): ImageLayout {
   const { fontSize, padding, outerPadding } = options
   const lineHeight = Math.round(fontSize * LINE_HEIGHT_RATIO)
 
@@ -346,7 +266,6 @@ export function layoutImage({ lines, options, charWidth, startLine, fallbackTitl
   const ops: DrawOp[] = []
 
   if (outerPadding > 0 && options.outer !== 'transparent') {
-    const colors = OUTER_COLORS[options.theme]
     ops.push({
       kind: 'rect',
       x: 0,
@@ -354,7 +273,7 @@ export function layoutImage({ lines, options, charWidth, startLine, fallbackTitl
       w: width,
       h: height,
       rx: 0,
-      fill: options.outer === 'gradient' ? colors.gradient : colors.solid,
+      fill: options.outer === 'gradient' ? theme.outer.gradient : theme.outer.solid,
       stroke: null,
     })
   }

@@ -1,13 +1,14 @@
 import { describe, it, expect, vi } from 'vitest'
 import { loadLanguageExtension } from '../languages'
 import { highlightToSpans } from '../utils/highlightSpans'
+import { buildImageTheme } from '../utils/imageTheme'
 import {
   DEFAULT_IMAGE_OPTIONS,
-  IMAGE_THEMES,
   MAX_CANVAS_SIDE,
   buildTokenLines,
   fitScale,
   layoutImage,
+  type LayoutInput,
   layoutToSvg,
   lineWidth,
   paintLayout,
@@ -27,6 +28,13 @@ const options = (patch: Partial<ImageOptions> = {}): ImageOptions => ({
   lineNumbers: false,
   ...patch,
 })
+
+/** Colors are resolved to readable placeholders, so tests can tell exactly which token a fill came from. */
+const resolve = (expression: string) => `<${expression}>`
+
+function lay(input: Omit<LayoutInput, 'theme'>) {
+  return layoutImage({ ...input, theme: buildImageTheme(input.options.theme, resolve) })
+}
 
 const texts = (ops: DrawOp[]) => ops.flatMap((op) => (op.kind === 'text' ? [op] : []))
 
@@ -80,23 +88,23 @@ describe('layoutImage', () => {
 
   it('sizes the card from the longest line, padding and line height', () => {
     // 11 columns * 6px + 2 * 16 padding; 2 lines * 15px + 2 * 16 padding
-    const layout = layoutImage({ lines, options: options(), charWidth: 6, startLine: 1, fallbackTitle: 'x' })
+    const layout = lay({ lines, options: options(), charWidth: 6, startLine: 1, fallbackTitle: 'x' })
     expect(layout.width).toBe(98)
     expect(layout.height).toBe(62)
   })
 
   it('places tokens on the character grid', () => {
-    const layout = layoutImage({ lines, options: options(), charWidth: 6, startLine: 1, fallbackTitle: 'x' })
+    const layout = lay({ lines, options: options(), charWidth: 6, startLine: 1, fallbackTitle: 'x' })
     const keyword = texts(layout.ops).find((op) => op.text === 'const')!
     expect(keyword.x).toBe(16)
     expect(keyword.width).toBe(30)
-    expect(keyword.fill).toBe(IMAGE_THEMES.dark.tokens.keyword!.color)
+    expect(keyword.fill).toBe('<var(--cs-keyword)>')
     const rest = texts(layout.ops).find((op) => op.text === ' a = 1')
     expect(rest?.x).toBe(16 + 5 * 6)
   })
 
   it('adds a line number gutter that follows the start line', () => {
-    const layout = layoutImage({
+    const layout = lay({
       lines,
       options: options({ lineNumbers: true }),
       charWidth: 6,
@@ -110,7 +118,7 @@ describe('layoutImage', () => {
   })
 
   it('draws window chrome with a title, falling back to the file name', () => {
-    const withChrome = layoutImage({
+    const withChrome = lay({
       lines,
       options: options({ windowChrome: true }),
       charWidth: 6,
@@ -121,7 +129,7 @@ describe('layoutImage', () => {
     expect(texts(withChrome.ops).some((op) => op.text === 'main.ts' && op.anchor === 'middle')).toBe(true)
     expect(withChrome.height).toBe(40 + 32 + 30)
 
-    const custom = layoutImage({
+    const custom = lay({
       lines,
       options: options({ windowChrome: true, title: 'My title' }),
       charWidth: 6,
@@ -133,22 +141,22 @@ describe('layoutImage', () => {
 
   it('adds an outer frame only when it has size and a background', () => {
     const base = { lines, charWidth: 6, startLine: 1, fallbackTitle: 'x' }
-    const framed = layoutImage({ ...base, options: options({ outerPadding: 32, outer: 'gradient' }) })
+    const framed = lay({ ...base, options: options({ outerPadding: 32, outer: 'gradient' }) })
     expect(framed.width).toBe(98 + 64)
     expect(framed.ops[0]).toMatchObject({ kind: 'rect', x: 0, y: 0, w: framed.width, h: framed.height })
     expect(typeof (framed.ops[0] as { fill: unknown }).fill).toBe('object')
 
-    const transparent = layoutImage({ ...base, options: options({ outerPadding: 32, outer: 'transparent' }) })
+    const transparent = lay({ ...base, options: options({ outerPadding: 32, outer: 'transparent' }) })
     expect(transparent.width).toBe(98 + 64)
     expect(transparent.ops[0]).toMatchObject({ x: 32, y: 32 })
 
-    const none = layoutImage({ ...base, options: options({ outerPadding: 0, outer: 'solid' }) })
+    const none = lay({ ...base, options: options({ outerPadding: 0, outer: 'solid' }) })
     expect(none.ops[0]).toMatchObject({ x: 0, y: 0 })
   })
 
   it('underlines tokens whose style asks for it', () => {
     const link = buildTokenLines('see', [{ from: 0, to: 3, classes: 'cs-tok-link' }], 2)
-    const layout = layoutImage({ lines: link, options: options(), charWidth: 6, startLine: 1, fallbackTitle: 'x' })
+    const layout = lay({ lines: link, options: options(), charWidth: 6, startLine: 1, fallbackTitle: 'x' })
     const underline = layout.ops.filter((op) => op.kind === 'rect').at(-1)!
     expect(underline).toMatchObject({ kind: 'rect', w: 18 })
   })
@@ -162,21 +170,14 @@ describe('layoutImage', () => {
       ],
       2,
     )
-    const layout = layoutImage({ lines: spaced, options: options(), charWidth: 6, startLine: 1, fallbackTitle: 'x' })
+    const layout = lay({ lines: spaced, options: options(), charWidth: 6, startLine: 1, fallbackTitle: 'x' })
     const drawn = texts(layout.ops)
     expect(drawn.map((op) => op.text)).toEqual(['a', 'b'])
     expect(drawn[1].x).toBe(16 + 5 * 6)
   })
 
-  it('uses only black, white and grays in the mono theme', () => {
-    const layout = layoutImage({
-      lines,
-      options: options({ theme: 'mono' }),
-      charWidth: 6,
-      startLine: 1,
-      fallbackTitle: 'x',
-    })
-    for (const op of texts(layout.ops)) expect(op.fill).toMatch(/^#(0{6}|5{6}|a{6})$/)
+  it('tells token kinds apart without color in the black & white theme', () => {
+    const layout = lay({ lines, options: options({ theme: 'mono' }), charWidth: 6, startLine: 1, fallbackTitle: 'x' })
     expect(texts(layout.ops).find((op) => op.text === 'const')?.bold).toBe(true)
   })
 })
@@ -184,7 +185,7 @@ describe('layoutImage', () => {
 describe('layoutToSvg', () => {
   const build = (source: string, patch: Partial<ImageOptions> = {}) =>
     layoutToSvg(
-      layoutImage({
+      lay({
         lines: buildTokenLines(source, [], 2),
         options: options(patch),
         charWidth: 6,
@@ -221,7 +222,7 @@ describe('layoutToSvg', () => {
 
   it('draws bold and italic tokens', () => {
     const svg = layoutToSvg(
-      layoutImage({
+      lay({
         lines: buildTokenLines(
           'kw // c',
           [
@@ -318,7 +319,7 @@ describe('paintLayout', () => {
     return { ctx: ctx as unknown as PaintContext, calls }
   }
 
-  const layout = layoutImage({
+  const layout = lay({
     lines: buildTokenLines('ab c', [{ from: 0, to: 2, classes: 'cs-tok-keyword' }], 2),
     options: options({ outerPadding: 16, outer: 'gradient', windowChrome: true, title: 'T' }),
     charWidth: 6,
@@ -330,7 +331,7 @@ describe('paintLayout', () => {
     const { ctx, calls } = fakeContext()
     paintLayout(ctx, layout, 2)
     expect(calls[0]).toBe('scale 2 2')
-    expect(calls.some((call) => call.startsWith('stop 0 #'))).toBe(true)
+    expect(calls.some((call) => call.startsWith('stop 0 <'))).toBe(true)
     expect(calls).toContain('roundRect')
     expect(calls.filter((call) => call === 'arc')).toHaveLength(3)
   })

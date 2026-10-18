@@ -1,21 +1,10 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import {
-  Button,
-  DownloadIcon,
-  PlusIcon,
-  Select,
-  SplitWorkspaceLayout,
-  UploadIcon,
-  safeGetItem,
-  safeSetItem,
-} from '@all/ui'
-import type { CursorInfo, EditorDoc, EditorSettings, Eol, Problem, SideTab, TabSize } from './types'
+import { Alert, ConfirmDialog, safeGetItem, safeSetItem } from '@all/ui'
+import type { CursorInfo, EditorDoc, EditorSettings, Eol, Problem, SideTab } from './types'
 import type { ToolComponentProps } from './types'
 import { getTranslations } from './i18n'
-import { LANGUAGES, PLAIN_TEXT_ID, getLanguage } from './languages'
+import { PLAIN_TEXT_ID } from './languages'
 import {
-  MAX_FONT_SIZE,
-  MIN_FONT_SIZE,
   SESSION_STORAGE_KEY,
   applyEol,
   createDefaultSession,
@@ -41,13 +30,16 @@ import { ImagePanel } from './components/ImagePanel'
 import { formatCode, isFormattable, minifyJson } from './utils/formatEngine'
 import { MARKDOWN_COMMANDS, type MarkdownCommandId } from './utils/markdownCommands'
 import { NameDialog } from './components/NameDialog'
+import { TopBar } from './components/TopBar'
+import { StatusBar } from './components/StatusBar'
+import { SettingsDialog } from './components/SettingsDialog'
 import './styles/code-studio.css'
 
 /** Files above this size are skipped: they would not fit the local session and make the editor sluggish. */
 const MAX_FILE_BYTES = 5 * 1024 * 1024
 const SAVE_DELAY_MS = 400
 
-type DialogKind = 'export' | 'rename' | null
+type DialogKind = 'export' | 'rename' | 'settings' | null
 
 function sameProblems(a: Problem[], b: Problem[]): boolean {
   return (
@@ -66,10 +58,10 @@ export function CodeStudio({ locale = 'en' }: ToolComponentProps) {
   const [cursor, setCursor] = useState<CursorInfo>({ line: 1, col: 1, selectedChars: 0 })
   const [tabFocusMode, setTabFocusMode] = useState(false)
   const [dialog, setDialog] = useState<DialogKind>(null)
+  const [pendingClose, setPendingClose] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [storageFull, setStorageFull] = useState(false)
   const [dragging, setDragging] = useState(false)
-  const [panel, setPanel] = useState<'input' | 'output'>('input')
   const [sideTab, setSideTab] = useState<SideTab>('problems')
   const [formatError, setFormatError] = useState<string | null>(null)
   const [formatting, setFormatting] = useState(false)
@@ -95,7 +87,6 @@ export function CodeStudio({ locale = 'en' }: ToolComponentProps) {
   }, [])
 
   const activeDoc = docs.find((doc) => doc.id === activeId) ?? docs[0]
-  const languageDef = getLanguage(activeDoc.language)
   const isPlainText = activeDoc.language === PLAIN_TEXT_ID
   const isMarkdown = activeDoc.language === 'markdown'
   const isJson = activeDoc.language === 'json'
@@ -106,6 +97,7 @@ export function CodeStudio({ locale = 'en' }: ToolComponentProps) {
   // Markdown documents open with the preview; leaving Markdown drops back to Problems.
   useEffect(() => {
     setSideTab((prev) => (isMarkdown ? 'preview' : prev === 'preview' ? 'problems' : prev))
+    if (isMarkdown) setSettings((prev) => (prev.panelOpen ? prev : { ...prev, panelOpen: true }))
   }, [activeDoc.id, isMarkdown])
 
   useEffect(() => {
@@ -161,7 +153,6 @@ export function CodeStudio({ locale = 'en' }: ToolComponentProps) {
     commitDocs([...docsRef.current, doc])
     commitActive(doc.id)
     setProblems([])
-    setPanel('input')
   }
 
   const handleSelect = (id: string) => {
@@ -171,12 +162,21 @@ export function CodeStudio({ locale = 'en' }: ToolComponentProps) {
     commitActive(id)
   }
 
-  const handleClose = (id: string) => {
+  const closeDoc = (id: string) => {
     if (id === activeIdRef.current) editorRef.current?.flush()
     const result = removeDoc(docsRef.current, activeIdRef.current, id)
     if (result.activeId !== activeIdRef.current) setProblems([])
     commitDocs(result.docs)
     commitActive(result.activeId)
+  }
+
+  /** Closing a tab with text in it asks first: the text lives only on this device. */
+  const handleClose = (id: string) => {
+    const doc = docsRef.current.find((candidate) => candidate.id === id)
+    const text =
+      id === activeIdRef.current ? (editorRef.current?.getText() ?? doc?.content ?? '') : (doc?.content ?? '')
+    if (text.trim() === '') closeDoc(id)
+    else setPendingClose(id)
   }
 
   const openFiles = async (files: FileList | File[]) => {
@@ -205,7 +205,6 @@ export function CodeStudio({ locale = 'en' }: ToolComponentProps) {
       commitDocs(next)
       commitActive(lastId)
       setProblems([])
-      setPanel('input')
     }
   }
 
@@ -276,7 +275,6 @@ export function CodeStudio({ locale = 'en' }: ToolComponentProps) {
   const changeSettings = (patch: Partial<EditorSettings>) => setSettings((prev) => ({ ...prev, ...patch }))
 
   const handleProblemSelect = (problem: Problem) => {
-    setPanel('input')
     editorRef.current?.jumpTo(problem.from, problem.to)
   }
 
@@ -330,168 +328,21 @@ export function CodeStudio({ locale = 'en' }: ToolComponentProps) {
 
   // ─── Render ───
 
-  const toolbar = (
-    <div className="cs-toolbar" role="toolbar" aria-label={t.toolbarLabel}>
-      <div className="cs-toolbar__group">
-        <Button size="sm" variant="secondary" icon={<PlusIcon />} onClick={handleNew}>
-          {t.newTab}
-        </Button>
-        <Button size="sm" variant="secondary" icon={<UploadIcon />} onClick={() => fileInputRef.current?.click()}>
-          {t.open}
-        </Button>
-        <Button size="sm" variant="secondary" icon={<DownloadIcon />} onClick={() => setDialog('export')}>
-          {t.exportFile}
-        </Button>
-        <Button size="sm" variant="ghost" onClick={() => setDialog('rename')}>
-          {t.rename}
-        </Button>
-        <Button size="sm" variant="ghost" onClick={() => editorRef.current?.openFind()}>
-          {t.find}
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={handleFormat}
-          disabled={!canFormat || formatting}
-          title={canFormat ? undefined : t.formatUnavailable}
-        >
-          {t.format}
-        </Button>
-        {isJson && (
-          <Button size="sm" variant="ghost" onClick={handleMinify}>
-            {t.minify}
-          </Button>
-        )}
-      </div>
+  const showProblemsInStatus = !isPlainText
 
-      <div className="cs-toolbar__group">
-        <Select
-          aria-label={t.language}
-          className="cs-select"
-          value={activeDoc.language}
-          options={LANGUAGES.map((lang) => ({ value: lang.id, label: lang.label }))}
-          onChange={(event) => handleLanguage(event.target.value)}
-        />
-        <Select
-          aria-label={t.lineEnding}
-          className="cs-select cs-select--narrow"
-          value={activeDoc.eol}
-          options={[
-            { value: 'lf', label: t.eolLf },
-            { value: 'crlf', label: t.eolCrlf },
-          ]}
-          onChange={(event) => handleEol(event.target.value as Eol)}
-        />
-        <Select
-          aria-label={t.tabSize}
-          className="cs-select cs-select--tiny"
-          value={settings.tabSize}
-          options={[2, 4, 8].map((size) => ({ value: size, label: `⇥ ${size}` }))}
-          onChange={(event) => changeSettings({ tabSize: Number(event.target.value) as TabSize })}
-        />
-        <Button
-          size="sm"
-          variant={settings.wordWrap ? 'primary' : 'secondary'}
-          aria-pressed={settings.wordWrap}
-          onClick={() => changeSettings({ wordWrap: !settings.wordWrap })}
-        >
-          {t.wrap}
-        </Button>
-        <Button
-          size="sm"
-          variant={settings.lineNumbers ? 'primary' : 'secondary'}
-          aria-pressed={settings.lineNumbers}
-          onClick={() => changeSettings({ lineNumbers: !settings.lineNumbers })}
-        >
-          {t.lineNumbers}
-        </Button>
-        <div className="cs-font-size" role="group" aria-label={t.fontSize(settings.fontSize)}>
-          <Button
-            size="sm"
-            variant="secondary"
-            aria-label={t.fontSmaller}
-            disabled={settings.fontSize <= MIN_FONT_SIZE}
-            onClick={() => changeSettings({ fontSize: settings.fontSize - 1 })}
-          >
-            A−
-          </Button>
-          <span className="cs-font-size__value" aria-live="polite">
-            {t.fontSize(settings.fontSize)}
-          </span>
-          <Button
-            size="sm"
-            variant="secondary"
-            aria-label={t.fontLarger}
-            disabled={settings.fontSize >= MAX_FONT_SIZE}
-            onClick={() => changeSettings({ fontSize: settings.fontSize + 1 })}
-          >
-            A+
-          </Button>
-        </div>
-      </div>
-    </div>
-  )
+  const handleProblemsStatus = () => {
+    changeSettings({ panelOpen: true })
+    setSideTab('problems')
+  }
 
-  const inputPane = (
-    <div ref={dropRef} className={`cs-input-pane${dragging ? ' cs-input-pane--dragging' : ''}`}>
-      <TabBar
-        docs={docs}
-        activeId={activeDoc.id}
-        label={t.tabsAria}
-        closeLabel={t.closeTab}
-        onSelect={handleSelect}
-        onClose={handleClose}
-      />
-      {isMarkdown && <MarkdownToolbar t={t} onCommand={handleMarkdownCommand} />}
-      <EditorPane
-        ref={editorRef}
-        doc={activeDoc}
-        settings={settings}
-        ariaLabel={t.editorAria(activeDoc.name)}
-        phrases={phrases}
-        messages={messages}
-        onChange={handleContentChange}
-        onCursor={setCursor}
-        onProblems={handleProblems}
-        onTabFocusModeChange={setTabFocusMode}
-        onLanguageError={() => setNotice(t.languageLoadError)}
-      />
-      {dragging && (
-        <div className="cs-dropzone" aria-hidden="true">
-          {t.dropHint}
-        </div>
-      )}
-    </div>
-  )
-
-  const statusBar = (
-    <div className="cs-status" role="status">
-      <span>{t.lnCol(cursor.line, cursor.col)}</span>
-      {cursor.selectedChars > 0 && <span>{t.selected(cursor.selectedChars)}</span>}
-      <span>{t.statLines(stats.lines)}</span>
-      <span>{t.statWords(stats.words)}</span>
-      <span>{t.statChars(stats.chars)}</span>
-      <span>{t.statBytes(stats.bytes)}</span>
-      <span>{languageDef.label}</span>
-      <span>{activeDoc.eol === 'crlf' ? 'CRLF' : 'LF'}</span>
-      {tabFocusMode && <span className="cs-status__flag">{t.tabFocusOn}</span>}
-      {storageFull && (
-        <span className="cs-status__flag" role="alert">
-          {t.storageFull}
-        </span>
-      )}
-      {formatError && (
-        <span className="cs-status__flag" role="alert">
-          {formatError}
-        </span>
-      )}
-      {notice && (
-        <span className="cs-status__flag" role="alert">
-          {notice}
-        </span>
-      )}
-    </div>
-  )
+  const handleRenameRequest = (id: string) => {
+    if (id !== activeIdRef.current) {
+      editorRef.current?.flush()
+      setProblems([])
+      commitActive(id)
+    }
+    setDialog('rename')
+  }
 
   const sideTabs: { id: SideTab; label: string }[] = [
     {
@@ -503,39 +354,125 @@ export function CodeStudio({ locale = 'en' }: ToolComponentProps) {
   ]
   const activeSideTab: SideTab = sideTabs.some((tab) => tab.id === sideTab) ? sideTab : 'problems'
 
-  const sidePanel = (
-    <SidePanel tabs={sideTabs} active={activeSideTab} ariaLabel={t.sidePanelAria} onChange={setSideTab}>
-      {activeSideTab === 'problems' && (
-        <ProblemsPanel problems={problems} isPlainText={isPlainText} t={t} onSelect={handleProblemSelect} />
-      )}
-      {activeSideTab === 'preview' && <MarkdownPreview source={activeDoc.content} t={t} />}
-      {activeSideTab === 'image' && (
-        <ImagePanel
-          t={t}
-          docName={activeDoc.name}
-          language={activeDoc.language}
-          content={activeDoc.content}
-          tabSize={settings.tabSize}
-          cursor={cursor}
-          getSelection={getSelection}
-        />
-      )}
-    </SidePanel>
-  )
-
   return (
-    <>
-      <SplitWorkspaceLayout
-        className="cs-layout"
-        toolbar={toolbar}
-        inputPane={inputPane}
-        outputPane={sidePanel}
-        statusBar={statusBar}
-        inputLabel={t.editorTab}
-        outputLabel={problems.length > 0 && !isPlainText ? `${t.sidePanelTab} (${problems.length})` : t.sidePanelTab}
-        activeTab={panel}
-        onTabChange={setPanel}
+    <div className="cs-layout cs-app">
+      <TopBar
+        t={t}
+        canFormat={canFormat}
+        formatting={formatting}
+        isJson={isJson}
+        panelOpen={settings.panelOpen}
+        onNew={handleNew}
+        onOpen={() => fileInputRef.current?.click()}
+        onExport={() => setDialog('export')}
+        onFind={() => editorRef.current?.openFind()}
+        onFormat={handleFormat}
+        onMinify={handleMinify}
+        onTogglePanel={() => changeSettings({ panelOpen: !settings.panelOpen })}
+        onSettings={() => setDialog('settings')}
       />
+
+      <div className={`cs-workspace${settings.panelOpen ? ' cs-workspace--with-panel' : ''}`}>
+        <section ref={dropRef} className={`cs-card${dragging ? ' cs-card--dragging' : ''}`} aria-label={t.editorTab}>
+          <TabBar
+            docs={docs}
+            activeId={activeDoc.id}
+            label={t.tabsAria}
+            closeLabel={t.closeTab}
+            addLabel={t.addTab}
+            renameHint={t.tipTabRename}
+            onSelect={handleSelect}
+            onClose={handleClose}
+            onAdd={handleNew}
+            onRename={handleRenameRequest}
+          />
+
+          {(storageFull || formatError || notice) && (
+            <div className="cs-alerts">
+              {storageFull && <Alert variant="warning">{t.storageFull}</Alert>}
+              {formatError && (
+                <Alert variant="danger" onClose={() => setFormatError(null)}>
+                  {formatError}
+                </Alert>
+              )}
+              {notice && (
+                <Alert variant="danger" onClose={() => setNotice(null)}>
+                  {notice}
+                </Alert>
+              )}
+            </div>
+          )}
+
+          {isMarkdown && <MarkdownToolbar t={t} onCommand={handleMarkdownCommand} />}
+
+          <EditorPane
+            ref={editorRef}
+            doc={activeDoc}
+            settings={settings}
+            ariaLabel={t.editorAria(activeDoc.name)}
+            phrases={phrases}
+            messages={messages}
+            onChange={handleContentChange}
+            onCursor={setCursor}
+            onProblems={handleProblems}
+            onTabFocusModeChange={setTabFocusMode}
+            onLanguageError={() => setNotice(t.languageLoadError)}
+            onFormat={handleFormat}
+            onSave={() => setDialog('export')}
+          />
+
+          <StatusBar
+            t={t}
+            doc={activeDoc}
+            settings={settings}
+            cursor={cursor}
+            stats={stats}
+            problemCount={problems.length}
+            showProblems={showProblemsInStatus}
+            tabFocusMode={tabFocusMode}
+            onProblems={handleProblemsStatus}
+            onLanguage={handleLanguage}
+            onEol={handleEol}
+            onTabSize={(tabSize) => changeSettings({ tabSize })}
+            onFontSize={(fontSize) => changeSettings({ fontSize })}
+          />
+
+          {dragging && (
+            <div className="cs-dropzone" aria-hidden="true">
+              {t.dropHint}
+            </div>
+          )}
+        </section>
+
+        {settings.panelOpen && (
+          <aside className="cs-panel" aria-label={t.sidePanelAria}>
+            <SidePanel
+              tabs={sideTabs}
+              active={activeSideTab}
+              ariaLabel={t.sidePanelAria}
+              closeLabel={t.closePanel}
+              onChange={setSideTab}
+              onClose={() => changeSettings({ panelOpen: false })}
+            >
+              {activeSideTab === 'problems' && (
+                <ProblemsPanel problems={problems} isPlainText={isPlainText} t={t} onSelect={handleProblemSelect} />
+              )}
+              {activeSideTab === 'preview' && <MarkdownPreview source={activeDoc.content} t={t} />}
+              {activeSideTab === 'image' && (
+                <ImagePanel
+                  t={t}
+                  docName={activeDoc.name}
+                  language={activeDoc.language}
+                  content={activeDoc.content}
+                  tabSize={settings.tabSize}
+                  cursor={cursor}
+                  getSelection={getSelection}
+                />
+              )}
+            </SidePanel>
+          </aside>
+        )}
+      </div>
 
       <input
         ref={fileInputRef}
@@ -568,6 +505,30 @@ export function CodeStudio({ locale = 'en' }: ToolComponentProps) {
         onConfirm={handleRename}
         onClose={() => setDialog(null)}
       />
-    </>
+      <SettingsDialog
+        open={dialog === 'settings'}
+        t={t}
+        settings={settings}
+        doc={activeDoc}
+        onChange={changeSettings}
+        onLanguage={handleLanguage}
+        onEol={handleEol}
+        onClose={() => setDialog(null)}
+      />
+      <ConfirmDialog
+        open={pendingClose !== null}
+        title={t.closeConfirmTitle(docs.find((doc) => doc.id === pendingClose)?.name ?? '')}
+        description={t.closeConfirmDescription}
+        confirmLabel={t.closeConfirm}
+        cancelLabel={t.cancel}
+        confirmVariant="danger"
+        maxWidth="sm"
+        onClose={() => setPendingClose(null)}
+        onConfirm={() => {
+          if (pendingClose) closeDoc(pendingClose)
+          setPendingClose(null)
+        }}
+      />
+    </div>
   )
 }

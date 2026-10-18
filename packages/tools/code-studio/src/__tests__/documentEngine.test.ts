@@ -192,12 +192,40 @@ describe('settings', () => {
   it('clamps the font size and keeps valid values', () => {
     expect(sanitizeSettings({ fontSize: 2 }).fontSize).toBe(10)
     expect(sanitizeSettings({ fontSize: 99 }).fontSize).toBe(28)
-    expect(sanitizeSettings({ fontSize: 16.4, wordWrap: true, lineNumbers: false, tabSize: 4 })).toEqual({
+    expect(
+      sanitizeSettings({ fontSize: 16.4, wordWrap: true, lineNumbers: false, tabSize: 4, ruler: 100, panelOpen: true }),
+    ).toEqual({
       fontSize: 16,
       wordWrap: true,
       lineNumbers: false,
       tabSize: 4,
+      ruler: 100,
+      panelOpen: true,
     })
+  })
+
+  it('accepts only the known ruler columns and defaults to a ruler at 80', () => {
+    expect(DEFAULT_SETTINGS.ruler).toBe(80)
+    expect(sanitizeSettings({ ruler: 0 }).ruler).toBe(0)
+    expect(sanitizeSettings({ ruler: 120 }).ruler).toBe(120)
+    expect(sanitizeSettings({ ruler: 77 }).ruler).toBe(80)
+    expect(sanitizeSettings({ ruler: '80' }).ruler).toBe(80)
+  })
+
+  it('keeps the side panel closed unless asked', () => {
+    expect(DEFAULT_SETTINGS.panelOpen).toBe(false)
+    expect(sanitizeSettings({ panelOpen: 'yes' }).panelOpen).toBe(false)
+    expect(sanitizeSettings({ panelOpen: true }).panelOpen).toBe(true)
+  })
+
+  it('upgrades sessions saved before the ruler and panel settings existed', () => {
+    const raw = JSON.stringify({
+      version: 1,
+      activeId: 'a',
+      settings: { fontSize: 16, wordWrap: true, lineNumbers: true, tabSize: 4 },
+      docs: [{ id: 'a', name: 'a.txt', content: '', language: 'plaintext', eol: 'lf' }],
+    })
+    expect(parseSession(raw)!.settings).toEqual({ ...DEFAULT_SETTINGS, fontSize: 16, wordWrap: true, tabSize: 4 })
   })
 })
 

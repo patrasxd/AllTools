@@ -1,4 +1,5 @@
 import React, { useDeferredValue, useMemo } from 'react'
+import { Text } from '@all/ui'
 import { renderMarkdown } from '../utils/markdownEngine'
 import type { getTranslations } from '../i18n'
 
@@ -15,11 +16,13 @@ export function MarkdownPreview({ source, t }: MarkdownPreviewProps) {
   return (
     <section className="cs-preview" aria-label={t.previewTitle}>
       {html === '' ? (
-        <p className="cs-problems__empty">{t.previewEmpty}</p>
+        <Text variant="dim">{t.previewEmpty}</Text>
       ) : (
         <article className="cs-md" dangerouslySetInnerHTML={{ __html: html }} />
       )}
-      <p className="cs-problems__note">{t.previewNote}</p>
+      <Text variant="caption" className="cs-note">
+        {t.previewNote}
+      </Text>
     </section>
   )
 }

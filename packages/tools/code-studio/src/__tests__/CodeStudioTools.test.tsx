@@ -28,7 +28,13 @@ function seed(name: string, content: string) {
   const session = createDefaultSession()
   session.docs = [createDoc([], { id: 'seed', name, content })]
   session.activeId = 'seed'
+  session.settings.panelOpen = true
   localStorage.setItem(SESSION_STORAGE_KEY, serializeSession(session)!)
+}
+
+/** The Problems / Preview / Image switch is the shared segmented control (buttons with aria-pressed). */
+function sideTab(name: string, group = 'Side panel') {
+  return within(screen.getByRole('group', { name: group })).queryByRole('button', { name })
 }
 
 /** Lets the debounced linter and deferred preview finish inside act(), so late updates do not leak out of a test. */
@@ -158,13 +164,20 @@ describe('Markdown', () => {
   it('opens with the preview for Markdown documents only', async () => {
     seed('notes.md', '# Hello\n\nSome **bold** text')
     render(<CodeStudio locale="en" />)
-    expect(screen.getByRole('tab', { name: 'Preview', selected: true })).toBeInTheDocument()
+    expect(
+      within(screen.getByRole('group', { name: 'Side panel' })).getByRole('button', { name: 'Preview', pressed: true }),
+    ).toBeInTheDocument()
     expect(await screen.findByRole('heading', { name: 'Hello' })).toBeInTheDocument()
     expect(within(document.querySelector('.cs-md') as HTMLElement).getByText('bold').tagName).toBe('STRONG')
 
     fireEvent.change(screen.getByLabelText('Language'), { target: { value: 'plaintext' } })
-    await waitFor(() => expect(screen.queryByRole('tab', { name: 'Preview' })).toBeNull())
-    expect(screen.getByRole('tab', { name: 'Problems', selected: true })).toBeInTheDocument()
+    await waitFor(() => expect(sideTab('Preview')).toBeNull())
+    expect(
+      within(screen.getByRole('group', { name: 'Side panel' })).getByRole('button', {
+        name: 'Problems',
+        pressed: true,
+      }),
+    ).toBeInTheDocument()
   })
 
   it('updates the preview while typing', async () => {
@@ -234,21 +247,21 @@ describe('Markdown', () => {
     await settle()
   })
 
-  it('switches side tabs with the arrow keys', async () => {
+  it('switches between the side panels', async () => {
     seed('notes.md', '# T')
     render(<CodeStudio locale="en" />)
-    const preview = screen.getByRole('tab', { name: 'Preview' })
-    fireEvent.keyDown(preview, { key: 'ArrowRight' })
-    expect(screen.getByRole('tab', { name: 'Image', selected: true })).toBeInTheDocument()
-    fireEvent.keyDown(screen.getByRole('tab', { name: 'Image' }), { key: 'ArrowLeft' })
-    expect(screen.getByRole('tab', { name: 'Preview', selected: true })).toBeInTheDocument()
+    fireEvent.click(sideTab('Image')!)
+    expect(sideTab('Image')).toHaveAttribute('aria-pressed', 'true')
+    expect(sideTab('Preview')).toHaveAttribute('aria-pressed', 'false')
+    fireEvent.click(sideTab('Preview')!)
+    expect(sideTab('Preview')).toHaveAttribute('aria-pressed', 'true')
     await settle()
   })
 })
 
 describe('Code as image', () => {
   async function openImageTab() {
-    fireEvent.click(screen.getByRole('tab', { name: 'Image' }))
+    fireEvent.click(sideTab('Image')!)
     return await screen.findByRole('img', { name: 'Preview of the code image' }, { timeout: 3000 })
   }
 
@@ -263,7 +276,8 @@ describe('Code as image', () => {
   it('asks for code when there is nothing to draw', async () => {
     installCanvasMock()
     render(<CodeStudio locale="en" />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Image' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Side panel' }))
+    fireEvent.click(sideTab('Image')!)
     expect(
       await screen.findByText('Write or select some code to preview it as an image.', undefined, { timeout: 3000 }),
     ).toBeInTheDocument()
@@ -274,7 +288,7 @@ describe('Code as image', () => {
     installCanvasMock()
     seed('long.txt', Array.from({ length: 450 }, (_, i) => `line ${i}`).join('\n'))
     render(<CodeStudio locale="en" />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Image' }))
+    fireEvent.click(sideTab('Image')!)
     expect(
       await screen.findByText(/Too many lines for an image \(limit 400\)/, undefined, { timeout: 3000 }),
     ).toBeInTheDocument()
@@ -314,7 +328,7 @@ describe('Code as image', () => {
     seed('main.js', 'let first = 1\nlet second = 2\nlet third = 3')
     render(<CodeStudio locale="en" />)
     select(14, 27) // "let second = 2"
-    fireEvent.click(screen.getByRole('tab', { name: 'Image' }))
+    fireEvent.click(sideTab('Image')!)
     await screen.findByRole('img', { name: 'Preview of the code image' }, { timeout: 3000 })
 
     fireEvent.click(screen.getByRole('switch', { name: 'Line numbers' }))
@@ -334,7 +348,7 @@ describe('Code as image', () => {
     seed('main.js', 'let first = 1\nlet second = 2')
     render(<CodeStudio locale="en" />)
     select(14, 27)
-    fireEvent.click(screen.getByRole('tab', { name: 'Image' }))
+    fireEvent.click(sideTab('Image')!)
     await screen.findByRole('img', { name: 'Preview of the code image' }, { timeout: 3000 })
     fireEvent.click(screen.getByRole('switch', { name: /Only the selection/ }))
     fireEvent.click(screen.getByRole('button', { name: 'Download SVG' }))
@@ -380,7 +394,7 @@ describe('Code as image', () => {
     unmount()
 
     render(<CodeStudio locale="en" />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Image' }))
+    fireEvent.click(sideTab('Image')!)
     expect((screen.getByLabelText('Theme') as HTMLSelectElement).value).toBe('mono')
     expect((screen.getByLabelText('Scale') as HTMLSelectElement).value).toBe('3')
   })
@@ -398,11 +412,11 @@ describe('Code as image', () => {
     installCanvasMock()
     seed('main.js', 'x')
     render(<CodeStudio locale="pl" />)
-    fireEvent.click(screen.getByRole('tab', { name: 'Obraz' }))
+    fireEvent.click(sideTab('Obraz', 'Panel boczny')!)
     expect(await screen.findByRole('img', { name: 'Podgląd obrazu z kodem' }, { timeout: 3000 })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Pobierz PNG' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Formatuj' })).toBeInTheDocument()
-    const group = screen.getByRole('tabpanel')
-    expect(within(group).getByLabelText('Motyw')).toBeInTheDocument()
+    const panel = screen.getByRole('region', { name: 'Kod jako obraz' })
+    expect(within(panel).getByLabelText('Motyw')).toBeInTheDocument()
   })
 })

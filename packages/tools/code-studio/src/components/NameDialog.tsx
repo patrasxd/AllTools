@@ -1,5 +1,5 @@
-import React, { useEffect, useId, useRef, useState } from 'react'
-import { Button, Dialog } from '@all/ui'
+import React, { useEffect, useRef, useState } from 'react'
+import { Button, Dialog, Input } from '@all/ui'
 
 interface NameDialogProps {
   open: boolean
@@ -25,7 +25,6 @@ export function NameDialog({
   onConfirm,
   onClose,
 }: NameDialogProps) {
-  const inputId = useId()
   const [value, setValue] = useState(initialValue)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -68,15 +67,12 @@ export function NameDialog({
           submit()
         }}
       >
-        <label htmlFor={inputId} className="cs-field-label">
-          {fieldLabel}
-        </label>
-        <input
-          id={inputId}
+        <Input
           ref={inputRef}
-          className="cs-field"
+          label={fieldLabel}
           value={value}
           onChange={(event) => setValue(event.target.value)}
+          fullWidth
           autoComplete="off"
           spellCheck={false}
         />

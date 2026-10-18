@@ -36,6 +36,10 @@ interface EditorPaneProps {
   onProblems: (problems: Problem[]) => void
   onTabFocusModeChange: (enabled: boolean) => void
   onLanguageError: () => void
+  /** Shift+Alt+F */
+  onFormat: () => void
+  /** Ctrl/Cmd+S */
+  onSave: () => void
 }
 
 const SYNC_DELAY_MS = 200
@@ -78,6 +82,8 @@ export const EditorPane = forwardRef<EditorPaneHandle, EditorPaneProps>(function
     (content: string): EditorState => {
       const extensions: Extension[] = [
         ...baseExtensions({
+          onFormat: () => propsRef.current.onFormat(),
+          onSave: () => propsRef.current.onSave(),
           isTabFocusMode: () => tabFocusModeRef.current,
           toggleTabFocusMode: () => {
             tabFocusModeRef.current = !tabFocusModeRef.current
@@ -248,9 +254,12 @@ export const EditorPane = forwardRef<EditorPaneHandle, EditorPaneProps>(function
 
   return (
     <div
-      className="cs-editor"
+      className={`cs-editor${settings.ruler > 0 ? ' cs-editor--ruler' : ''}`}
       ref={hostRef}
-      style={{ ['--cs-font-size' as string]: `${settings.fontSize}px` }}
+      style={{
+        ['--cs-font-size' as string]: `${settings.fontSize}px`,
+        ['--cs-ruler-col' as string]: String(settings.ruler),
+      }}
       data-language={doc.language}
     />
   )

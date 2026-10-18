@@ -26,11 +26,17 @@ export interface EditorDoc {
 
 export type TabSize = 2 | 4 | 8
 
+/** Column of the vertical guide line in the editor; 0 hides it. */
+export type Ruler = 0 | 80 | 100 | 120
+
 export interface EditorSettings {
   fontSize: number
   wordWrap: boolean
   lineNumbers: boolean
   tabSize: TabSize
+  ruler: Ruler
+  /** Whether the side panel (problems, preview, image) is open. */
+  panelOpen: boolean
 }
 
 export interface SessionData {

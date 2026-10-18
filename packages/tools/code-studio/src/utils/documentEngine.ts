@@ -1,5 +1,5 @@
 import { PLAIN_TEXT_ID, detectLanguage, isKnownLanguage } from '../languages'
-import type { DocStats, EditorDoc, EditorSettings, Eol, SessionData, TabSize } from '../types'
+import type { DocStats, EditorDoc, EditorSettings, Eol, Ruler, SessionData, TabSize } from '../types'
 
 export const SESSION_STORAGE_KEY = 'alltools:code-studio:v1:session'
 
@@ -11,12 +11,15 @@ export const DEFAULT_SETTINGS: EditorSettings = {
   wordWrap: false,
   lineNumbers: true,
   tabSize: 2,
+  ruler: 80,
+  panelOpen: false,
 }
 
 export const MIN_FONT_SIZE = 10
 export const MAX_FONT_SIZE = 28
 
 const TAB_SIZES: TabSize[] = [2, 4, 8]
+export const RULERS: Ruler[] = [0, 80, 100, 120]
 
 // ─── Line endings ───
 
@@ -183,6 +186,8 @@ export function sanitizeSettings(input: unknown): EditorSettings {
     wordWrap: typeof raw.wordWrap === 'boolean' ? raw.wordWrap : DEFAULT_SETTINGS.wordWrap,
     lineNumbers: typeof raw.lineNumbers === 'boolean' ? raw.lineNumbers : DEFAULT_SETTINGS.lineNumbers,
     tabSize: TAB_SIZES.includes(raw.tabSize as TabSize) ? (raw.tabSize as TabSize) : DEFAULT_SETTINGS.tabSize,
+    ruler: RULERS.includes(raw.ruler as Ruler) ? (raw.ruler as Ruler) : DEFAULT_SETTINGS.ruler,
+    panelOpen: typeof raw.panelOpen === 'boolean' ? raw.panelOpen : DEFAULT_SETTINGS.panelOpen,
   }
 }
 
