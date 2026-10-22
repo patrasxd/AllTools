@@ -47,8 +47,12 @@ beforeEach(() => {
   localStorage.clear()
 })
 
-afterEach(() => {
-  cleanup()
+afterEach(async () => {
+  // The find panel is a separate React root that unmounts in a microtask; let that happen inside act().
+  await act(async () => {
+    cleanup()
+    await Promise.resolve()
+  })
   vi.useRealTimers()
   vi.restoreAllMocks()
 })
@@ -226,10 +230,10 @@ describe('CodeStudio', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }))
     const dialog = await screen.findByRole('dialog')
-    fireEvent.click(within(dialog).getByRole('switch', { name: 'Lines' }))
+    fireEvent.click(within(dialog).getByRole('switch', { name: 'Line numbers' }))
     await waitFor(() => expect(document.querySelector('.cm-lineNumbers')).toBeNull())
 
-    fireEvent.click(within(dialog).getByRole('switch', { name: 'Wrap' }))
+    fireEvent.click(within(dialog).getByRole('switch', { name: 'Word wrap' }))
     await waitFor(() => expect(document.querySelector('.cm-lineWrapping')).not.toBeNull())
   })
 
@@ -248,19 +252,123 @@ describe('CodeStudio', () => {
     })
   })
 
-  it('opens the search panel from the toolbar', async () => {
+  it('opens the find and replace panel from the toolbar and focuses the search field', async () => {
     render(<CodeStudio locale="en" />)
     fireEvent.click(screen.getByRole('button', { name: 'Find' }))
-    await waitFor(() => expect(document.querySelector('.cm-search')).not.toBeNull())
+    const panel = await screen.findByRole('search', { name: 'Find and replace' })
+    await waitFor(() => expect(within(panel).getByLabelText('Find')).toHaveFocus())
   })
 
-  it('uses Polish labels and search wording', async () => {
+  it('builds the find panel from shared components, not native checkboxes and buttons', async () => {
+    render(<CodeStudio locale="en" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Find' }))
+    const panel = await screen.findByRole('search', { name: 'Find and replace' })
+
+    expect(panel.querySelectorAll('input[type="checkbox"]')).toHaveLength(0)
+    expect(document.querySelector('.cm-search')).toBeNull()
+    expect(panel.querySelectorAll('.all-input-field')).toHaveLength(2)
+    expect(panel.querySelectorAll('.all-icon-btn').length).toBeGreaterThanOrEqual(6)
+    for (const button of within(panel).getAllByRole('button')) {
+      // every button is a shared one and has an accessible name
+      expect(button.classList.contains('all-btn') || button.classList.contains('all-icon-btn')).toBe(true)
+      expect(button.getAttribute('aria-label') ?? button.textContent).toBeTruthy()
+    }
+    expect(within(panel).getAllByRole('button', { name: /^Replace/ })).toHaveLength(2)
+  })
+
+  it('finds, counts and steps through matches', async () => {
+    render(<CodeStudio locale="en" />)
+    typeInEditor('foo bar foo baz foo')
+    fireEvent.click(screen.getByRole('button', { name: 'Find' }))
+    const panel = await screen.findByRole('search', { name: 'Find and replace' })
+
+    const field = within(panel).getByLabelText('Find')
+    fireEvent.change(field, { target: { value: 'foo' } })
+    await waitFor(() => expect(within(panel).getByRole('status')).toHaveTextContent('? of 3'))
+
+    fireEvent.keyDown(field, { key: 'Enter' })
+    await waitFor(() => expect(within(panel).getByRole('status')).toHaveTextContent('1 of 3'))
+    expect(getView().state.selection.main).toMatchObject({ from: 0, to: 3 })
+
+    fireEvent.click(within(panel).getByRole('button', { name: 'Next match' }))
+    await waitFor(() => expect(within(panel).getByRole('status')).toHaveTextContent('2 of 3'))
+    fireEvent.keyDown(field, { key: 'Enter', shiftKey: true })
+    await waitFor(() => expect(within(panel).getByRole('status')).toHaveTextContent('1 of 3'))
+  })
+
+  it('reports when nothing matches', async () => {
+    render(<CodeStudio locale="en" />)
+    typeInEditor('hello')
+    fireEvent.click(screen.getByRole('button', { name: 'Find' }))
+    const panel = await screen.findByRole('search', { name: 'Find and replace' })
+    fireEvent.change(within(panel).getByLabelText('Find'), { target: { value: 'zzz' } })
+
+    await waitFor(() => expect(within(panel).getByRole('status')).toHaveTextContent('No results'))
+    expect(within(panel).getByRole('button', { name: 'Next match' })).toBeDisabled()
+    expect(within(panel).getByRole('button', { name: 'Replace all' })).toBeDisabled()
+  })
+
+  it('has toggles for case, regular expressions and whole words', async () => {
+    render(<CodeStudio locale="en" />)
+    typeInEditor('Foo foo food')
+    fireEvent.click(screen.getByRole('button', { name: 'Find' }))
+    const panel = await screen.findByRole('search', { name: 'Find and replace' })
+    fireEvent.change(within(panel).getByLabelText('Find'), { target: { value: 'foo' } })
+    await waitFor(() => expect(within(panel).getByRole('status')).toHaveTextContent('of 3'))
+
+    const matchCase = within(panel).getByRole('button', { name: 'Match case' })
+    expect(matchCase).toHaveAttribute('aria-pressed', 'false')
+    fireEvent.click(matchCase)
+    await waitFor(() => expect(within(panel).getByRole('status')).toHaveTextContent('of 2'))
+    expect(within(panel).getByRole('button', { name: 'Match case' })).toHaveAttribute('aria-pressed', 'true')
+
+    fireEvent.click(within(panel).getByRole('button', { name: 'Whole word' }))
+    await waitFor(() => expect(within(panel).getByRole('status')).toHaveTextContent('of 1'))
+
+    fireEvent.click(within(panel).getByRole('button', { name: 'Whole word' }))
+    fireEvent.click(within(panel).getByRole('button', { name: 'Regular expression' }))
+    fireEvent.change(within(panel).getByLabelText('Find'), { target: { value: 'fo+d?' } })
+    await waitFor(() => expect(within(panel).getByRole('status')).toHaveTextContent('of 2'))
+  })
+
+  it('replaces one match or all of them', async () => {
+    render(<CodeStudio locale="en" />)
+    typeInEditor('cat dog cat')
+    fireEvent.click(screen.getByRole('button', { name: 'Find' }))
+    const panel = await screen.findByRole('search', { name: 'Find and replace' })
+    fireEvent.change(within(panel).getByLabelText('Find'), { target: { value: 'cat' } })
+    fireEvent.change(within(panel).getByLabelText('Replace'), { target: { value: 'fox' } })
+    await waitFor(() => expect(within(panel).getByRole('status')).toHaveTextContent('of 2'))
+
+    fireEvent.click(within(panel).getByRole('button', { name: 'Replace all' }))
+    await waitFor(() => expect(editorText()).toBe('fox dog fox'))
+  })
+
+  it('closes with Escape and returns focus to the editor', async () => {
+    render(<CodeStudio locale="en" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Find' }))
+    const panel = await screen.findByRole('search', { name: 'Find and replace' })
+    fireEvent.keyDown(within(panel).getByLabelText('Find'), { key: 'Escape' })
+    await waitFor(() => expect(screen.queryByRole('search')).toBeNull())
+    expect(getView().hasFocus).toBe(true)
+  })
+
+  it('uses Polish labels in the toolbar, status bar and find panel', async () => {
     render(<CodeStudio locale="pl" />)
     expect(screen.getByRole('button', { name: 'Otwórz' })).toBeInTheDocument()
     expect(screen.getByLabelText('Język')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Szukaj' }))
-    await waitFor(() => expect(document.querySelector('.cm-search')).not.toBeNull())
-    expect(document.querySelector('.cm-search input[name="search"]')?.getAttribute('placeholder')).toBe('Szukaj')
+    const panel = await screen.findByRole('search', { name: 'Szukaj i zamień' })
+    expect(within(panel).getByPlaceholderText('Szukaj')).toBeInTheDocument()
+    expect(within(panel).getByRole('button', { name: 'Zamień wszystko' })).toBeInTheDocument()
+    expect(within(panel).getByRole('button', { name: 'Rozróżniaj wielkość liter' })).toBeInTheDocument()
+  })
+
+  it('writes line, word and character counts with correct singular and plural forms', () => {
+    const { unmount } = render(<CodeStudio locale="en" />)
+    expect(screen.getByText('1 line · 0 words')).toBeInTheDocument()
+    typeInEditor('one')
+    unmount()
   })
 
   it('asks before closing a tab that has text, and keeps it when cancelled', async () => {
@@ -333,6 +441,68 @@ describe('CodeStudio', () => {
     expect(editor.style.getPropertyValue('--cs-ruler-col')).toBe('120')
     fireEvent.change(within(dialog).getByLabelText('Ruler'), { target: { value: '0' } })
     expect(editor.classList.contains('cs-editor--ruler')).toBe(false)
+  })
+
+  it('renames a fresh untitled file when its language is changed in the status bar', async () => {
+    render(<CodeStudio locale="en" />)
+    expect(tabNames()).toEqual(['untitled-1.txt'])
+
+    fireEvent.change(screen.getByLabelText('Language'), { target: { value: 'java' } })
+    await waitFor(() => expect(tabNames()).toEqual(['untitled-1.java']))
+    expect(screen.getByRole('tab', { name: 'untitled-1.java' })).toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Language'), { target: { value: 'python' } })
+    await waitFor(() => expect(tabNames()).toEqual(['untitled-1.py']))
+    fireEvent.change(screen.getByLabelText('Language'), { target: { value: 'plaintext' } })
+    await waitFor(() => expect(tabNames()).toEqual(['untitled-1.txt']))
+    expect(document.querySelector('.cm-content')?.getAttribute('aria-label')).toBe('Code editor: untitled-1.txt')
+  })
+
+  it('renames the file when the language is changed in the settings dialog too', async () => {
+    render(<CodeStudio locale="en" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }))
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.change(within(dialog).getByLabelText('Language'), { target: { value: 'typescript' } })
+    await waitFor(() => expect(tabNames()).toEqual(['untitled-1.ts']))
+  })
+
+  it('keeps a custom file name and survives a reload with the new name', async () => {
+    render(<CodeStudio locale="en" />)
+    fireEvent.doubleClick(screen.getByRole('tab', { name: 'untitled-1.txt' }))
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.change(within(dialog).getByLabelText('File name'), { target: { value: 'Makefile' } })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Apply' }))
+    await waitFor(() => expect(tabNames()).toEqual(['Makefile']))
+
+    fireEvent.change(screen.getByLabelText('Language'), { target: { value: 'shell' } })
+    await waitFor(() => expect((screen.getByLabelText('Language') as HTMLSelectElement).value).toBe('shell'))
+    expect(tabNames()).toEqual(['Makefile'])
+  })
+
+  it('lays out the settings dialog as labelled groups on a grid', async () => {
+    render(<CodeStudio locale="en" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }))
+    const dialog = await screen.findByRole('dialog')
+
+    const grid = dialog.querySelector('.cs-settings') as HTMLElement
+    expect(grid).not.toBeNull()
+    // one shared SettingsGroup per select, each with its label above the control
+    const groups = Array.from(grid.querySelectorAll('.all-settings-group'))
+    expect(groups.map((group) => group.querySelector('.all-settings-group__label')?.textContent)).toEqual([
+      'Language',
+      'Line endings',
+      'Ruler',
+      'Tab size',
+    ])
+    for (const group of groups) expect(group.querySelectorAll('select')).toHaveLength(1)
+    // toggles sit on their own full-width row instead of squeezing in next to the selects
+    const toggles = grid.querySelector('.cs-settings__toggles') as HTMLElement
+    expect(
+      within(toggles)
+        .getAllByRole('switch')
+        .map((el) => el.getAttribute('aria-label') ?? el.textContent),
+    ).toHaveLength(2)
+    expect(toggles.closest('.all-settings-group')).toBeNull()
   })
 
   it('also offers language and line endings in the settings dialog (the phone status bar hides them)', async () => {

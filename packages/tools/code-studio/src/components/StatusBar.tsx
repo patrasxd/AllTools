@@ -1,5 +1,5 @@
 import React from 'react'
-import { Select } from '@all/ui'
+import { Button, IconButton, Select } from '@all/ui'
 import { LANGUAGES } from '../languages'
 import { MAX_FONT_SIZE, MIN_FONT_SIZE } from '../utils/documentEngine'
 import type { CursorInfo, DocStats, EditorDoc, EditorSettings, Eol, TabSize } from '../types'
@@ -48,9 +48,10 @@ export function StatusBar({
     <div className="cs-status" role="group" aria-label={t.statusBarAria}>
       <div className="cs-status__side">
         {showProblems && (
-          <button
-            type="button"
-            className={`cs-status__item cs-status__item--button${problemCount > 0 ? ' cs-status__item--danger' : ''}`}
+          <Button
+            size="sm"
+            variant="ghost"
+            className={`cs-status__problems${problemCount > 0 ? ' cs-status__problems--danger' : ''}`}
             title={t.problemsStatusTip}
             aria-label={t.problemsStatus(problemCount)}
             onClick={onProblems}
@@ -63,7 +64,7 @@ export function StatusBar({
             <span aria-hidden="true" className="cs-status__long">
               {` ${t.problemsStatus(problemCount)}`}
             </span>
-          </button>
+          </Button>
         )}
         <span className="cs-status__item">{t.lnCol(cursor.line, cursor.col)}</span>
         {cursor.selectedChars > 0 && <span className="cs-status__item">{t.selected(cursor.selectedChars)}</span>}
@@ -103,29 +104,27 @@ export function StatusBar({
         />
 
         <span className="cs-status__zoom" role="group" aria-label={t.fontSizeValue}>
-          <button
-            type="button"
-            className="cs-status__zoom-btn"
+          <IconButton
+            size="sm"
+            variant="ghost"
             aria-label={t.fontSmaller}
             title={t.fontSmaller}
             disabled={settings.fontSize <= MIN_FONT_SIZE}
+            icon={<span aria-hidden="true">−</span>}
             onClick={() => onFontSize(settings.fontSize - 1)}
-          >
-            −
-          </button>
+          />
           <span className="cs-status__zoom-value" aria-live="polite">
             {t.fontSize(settings.fontSize)}
           </span>
-          <button
-            type="button"
-            className="cs-status__zoom-btn"
+          <IconButton
+            size="sm"
+            variant="ghost"
             aria-label={t.fontLarger}
             title={t.fontLarger}
             disabled={settings.fontSize >= MAX_FONT_SIZE}
+            icon={<span aria-hidden="true">+</span>}
             onClick={() => onFontSize(settings.fontSize + 1)}
-          >
-            +
-          </button>
+          />
         </span>
       </div>
     </div>

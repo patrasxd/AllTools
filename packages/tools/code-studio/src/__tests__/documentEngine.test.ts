@@ -19,6 +19,8 @@ import {
   sanitizeFileName,
   sanitizeSettings,
   serializeSession,
+  nameForLanguage,
+  setDocLanguage,
   uniqueName,
   updateDoc,
 } from '../utils/documentEngine'
@@ -269,5 +271,76 @@ describe('session', () => {
     const session = createDefaultSession(nextId)
     session.docs[0].content = 'x'.repeat(MAX_SESSION_CHARS + 1)
     expect(serializeSession(session)).toBeNull()
+  })
+})
+
+describe('changing the language of a document', () => {
+  const doc = (name: string, language: string, id = 'x') => makeDoc(name, '', { id, language })
+
+  it('moves a fresh untitled file to the extension of the chosen language', () => {
+    const docs = [doc('untitled-1.txt', 'plaintext')]
+    const [result] = setDocLanguage(docs, 'x', 'java')
+    expect(result.language).toBe('java')
+    expect(result.name).toBe('untitled-1.java')
+  })
+
+  it('keeps following the language when it is changed again', () => {
+    let docs = [doc('untitled-1.txt', 'plaintext')]
+    for (const [language, name] of [
+      ['java', 'untitled-1.java'],
+      ['python', 'untitled-1.py'],
+      ['typescript', 'untitled-1.ts'],
+      ['markdown', 'untitled-1.md'],
+      ['cpp', 'untitled-1.cpp'],
+      ['yaml', 'untitled-1.yaml'],
+      ['plaintext', 'untitled-1.txt'],
+    ] as const) {
+      docs = setDocLanguage(docs, 'x', language)
+      expect(docs[0]).toMatchObject({ language, name })
+    }
+  })
+
+  it('also changes the extension of a file the user named', () => {
+    expect(setDocLanguage([doc('notes.txt', 'plaintext')], 'x', 'json')[0].name).toBe('notes.json')
+    expect(setDocLanguage([doc('Hello.java', 'java')], 'x', 'plaintext')[0].name).toBe('Hello.txt')
+  })
+
+  it('keeps an extension that already belongs to the chosen language', () => {
+    expect(setDocLanguage([doc('App.jsx', 'javascript')], 'x', 'javascript')[0].name).toBe('App.jsx')
+    expect(setDocLanguage([doc('lib.mjs', 'javascript')], 'x', 'javascript')[0].name).toBe('lib.mjs')
+    expect(setDocLanguage([doc('main.h', 'cpp')], 'x', 'cpp')[0].name).toBe('main.h')
+    expect(setDocLanguage([doc('a.yml', 'yaml')], 'x', 'yaml')[0].name).toBe('a.yml')
+  })
+
+  it('never overwrites a custom name', () => {
+    expect(setDocLanguage([doc('Makefile', 'plaintext')], 'x', 'shell')[0].name).toBe('Makefile')
+    expect(setDocLanguage([doc('data.custom', 'plaintext')], 'x', 'json')[0].name).toBe('data.custom')
+    expect(setDocLanguage([doc('.gitignore', 'plaintext')], 'x', 'shell')[0].name).toBe('.gitignore')
+  })
+
+  it('only renames files whose last extension is known', () => {
+    expect(setDocLanguage([doc('archive.tar.txt', 'plaintext')], 'x', 'java')[0].name).toBe('archive.tar.java')
+    expect(setDocLanguage([doc('backup.json.bak', 'plaintext')], 'x', 'java')[0].name).toBe('backup.json.bak')
+  })
+
+  it('does not collide with another open tab', () => {
+    const docs = [doc('untitled-1.txt', 'plaintext', 'a'), doc('untitled-1.java', 'java', 'b')]
+    const result = setDocLanguage(docs, 'a', 'java')
+    expect(result[0].name).toBe('untitled-1 (2).java')
+    expect(result[1].name).toBe('untitled-1.java')
+  })
+
+  it('changes only the targeted document and ignores unknown languages', () => {
+    const docs = [doc('a.txt', 'plaintext', 'a'), doc('b.txt', 'plaintext', 'b')]
+    const result = setDocLanguage(docs, 'b', 'rust')
+    expect(result[0]).toBe(docs[0])
+    expect(result[1]).toMatchObject({ name: 'b.rs', language: 'rust' })
+    expect(setDocLanguage(docs, 'a', 'klingon')).toBe(docs)
+  })
+
+  it('exposes the name rule on its own', () => {
+    const docs = [doc('x.txt', 'plaintext')]
+    expect(nameForLanguage(docs, docs[0], 'go')).toBe('x.go')
+    expect(nameForLanguage(docs, docs[0], 'plaintext')).toBe('x.txt')
   })
 })

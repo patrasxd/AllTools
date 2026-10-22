@@ -337,30 +337,6 @@
   padding: 0 var(--all-space-2);
 }
 
-.cs-status__item--button {
-  height: 22px;
-  background: transparent;
-  border: none;
-  border-radius: var(--all-radius-sm);
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-}
-
-.cs-status__item--button:hover {
-  background: var(--all-surface);
-  color: var(--all-text);
-}
-
-.cs-status__item--button:focus-visible {
-  outline: 2px solid var(--all-focus-ring);
-  outline-offset: -2px;
-}
-
-.cs-status__item--danger {
-  color: var(--all-danger);
-}
-
 .cs-status__item--warning {
   color: var(--all-warning);
   font-weight: 600;
@@ -395,32 +371,24 @@
   margin-inline-start: var(--all-space-2);
 }
 
-.cs-status__zoom-btn {
+.cs-status .cs-status__problems.all-btn {
+  min-height: 22px;
+  height: 22px;
+  padding-inline: var(--all-space-2);
+  color: var(--all-text-dim);
+  font-size: var(--all-font-size-xs);
+  font-weight: 400;
+}
+
+.cs-status .cs-status__problems--danger.all-btn {
+  color: var(--all-danger);
+}
+
+/* AllUI has no extra-small size; the status bar needs a denser icon button */
+.cs-status__zoom .all-icon-btn {
   width: 22px;
   height: 22px;
-  background: transparent;
-  border: none;
-  border-radius: var(--all-radius-sm);
-  color: var(--all-text-dim);
-  font: inherit;
-  font-size: var(--all-font-size-sm);
-  line-height: 1;
-  cursor: pointer;
-}
-
-.cs-status__zoom-btn:hover:not(:disabled) {
-  background: var(--all-surface);
-  color: var(--all-text);
-}
-
-.cs-status__zoom-btn:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.cs-status__zoom-btn:focus-visible {
-  outline: 2px solid var(--all-focus-ring);
-  outline-offset: -2px;
+  min-height: 22px;
 }
 
 .cs-status__zoom-value {
@@ -558,40 +526,11 @@
   background-size: 6px 3px;
 }
 
-/* Search panel (CodeMirror @codemirror/search) */
+/* Panels at the bottom of the editor (the find & replace panel is built from AllUI components, see FindPanel) */
 .cs-editor .cm-panels {
   background: var(--all-surface-2);
   color: var(--all-text);
   border-color: var(--all-border);
-}
-
-.cs-editor .cm-panels input,
-.cs-editor .cm-panels button,
-.cs-editor .cm-panels label {
-  font-family: var(--all-font-sans, inherit);
-  font-size: var(--all-text-sm, 0.8rem);
-  color: var(--all-text);
-}
-
-.cs-editor .cm-panels input[type='text'],
-.cs-editor .cm-panels input:not([type]) {
-  background: var(--all-surface);
-  border: 1px solid var(--all-border-2);
-  border-radius: var(--all-radius-sm, 2px);
-  padding: 0.25rem 0.5rem;
-}
-
-.cs-editor .cm-panels button {
-  background: var(--all-surface);
-  background-image: none;
-  border: 1px solid var(--all-border-2);
-  border-radius: var(--all-radius-sm, 2px);
-  padding: 0.25rem 0.6rem;
-  cursor: pointer;
-}
-
-.cs-editor .cm-panels button:hover {
-  background: var(--all-surface-2);
 }
 
 .cs-editor .cm-searchMatch {
@@ -898,9 +837,62 @@
 /* ─── Touch targets ─── */
 @media (pointer: coarse) {
   .cs-tab__label,
-  .cs-problem,
-  .cs-status__zoom-btn,
-  .cs-status__item--button {
+  .cs-problem {
     min-height: 44px;
+  }
+}
+
+/* ─── Find and replace panel ─── */
+.cs-find {
+  display: flex;
+  flex-direction: column;
+  gap: var(--all-space-2);
+  padding: var(--all-space-2) var(--all-space-3);
+}
+
+.cs-find__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--all-space-1);
+}
+
+.cs-find .cs-find__input {
+  flex: 1 1 12rem;
+  min-width: 8rem;
+  max-width: 22rem;
+}
+
+.cs-find__count {
+  min-width: 4.5rem;
+  padding-inline: var(--all-space-2);
+  color: var(--all-text-dim);
+  font-family: var(--all-font-sans);
+  font-size: var(--all-font-size-xs);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.cs-find__count--empty {
+  color: var(--all-danger);
+}
+
+/* ─── Settings dialog ─── */
+.cs-settings {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--all-space-4);
+}
+
+.cs-settings__toggles {
+  display: flex;
+  flex-direction: column;
+  gap: var(--all-space-3);
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 480px) {
+  .cs-settings {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

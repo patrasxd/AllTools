@@ -68,7 +68,7 @@ export const LANGUAGES: LanguageDef[] = [
   {
     id: 'cpp',
     label: 'C / C++',
-    extensions: ['c', 'h', 'cpp', 'cc', 'cxx', 'hpp', 'hh', 'hxx'],
+    extensions: ['cpp', 'c', 'h', 'cc', 'cxx', 'hpp', 'hh', 'hxx'],
     load: async () => (await import('@codemirror/lang-cpp')).cpp(),
   },
   {
@@ -104,7 +104,7 @@ export const LANGUAGES: LanguageDef[] = [
   {
     id: 'yaml',
     label: 'YAML',
-    extensions: ['yml', 'yaml'],
+    extensions: ['yaml', 'yml'],
     load: async () => (await import('@codemirror/lang-yaml')).yaml(),
   },
   {
@@ -143,7 +143,12 @@ export function detectLanguage(fileName: string): string {
   return BY_EXTENSION.get(ext) ?? PLAIN_TEXT_ID
 }
 
-/** Default extension used when a new document is created for a language. */
+/** The language a file extension belongs to, or `undefined` for extensions the editor does not know. */
+export function languageForExtension(extension: string): string | undefined {
+  return BY_EXTENSION.get(extension.toLowerCase())
+}
+
+/** Default extension used when a document is switched to a language. */
 export function defaultExtension(languageId: string): string {
   return getLanguage(languageId).extensions[0]
 }

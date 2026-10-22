@@ -17,6 +17,7 @@ import {
   renameDoc,
   sanitizeFileName,
   serializeSession,
+  setDocLanguage,
   updateDoc,
 } from './utils/documentEngine'
 import { downloadTextFile, readFileText } from './utils/fileUtils'
@@ -229,7 +230,7 @@ export function CodeStudio({ locale = 'en' }: ToolComponentProps) {
   }
 
   const handleLanguage = (language: string) => {
-    commitDocs(updateDoc(docsRef.current, activeDoc.id, { language }))
+    commitDocs(setDocLanguage(docsRef.current, activeDoc.id, language))
   }
 
   const handleEol = (eol: Eol) => {
@@ -411,6 +412,7 @@ export function CodeStudio({ locale = 'en' }: ToolComponentProps) {
             settings={settings}
             ariaLabel={t.editorAria(activeDoc.name)}
             phrases={phrases}
+            findLabels={t.search}
             messages={messages}
             onChange={handleContentChange}
             onCursor={setCursor}

@@ -1,5 +1,13 @@
 import type { Locale } from './types'
 
+/** Polish plural forms: 1 → one, 2–4 (except 12–14) → few, everything else → many. */
+function plPlural(n: number, one: string, few: string, many: string): string {
+  if (n === 1) return one
+  const lastTwo = n % 100
+  const last = n % 10
+  return last >= 2 && last <= 4 && !(lastTwo >= 12 && lastTwo <= 14) ? few : many
+}
+
 export const codeStudioTranslations = {
   en: {
     editorTab: 'Editor',
@@ -10,8 +18,8 @@ export const codeStudioTranslations = {
     exportFile: 'Export',
     rename: 'Rename',
     find: 'Find',
-    wrap: 'Wrap',
-    lineNumbers: 'Lines',
+    wrap: 'Word wrap',
+    lineNumbers: 'Line numbers',
     fontSmaller: 'Decrease font size',
     fontLarger: 'Increase font size',
     fontSize: (size: number) => `${size}px`,
@@ -32,9 +40,9 @@ export const codeStudioTranslations = {
     lintNote: 'Syntax checking is approximate: it reports places where the parser could not follow the code.',
     lnCol: (line: number, col: number) => `Ln ${line}, Col ${col}`,
     selected: (n: number) => `${n} selected`,
-    statLines: (n: number) => `${n} lines`,
-    statWords: (n: number) => `${n} words`,
-    statChars: (n: number) => `${n} chars`,
+    statLines: (n: number) => (n === 1 ? '1 line' : `${n} lines`),
+    statWords: (n: number) => (n === 1 ? '1 word' : `${n} words`),
+    statChars: (n: number) => (n === 1 ? '1 char' : `${n} chars`),
     statBytes: (n: number) => `${n} B`,
     tabFocusOn: 'Tab moves focus (Ctrl+M)',
     exportTitle: 'Export file',
@@ -149,6 +157,22 @@ export const codeStudioTranslations = {
     problemsStatusTip: 'Show problems',
     tabSizeOption: (n: number) => `Spaces: ${n}`,
     fontSizeValue: 'Font size',
+    search: {
+      title: 'Find and replace',
+      find: 'Find',
+      replace: 'Replace',
+      next: 'Next match',
+      previous: 'Previous match',
+      matchCase: 'Match case',
+      regexp: 'Regular expression',
+      wholeWord: 'Whole word',
+      replaceOne: 'Replace',
+      replaceAll: 'Replace all',
+      close: 'Close find and replace',
+      noResults: 'No results',
+      results: (current: number, total: number, capped: boolean) =>
+        `${current > 0 ? current : '?'} of ${total}${capped ? '+' : ''}`,
+    },
     cmPhrases: {} as Record<string, string>,
   },
   pl: {
@@ -160,8 +184,8 @@ export const codeStudioTranslations = {
     exportFile: 'Eksport',
     rename: 'Zmień nazwę',
     find: 'Szukaj',
-    wrap: 'Zawijaj',
-    lineNumbers: 'Linie',
+    wrap: 'Zawijanie wierszy',
+    lineNumbers: 'Numery linii',
     fontSmaller: 'Zmniejsz czcionkę',
     fontLarger: 'Zwiększ czcionkę',
     fontSize: (size: number) => `${size}px`,
@@ -187,9 +211,9 @@ export const codeStudioTranslations = {
     lintNote: 'Sprawdzanie składni jest przybliżone: wskazuje miejsca, w których parser nie potrafił podążyć za kodem.',
     lnCol: (line: number, col: number) => `Wiersz ${line}, kol. ${col}`,
     selected: (n: number) => `zaznaczono ${n}`,
-    statLines: (n: number) => `${n} linii`,
-    statWords: (n: number) => `${n} słów`,
-    statChars: (n: number) => `${n} znaków`,
+    statLines: (n: number) => `${n} ${plPlural(n, 'linia', 'linie', 'linii')}`,
+    statWords: (n: number) => `${n} ${plPlural(n, 'słowo', 'słowa', 'słów')}`,
+    statChars: (n: number) => `${n} ${plPlural(n, 'znak', 'znaki', 'znaków')}`,
     statBytes: (n: number) => `${n} B`,
     tabFocusOn: 'Tab przenosi fokus (Ctrl+M)',
     exportTitle: 'Eksport pliku',
@@ -317,24 +341,31 @@ export const codeStudioTranslations = {
     problemsStatusTip: 'Pokaż problemy',
     tabSizeOption: (n: number) => `Spacje: ${n}`,
     fontSizeValue: 'Rozmiar czcionki',
+    search: {
+      title: 'Szukaj i zamień',
+      find: 'Szukaj',
+      replace: 'Zamień na',
+      next: 'Następne dopasowanie',
+      previous: 'Poprzednie dopasowanie',
+      matchCase: 'Rozróżniaj wielkość liter',
+      regexp: 'Wyrażenie regularne',
+      wholeWord: 'Całe słowa',
+      replaceOne: 'Zamień',
+      replaceAll: 'Zamień wszystko',
+      close: 'Zamknij szukanie i zamianę',
+      noResults: 'Brak wyników',
+      results: (current: number, total: number, capped: boolean) =>
+        `${current > 0 ? current : '?'} z ${total}${capped ? '+' : ''}`,
+    },
     cmPhrases: {
-      Find: 'Szukaj',
-      Replace: 'Zamień',
-      next: 'następny',
-      previous: 'poprzedni',
-      all: 'wszystkie',
-      'match case': 'rozróżniaj wielkość liter',
-      regexp: 'regex',
-      'by word': 'całe słowa',
-      replace: 'zamień',
-      'replace all': 'zamień wszystkie',
-      close: 'zamknij',
-      'current match': 'bieżące dopasowanie',
-      'on line': 'w wierszu',
-      'replaced $ matches': 'zamieniono $ dopasowań',
-      'replaced match on line $': 'zamieniono dopasowanie w wierszu $',
-      'Go to line': 'Przejdź do wiersza',
-      go: 'idź',
+      'Fold line': 'Zwiń linię',
+      'Unfold line': 'Rozwiń linię',
+      'folded code': 'zwinięty kod',
+      unfold: 'rozwiń',
+      'Folded lines': 'Zwinięte linie',
+      'Unfolded lines': 'Rozwinięte linie',
+      to: 'do',
+      'Control character': 'Znak sterujący',
     } as Record<string, string>,
   },
 }

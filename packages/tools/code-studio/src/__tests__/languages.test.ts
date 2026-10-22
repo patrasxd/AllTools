@@ -6,6 +6,7 @@ import {
   detectLanguage,
   getLanguage,
   isKnownLanguage,
+  languageForExtension,
   loadLanguageExtension,
 } from '../languages'
 
@@ -44,6 +45,39 @@ describe('language registry', () => {
   it('exposes a default extension for each language', () => {
     expect(defaultExtension('typescript')).toBe('ts')
     expect(defaultExtension(PLAIN_TEXT_ID)).toBe('txt')
+  })
+
+  it('knows which language an extension belongs to', () => {
+    expect(languageForExtension('java')).toBe('java')
+    expect(languageForExtension('JSX')).toBe('javascript')
+    expect(languageForExtension('txt')).toBe(PLAIN_TEXT_ID)
+    expect(languageForExtension('weird')).toBeUndefined()
+  })
+
+  it('picks a sensible default extension for every language', () => {
+    const defaults = Object.fromEntries(LANGUAGES.map((lang) => [lang.id, defaultExtension(lang.id)]))
+    expect(defaults).toMatchObject({
+      plaintext: 'txt',
+      javascript: 'js',
+      typescript: 'ts',
+      json: 'json',
+      html: 'html',
+      css: 'css',
+      markdown: 'md',
+      python: 'py',
+      java: 'java',
+      cpp: 'cpp',
+      csharp: 'cs',
+      go: 'go',
+      rust: 'rs',
+      php: 'php',
+      sql: 'sql',
+      yaml: 'yaml',
+      xml: 'xml',
+      shell: 'sh',
+    })
+    // choosing a language and then detecting it from the new name gives the same language back
+    for (const lang of LANGUAGES) expect(detectLanguage(`file.${defaultExtension(lang.id)}`)).toBe(lang.id)
   })
 
   it('loads the grammar of every language', async () => {

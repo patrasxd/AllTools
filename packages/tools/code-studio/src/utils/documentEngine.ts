@@ -1,4 +1,4 @@
-import { PLAIN_TEXT_ID, detectLanguage, isKnownLanguage } from '../languages'
+import { PLAIN_TEXT_ID, defaultExtension, detectLanguage, isKnownLanguage, languageForExtension } from '../languages'
 import type { DocStats, EditorDoc, EditorSettings, Eol, Ruler, SessionData, TabSize } from '../types'
 
 export const SESSION_STORAGE_KEY = 'alltools:code-studio:v1:session'
@@ -130,6 +130,26 @@ export function renameDoc(docs: EditorDoc[], id: string, newName: string): Edito
     const detected = detectLanguage(name)
     return { ...doc, name, language: detected === PLAIN_TEXT_ID ? doc.language : detected }
   })
+}
+
+/**
+ * Chooses the file name a document gets when its language is changed by hand.
+ * The extension follows the language when it currently belongs to a different language (`untitled-1.txt` becomes
+ * `untitled-1.java`). It is kept when it already fits the language (`App.jsx` stays for JavaScript), and files
+ * without an extension or with one the editor does not know are left alone, so a custom name is never overwritten.
+ */
+export function nameForLanguage(docs: EditorDoc[], doc: EditorDoc, language: string): string {
+  const dot = doc.name.lastIndexOf('.')
+  if (dot <= 0) return doc.name
+  const current = languageForExtension(doc.name.slice(dot + 1))
+  if (current === undefined || current === language) return doc.name
+  return uniqueName(docs, `${doc.name.slice(0, dot)}.${defaultExtension(language)}`, doc.id)
+}
+
+/** Switches a document to another language and updates its extension accordingly (see `nameForLanguage`). */
+export function setDocLanguage(docs: EditorDoc[], id: string, language: string): EditorDoc[] {
+  if (!isKnownLanguage(language)) return docs
+  return docs.map((doc) => (doc.id === id ? { ...doc, language, name: nameForLanguage(docs, doc, language) } : doc))
 }
 
 export function updateDoc(docs: EditorDoc[], id: string, patch: Partial<Omit<EditorDoc, 'id'>>): EditorDoc[] {

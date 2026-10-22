@@ -15,71 +15,85 @@ interface SettingsDialogProps {
   onClose: () => void
 }
 
-/** Rarely changed editor options live here, so the toolbar stays small. */
+/**
+ * Rarely changed options live here, so the toolbar stays small.
+ * Each setting is one `SettingsGroup` (label above one control), laid out on a two-column grid.
+ */
 export function SettingsDialog({ open, t, settings, doc, onChange, onLanguage, onEol, onClose }: SettingsDialogProps) {
   return (
     <Dialog
       open={open}
       onClose={onClose}
       title={t.settingsTitle}
-      maxWidth="sm"
+      maxWidth="md"
       footer={
         <Button variant="primary" onClick={onClose}>
           {t.closeDialog}
         </Button>
       }
     >
-      <SettingsGroup label={t.settingsDocument}>
-        <Select
-          density="compact"
-          label={t.language}
-          fullWidth
-          value={doc.language}
-          options={LANGUAGES.map((lang) => ({ value: lang.id, label: lang.label }))}
-          onChange={(event) => onLanguage(event.target.value)}
-        />
-        <Select
-          density="compact"
-          label={t.lineEnding}
-          fullWidth
-          value={doc.eol}
-          options={[
-            { value: 'lf', label: t.eolLf },
-            { value: 'crlf', label: t.eolCrlf },
-          ]}
-          onChange={(event) => onEol(event.target.value as Eol)}
-        />
-      </SettingsGroup>
+      <div className="cs-settings">
+        <SettingsGroup label={t.language}>
+          <Select
+            density="compact"
+            aria-label={t.language}
+            fullWidth
+            value={doc.language}
+            options={LANGUAGES.map((lang) => ({ value: lang.id, label: lang.label }))}
+            onChange={(event) => onLanguage(event.target.value)}
+          />
+        </SettingsGroup>
 
-      <SettingsGroup label={t.settingsDisplay}>
-        <Toggle label={t.wrap} checked={settings.wordWrap} onChange={(checked) => onChange({ wordWrap: checked })} />
-        <Toggle
-          label={t.lineNumbers}
-          checked={settings.lineNumbers}
-          onChange={(checked) => onChange({ lineNumbers: checked })}
-        />
-        <Select
-          density="compact"
-          label={t.settingsRuler}
-          fullWidth
-          value={settings.ruler}
-          options={[
-            { value: 0, label: t.rulerOff },
-            { value: 80, label: t.rulerAt(80) },
-            { value: 100, label: t.rulerAt(100) },
-            { value: 120, label: t.rulerAt(120) },
-          ]}
-          onChange={(event) => onChange({ ruler: Number(event.target.value) as Ruler })}
-        />
-        <Select
-          density="compact"
-          label={t.tabSize}
-          fullWidth
-          value={settings.tabSize}
-          options={[2, 4, 8].map((size) => ({ value: size, label: t.tabSizeOption(size) }))}
-          onChange={(event) => onChange({ tabSize: Number(event.target.value) as TabSize })}
-        />
-      </SettingsGroup>
+        <SettingsGroup label={t.lineEnding}>
+          <Select
+            density="compact"
+            aria-label={t.lineEnding}
+            fullWidth
+            value={doc.eol}
+            options={[
+              { value: 'lf', label: t.eolLf },
+              { value: 'crlf', label: t.eolCrlf },
+            ]}
+            onChange={(event) => onEol(event.target.value as Eol)}
+          />
+        </SettingsGroup>
+
+        <SettingsGroup label={t.settingsRuler}>
+          <Select
+            density="compact"
+            aria-label={t.settingsRuler}
+            fullWidth
+            value={settings.ruler}
+            options={[
+              { value: 0, label: t.rulerOff },
+              { value: 80, label: t.rulerAt(80) },
+              { value: 100, label: t.rulerAt(100) },
+              { value: 120, label: t.rulerAt(120) },
+            ]}
+            onChange={(event) => onChange({ ruler: Number(event.target.value) as Ruler })}
+          />
+        </SettingsGroup>
+
+        <SettingsGroup label={t.tabSize}>
+          <Select
+            density="compact"
+            aria-label={t.tabSize}
+            fullWidth
+            value={settings.tabSize}
+            options={[2, 4, 8].map((size) => ({ value: size, label: t.tabSizeOption(size) }))}
+            onChange={(event) => onChange({ tabSize: Number(event.target.value) as TabSize })}
+          />
+        </SettingsGroup>
+
+        <div className="cs-settings__toggles">
+          <Toggle label={t.wrap} checked={settings.wordWrap} onChange={(checked) => onChange({ wordWrap: checked })} />
+          <Toggle
+            label={t.lineNumbers}
+            checked={settings.lineNumbers}
+            onChange={(checked) => onChange({ lineNumbers: checked })}
+          />
+        </div>
+      </div>
     </Dialog>
   )
 }

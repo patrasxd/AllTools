@@ -13,7 +13,7 @@ import {
   syntaxTree,
 } from '@codemirror/language'
 import { lintGutter, linter, type Diagnostic } from '@codemirror/lint'
-import { highlightSelectionMatches, searchKeymap } from '@codemirror/search'
+import { highlightSelectionMatches, search, searchKeymap } from '@codemirror/search'
 import { EditorState, type Extension } from '@codemirror/state'
 import {
   EditorView,
@@ -28,6 +28,7 @@ import {
 } from '@codemirror/view'
 import { tags as t } from '@lezer/highlight'
 import type { EditorSettings, Problem } from '../types'
+import { createFindPanel, type FindLabels } from '../components/FindPanel'
 import { buildProblems, findSyntaxErrorsForLanguage, type ProblemMessages } from './lintEngine'
 
 /**
@@ -76,6 +77,8 @@ export interface BaseExtensionOptions {
   toggleTabFocusMode: () => void
   onFormat: () => void
   onSave: () => void
+  /** Texts of the find and replace panel, read when the panel opens. */
+  getFindLabels: () => FindLabels
 }
 
 /** Locale and accessibility dependent extensions (search panel wording, editor label), kept in a Compartment. */
@@ -99,6 +102,7 @@ export function baseExtensions(options: BaseExtensionOptions): Extension[] {
     rectangularSelection(),
     crosshairCursor(),
     syntaxHighlighting(highlightStyle),
+    search({ createPanel: (view) => createFindPanel(view, options.getFindLabels) }),
     EditorState.allowMultipleSelections.of(true),
     keymap.of([
       {

@@ -6,6 +6,7 @@ import { openSearchPanel } from '@codemirror/search'
 import { loadLanguageExtension } from '../languages'
 import { baseExtensions, lintExtensions, metaExtensions, settingsExtensions } from '../utils/editorExtensions'
 import type { ProblemMessages } from '../utils/lintEngine'
+import type { FindLabels } from './FindPanel'
 import type { MarkdownCommand } from '../utils/markdownCommands'
 import type { CursorInfo, EditorDoc, EditorSettings, Problem } from '../types'
 
@@ -30,6 +31,7 @@ interface EditorPaneProps {
   settings: EditorSettings
   ariaLabel: string
   phrases: Record<string, string>
+  findLabels: FindLabels
   messages: ProblemMessages
   onChange: (id: string, content: string) => void
   onCursor: (info: CursorInfo) => void
@@ -84,6 +86,7 @@ export const EditorPane = forwardRef<EditorPaneHandle, EditorPaneProps>(function
         ...baseExtensions({
           onFormat: () => propsRef.current.onFormat(),
           onSave: () => propsRef.current.onSave(),
+          getFindLabels: () => propsRef.current.findLabels,
           isTabFocusMode: () => tabFocusModeRef.current,
           toggleTabFocusMode: () => {
             tabFocusModeRef.current = !tabFocusModeRef.current
@@ -201,10 +204,8 @@ export const EditorPane = forwardRef<EditorPaneHandle, EditorPaneProps>(function
       focus: () => viewRef.current?.focus(),
       openFind: () => {
         const view = viewRef.current
-        if (view) {
-          openSearchPanel(view)
-          view.focus()
-        }
+        // The panel focuses its own search field, so the editor must not take focus back here.
+        if (view) openSearchPanel(view)
       },
       replaceAll: (text) => {
         const view = viewRef.current
